@@ -1,1 +1,50 @@
-<p>contactform works!</p>
+<div class="contactform-section">
+    <div class="contactform-section-head">
+        <h2>Say Hi!</h2>
+        <span>Want to discuss a new Project?</span>
+        <p>Say hello! let's discuss your ideas and make it happen</p>
+    </div>
+    <div class="contactform-section-input">
+        <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" class="form-control" formControlName="name" required>
+                <div *ngIf="contactForm.get('name')?.touched && contactForm.get('name')?.invalid" class="text-danger">
+                    Name is required.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" class="form-control" formControlName="email" required email>
+                <div *ngIf="contactForm.get('email')?.touched && contactForm.get('email')?.invalid" class="text-danger">
+                    Please provide a valid email address.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" class="form-control" formControlName="message" required></textarea>
+                <div *ngIf="contactForm.get('message')?.touched && contactForm.get('message')?.invalid"
+                    class="text-danger">
+                    Message is required.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="privacy" formControlName="privacy" required>
+                <label for="privacy">Ich akzeptiere die Datenschutzbestimmungen</label>
+                <div *ngIf="contactForm.get('privacy')?.touched && !contactForm.get('privacy')?.value"
+                    class="text-danger">
+                    Sie müssen die Datenschutzbestimmungen akzeptieren, um fortzufahren.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid">Senden</button>
+
+        </form>
+
+    </div>
+
+</div>
