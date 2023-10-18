@@ -1,0 +1,84 @@
+.portfolio-section-project {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.portfolio-section-project-left {
+
+
+    img {
+        width: 620px;
+    }
+}
+
+.portfolio-section-project-right {}
+
+.portfolio-section-project-right-head {
+    text-align: right;
+    font-variant-numeric: lining-nums proportional-nums;
+    font-family: Syne;
+    font-size: 48px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+}
+
+.portfolio-section-project-right-text {
+    max-width: 480px;
+
+    h2 {
+        font-family: 'Syne';
+        font-size: 45px;
+        font-style: normal;
+        font-weight: 800;
+        line-height: 100%;
+    }
+
+    span {
+        color: #00BC8F;
+        font-family: 'Overpass';
+        font-size: 23px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 120%;
+    }
+
+    p {
+        font-family: 'Overpass';
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 120%
+    }
+}
+
+.portfolio-section-project-right-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+
+    button {
+        width: 189px;
+        height: 68px;
+        border: 4px solid black;
+        box-shadow: 5px 5px 15px 0px rgba(0, 0, 0, 0.15);
+        font-family: 'Overpass';
+        font-size: 23px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 120%;
+
+        &:hover {
+            cursor: pointer;
+            font-weight: 800;
+            transform-origin: left center;
+            transform: scaleX(1.15);
+            transition: all ease-in-out 200ms;
+        }
+    }
+
+   
+}
