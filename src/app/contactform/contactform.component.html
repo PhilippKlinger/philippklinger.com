@@ -1,38 +1,42 @@
+
 <div class="contactform-section">
+   <!-- <div class="svg-background">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="1065" viewBox="0 0 1440 1065" fill="none" position="absolute">
+        <path d="M0 0.5L1440 181.5V1082.5H0L0 0.5Z" fill="black"/>
+      </svg>
+   </div> -->
+   <h2>Say Hi!</h2>
     <div class="contactform-section-head">
-        <h2>Say Hi!</h2>
         <span>Want to discuss a new Project?</span>
         <p>Say hello! let's discuss your ideas and make it happen</p>
     </div>
+
     <div class="contactform-section-input">
         <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
 
             <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" id="name" class="form-control" formControlName="name" required>
+                <input type="text" id="name" class="form-control" formControlName="name" required placeholder="Your name">
                 <div *ngIf="contactForm.get('name')?.touched && contactForm.get('name')?.invalid" class="text-danger">
                     Name is required.
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" class="form-control" formControlName="email" required email>
+                <input type="email" id="email" class="form-control" formControlName="email" required email placeholder="Your email">
                 <div *ngIf="contactForm.get('email')?.touched && contactForm.get('email')?.invalid" class="text-danger">
                     Please provide a valid email address.
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="message">Message:</label>
-                <textarea id="message" class="form-control" formControlName="message" required></textarea>
+                <textarea id="message" class="form-control" formControlName="message" required placeholder="Your message"></textarea>
                 <div *ngIf="contactForm.get('message')?.touched && contactForm.get('message')?.invalid"
                     class="text-danger">
                     Message is required.
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group-checkbox">
                 <input type="checkbox" id="privacy" formControlName="privacy" required>
                 <label for="privacy">Ich akzeptiere die Datenschutzbestimmungen</label>
                 <div *ngIf="contactForm.get('privacy')?.touched && !contactForm.get('privacy')?.value"
