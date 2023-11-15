@@ -4,19 +4,21 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
-import { DescriptionComponent } from './description/description.component';
-import { SkillsComponent } from './skills/skills.component';
-import { PortfolioComponent } from './portfolio/portfolio.component';
-import { ContactFormComponent } from './contactform/contactform.component';
+import { MainContentComponent } from './main-content/main-content.component';
+import { DescriptionComponent } from './main-content/description/description.component';
+import { SkillsComponent } from './main-content/skills/skills.component';
+import { PortfolioComponent } from './main-content/portfolio/portfolio.component';
+import { ContactFormComponent } from './main-content/contactform/contactform.component';
 import { FooterComponent } from './footer/footer.component';
-import { ProjectComponent } from './portfolio/project/project.component';
-import { AbovethefoldComponent } from './abovethefold/abovethefold.component';
+import { ProjectComponent } from './main-content/portfolio/project/project.component';
+import { AbovethefoldComponent } from './main-content/abovethefold/abovethefold.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
+    MainContentComponent,
     DescriptionComponent,
     SkillsComponent,
     PortfolioComponent,
