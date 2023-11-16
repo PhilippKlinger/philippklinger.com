@@ -1,21 +1,39 @@
 header {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    width: 100%;
+    height: 80px;
     z-index: 999;
+    background-color: #FFFCF3;
 }
 
 nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-left: 10%;
-    padding-right: 10%;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    height: 100%;
     img {
         height: 32px;
     }
+}
+
+
+@media (max-width: 1200px) {
+    nav { max-width: 1000px;}
+}
+
+@media (max-width: 1050px) {
+    nav { max-width: 760px;}
+}
+
+@media (max-width: 768px) {
+    nav { max-width: 570px;}
+}
+
+@media (max-width: 576px) {
+    nav { max-width: 400px;}
+}
+
+@media (max-width: 440px) {
 }

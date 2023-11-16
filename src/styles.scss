@@ -1,5 +1,21 @@
 body {
     margin: 0;
     background-color: #FFFCF3;
-    font-family: 'Overpass', sans-serif;
+    overflow-x: hidden;
+    font-family: 'Overpass';
+}
+
+.wrapper {
+    max-width: 1000px;
+    width: 100%;
+    margin: auto;
+}
+
+.content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    
 }
