@@ -12,25 +12,59 @@ h2 {
     font-weight: 800;
     line-height: 100%;
     letter-spacing: 0.78px;
-    margin: 0;
+    width: 100%;
+    text-align: left;
+}
+
+.description-section-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
+    justify-content: space-between;
 }
 
 
 .description-section-content-right {
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
-.portrait {
-    width: 553px;
+.description-section-content-right {
+    width: 500px;
+    height: 500px;
+
+    &::before {
+        content: "";
+        position: absolute;
+        border: 4px solid transparent;
+        z-index: 1;
+        transition: all 225ms ease-in-out;
+        top: 20px;
+        left: 20px;
+        right: -20px;
+        bottom: -20px;
+    }
+
+    &:hover::before {
+        border: 4px solid black;
+        top: 20px;
+        left: 20px;
+        right: -20px;
+        bottom: -20px;
+    }
 }
 
-.arrow {
-    width: 280px;
+.arrow-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .description-section-content-left {
-    width: 620px;
+    max-width: 610px;
 }
 
 .description-section-content-left-text {
@@ -45,5 +79,43 @@ h2 {
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
+    }
+}
+
+
+@media (max-width: 1400px) {
+    h2 {
+        font-size: 70px;
+    }
+}
+
+@media (max-width: 1200px) {
+    h2 {
+        font-size: 64px;
+    }
+}
+
+@media (max-width: 1050px) {
+    h2 {
+        font-size: 55px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    h2 {
+        font-size: 45px;
+    }
+}
+
+@media (max-width: 576px) {
+    h2 {
+        font-size: 35px;
+    }
+}
+
+@media (max-width: 440px) {
+    h2 {
+        font-size: 25px;
     }
 }

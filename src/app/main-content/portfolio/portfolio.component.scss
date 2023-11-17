@@ -8,13 +8,14 @@
     flex-direction: column;
     align-items: center;
     margin-bottom: 114px;
+
     h2 {
         text-align: center;
         font-family: 'Syne';
         font-size: 78px;
         font-style: normal;
         font-weight: 800;
-        line-height: 100%; 
+        line-height: 100%;
         letter-spacing: 0.78px;
         margin: 0;
     }
@@ -24,11 +25,11 @@
         font-size: 23px;
         font-style: normal;
         font-weight: 400;
-        line-height: 120%; 
+        line-height: 120%;
         margin-top: 35px;
     }
 }
 
 .portfolio-section-projectslist {
-
+    width: 100%;
 }
