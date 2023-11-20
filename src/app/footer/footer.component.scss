@@ -1,0 +1,29 @@
+.footer-content {
+    background-color: black;
+    color: var(--cream, #FFFCF3);
+}
+
+.footer-section {
+    display: flex;
+    width: 100%;
+    padding-top: 100px;
+    padding-bottom: 50px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-section-logo {
+
+    img {
+        width: 32px;
+       filter: invert(1);
+    }
+}
+
+.social-logos {
+    display: flex;
+    gap: 42px;
+    flex-direction: row;
+    align-items: center;
+}
