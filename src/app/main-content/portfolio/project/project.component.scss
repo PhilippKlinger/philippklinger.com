@@ -15,7 +15,7 @@
 
     &:hover .arrow-flip {
         animation: rotate-arrow 1s forwards;
-        animation-delay: 300ms;
+        animation-delay: 100ms;
         transition: all 200ms ease-in-out;
     }
 
@@ -85,7 +85,8 @@
 .portfolio-section-project-right-text {
     max-width: 480px;
     transform: translateX(-150%);
-    z-index: -10;
+ 
+    opacity: 0;
 
     h2 {
         font-family: 'Syne';

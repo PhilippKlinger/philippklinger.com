@@ -1,14 +1,31 @@
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+
+:host {
+    --bar-width: 40px;
+    --bar-height: 4px;
+    --hamburger-gap: 12px;
+    --foreground: #333;
+    --background: white;
+    --hamburger-margin: 8px;
+    --animation-timing: 200ms ease-in-out;
+    --hamburger-height: calc(var(--bar-height) * 3 + var(--hamburger-gap) * 2);
+}
+
 header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     height: 80px;
-    z-index: 999;
+    z-index: 5;
     background-color: #FFFCF3;
 }
 
-nav {
+.header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -18,21 +35,76 @@ nav {
     }
 }
 
+.hamburger-menu {
+    --x-width: calc(var(--hamburger-height) * 1.41421356237);
+    display: flex;
+    flex-direction: column;
+    gap: var(--hamburger-gap);
+    width: max-content;
+    cursor: pointer;
+  }
+    
+  .hamburger-menu:has(input:focus-visible)::before,
+  .hamburger-menu:has(input:focus-visible)::after,
+  .hamburger-menu input:focus-visible {
+    border: 1px solid var(--background);
+    box-shadow: 0 0 0 1px var(--foreground);
+  }
+  
+  .hamburger-menu::before,
+  .hamburger-menu::after,
+  .hamburger-menu input {
+    content: "";
+    width: var(--bar-width);
+    height: var(--bar-height);
+    background-color: var(--foreground);
+    transform-origin: right center;
+    transition: opacity var(--animation-timing), width var(--animation-timing),
+      rotate var(--animation-timing), translate var(--animation-timing),
+      background-color var(--animation-timing);
+  }
+  
+  .hamburger-menu input {
+    appearance: none;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    pointer-events: none;
+  }
+  
+  .hamburger-menu:has(input:checked)::before {
+    rotate: -45deg;
+    width: var(--x-width);
+    translate: 0 calc(var(--bar-height) / -2);
+  }
+  
+  .hamburger-menu:has(input:checked)::after {
+    rotate: 45deg;
+    width: var(--x-width);
+    translate: 0 calc(var(--bar-height) / 2);
+  }
+  
+  .hamburger-menu input:checked {
+    opacity: 0;
+    width: 0;
+  }
+  
+
 
 @media (max-width: 1200px) {
-    nav { max-width: 1000px;}
+    .header-content { max-width: 1000px;}
 }
 
 @media (max-width: 1050px) {
-    nav { max-width: 760px;}
+    .header-content { max-width: 760px;}
 }
 
 @media (max-width: 768px) {
-    nav { max-width: 570px;}
+    .header-content { max-width: 570px;}
 }
 
 @media (max-width: 576px) {
-    nav { max-width: 400px;}
+    .header-content { max-width: 400px;}
 }
 
 @media (max-width: 440px) {

@@ -1,3 +1,30 @@
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+
+:root {
+    --bar-width: 60px;
+    --bar-height: 8px;
+    --hamburger-gap: 6px;
+    --foreground: #541d1d;
+    --background: rgb(113, 22, 22);
+    --hamburger-margin: 8px;
+    --animation-timing: 200ms ease-in-out;
+    --hamburger-height: calc(var(--bar-height) * 3 + var(--hamburger-gap) * 2);
+}
+
+.hamburger-menu::before,
+.hamburger-menu::after,
+.hamburger-menu input {
+    content: "";
+    width: 60px;
+    height: var(--bar-height);
+    background-color: var(--foreground);
+}
+
+
 .description-section {
     height: 100vh;
     display: flex;
