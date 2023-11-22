@@ -1,0 +1,14 @@
+.navigation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+
+    span {
+        font-size: 60px;
+    }
+
+    a {
+        text-decoration: none;
+        color: black;
+    }
+}

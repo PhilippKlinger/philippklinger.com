@@ -13,6 +13,8 @@ import { FooterComponent } from './footer/footer.component';
 import { ProjectComponent } from './main-content/portfolio/project/project.component';
 import { AbovethefoldComponent } from './main-content/abovethefold/abovethefold.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MainContentNavigationComponent } from './main-content-navigation/main-content-navigation.component';
+import { SharedService } from './shared.service';
 
 @NgModule({
   declarations: [
@@ -25,14 +27,15 @@ import { ReactiveFormsModule } from '@angular/forms';
     ContactFormComponent,
     FooterComponent,
     ProjectComponent,
-    AbovethefoldComponent
+    AbovethefoldComponent,
+    MainContentNavigationComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     ReactiveFormsModule
   ],
-  providers: [],
+  providers: [SharedService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

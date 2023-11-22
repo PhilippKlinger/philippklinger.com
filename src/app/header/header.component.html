@@ -1,10 +1,10 @@
 <header>
     <div class="header-content wrapper">
-        <div>
-            <img src="./assets/icons/logo.png">
+        <div >
+            <img class="test" src="./assets/icons/logo.png">
         </div>
-        <label class="hamburger-menu">
-            <input type="checkbox">
+        <label class="hamburger-menu" (click)="toggleNavigation()">
+            <input type="checkbox" #navigationCheckbox>
         </label>
     </div>
 </header>
