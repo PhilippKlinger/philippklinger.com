@@ -12,5 +12,6 @@ export class MainContentNavigationComponent {
 
   updateCheckboxStatus(): void {
     this.sharedService.resetCheckboxStatus();
+    this.sharedService.updateHamburgerMenuStatus(false);
   }
 }

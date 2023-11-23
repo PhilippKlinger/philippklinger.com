@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
+
 export class SharedService {
   private checkboxStatusSubject = new BehaviorSubject<boolean>(false);
   checkboxStatus$ = this.checkboxStatusSubject.asObservable();
@@ -15,4 +16,10 @@ export class SharedService {
   resetCheckboxStatus(): void {
     this.checkboxStatusSubject.next(false);
   }
+
+  updateHamburgerMenuStatus(newStatus: boolean): void {
+    this.checkboxStatusSubject.next(newStatus);
+  }
 }
+
+

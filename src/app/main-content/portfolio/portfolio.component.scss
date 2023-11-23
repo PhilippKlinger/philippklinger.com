@@ -1,6 +1,7 @@
 .portfolio-section {
     display: flex;
     flex-direction: column;
+    margin-top: 50px;
 }
 
 .portfolio-section-head {
@@ -39,4 +40,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+
+    img {
+        padding-right: 40px;
+    }
 }
