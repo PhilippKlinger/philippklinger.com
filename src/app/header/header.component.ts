@@ -23,6 +23,6 @@ export class HeaderComponent {
       this.router.navigate(['']);
     }
 
-    this.sharedService.updateCheckboxStatus(!isChecked);
+
   }
 }
