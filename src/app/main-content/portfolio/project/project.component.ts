@@ -7,5 +7,6 @@ import { Component, Input } from '@angular/core';
 })
 export class ProjectComponent {
 @Input() project: any;
-
+@Input() projects!: any[];
+@Input() isReversed: boolean = false;
 }

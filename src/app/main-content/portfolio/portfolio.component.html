@@ -4,8 +4,13 @@
         <span>This page is a sample of my work - please feel free to try them out.</span>
     </div>
     <div class="portfolio-section-projectslist">
-        <app-project *ngFor="let project of projects, let i = index" [project]="project">
-        </app-project>
+        <ng-container *ngFor="let project of projects; let i = index">
+            <app-project
+                [project]="project"
+                [projects]="projects"
+                [isReversed]="i % 2 !== 0">
+            </app-project>
+        </ng-container>
     </div>
     <div class="arrow-section">
         <img class="arrow" src="./assets/icons/arrowRight.png">

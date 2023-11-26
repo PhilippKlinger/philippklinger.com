@@ -44,4 +44,11 @@ export class PortfolioComponent {
       imageUrl: './assets/projects/mayavaliente.png'
     },
   ];
+
+  isReverse = false;
+
+  toggleDisplayMode() {
+    this.isReverse = !this.isReverse;
+  }
+  
 }

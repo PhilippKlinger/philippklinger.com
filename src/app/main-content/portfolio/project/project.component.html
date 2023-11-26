@@ -1,13 +1,15 @@
-<div class="portfolio-section-project">
-    <div class="portfolio-section-project-left">
+<div class="portfolio-section-project" [ngClass]="{'portfolio-section-project-reverse': isReversed}">
+    <div class="portfolio-section-project-left" [ngClass]="{'portfolio-section-project-left-reverse': isReversed}">
         <img class="project-screen" [src]="project.imageUrl">
-        <img class="arrow-flip" src="./assets/icons/arrow-project.svg">
+        <img class="arrow-flip" [ngClass]="{'arrow-flip-reverse': isReversed}" src="./assets/icons/arrow-project.svg">
     </div>
     <div class="portfolio-section-project-right">
-        <div class="portfolio-section-project-right-head">
-            <span>0{{ project.id }}/05</span>
+        <div class="portfolio-section-project-right-head"
+            [ngClass]="{'portfolio-section-project-right-head-reverse': isReversed}">
+            <span>0{{ project.id }}/0{{ projects.length }}</span>
         </div>
-        <div class="portfolio-section-project-right-text">
+        <div class="portfolio-section-project-right-text"
+            [ngClass]="{'portfolio-section-project-right-text-reverse': isReversed}">
             <h2>{{ project.title }}</h2>
             <span>{{ project.technologies }}</span>
             <p>{{ project.description }}</p>
@@ -22,35 +24,3 @@
         </div>
     </div>
 </div>
-
-
-
-
-
-
-
-
-<!-- <div class="portfolio-section-project-reverse">
-    <div class="portfolio-section-project-left-reverse">
-        <img class="project-screen" [src]="project.imageUrl">
-        <img class="arrow-flip-reverse" src="./assets/icons/arrow-project.svg">
-    </div>
-    <div class="portfolio-section-project-right">
-        <div class="portfolio-section-project-right-head-reverse">
-            <span>0{{ project.id }}/05</span>
-        </div>
-        <div class="portfolio-section-project-right-text-reverse">
-            <h2>{{ project.title }}</h2>
-            <span>{{ project.technologies }}</span>
-            <p>{{ project.description }}</p>
-            <div class="portfolio-section-project-right-buttons">
-                <a [href]="project.githubLink" target="_blank" rel="noopener noreferrer">
-                    <button>Github</button>
-                </a>
-                <a [href]="project.liveLink" target="_blank" rel="noopener noreferrer">
-                    <button>Live</button>
-                </a>
-            </div>
-        </div>
-    </div>
-</div> -->

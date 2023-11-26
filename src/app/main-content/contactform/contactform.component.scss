@@ -10,7 +10,7 @@
 }
 
 h2 {
-    color: var(--cream, #FFFCF3);
+    color: #FFFCF3;
     text-align: left;
     font-family: 'Syne';
     font-size: 78px;
@@ -27,13 +27,13 @@ h2 {
     line-height: 120%;
 
     span {
-        color: var(--secundario, #00BC8F);
+        color:#00BC8F;
         font-size: 32px;
         font-weight: 700;
     }
 
     p {
-        color: var(--cream, #FFFCF3);
+        color: #FFFCF3;
         font-size: 23px;
         font-weight: 400;
     }
@@ -50,7 +50,7 @@ h2 {
     align-items: center;
     border: none;
     outline: none;
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid #FFFCF3;
     padding: 15px 25px;
     height: 50px;
     width: 617px;
@@ -63,7 +63,7 @@ h2 {
     align-items: center;
     border: none;
     outline: none;
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid #FFFCF3;
     padding: 15px 25px;
     height: 50px;
     width: 617px;
@@ -72,7 +72,7 @@ h2 {
 }
 
 .form-group input::placeholder {
-    color: var(--cream, #FFFCF3);
+    color:#FFFCF3;
     font-family: 'Overpass';
     font-size: 16px;
     font-style: normal;
@@ -81,7 +81,7 @@ h2 {
 }
 
 .form-group textarea::placeholder {
-    color: var(--cream, #FFFCF3);
+    color: #FFFCF3;
     font-family: 'Overpass';
     font-size: 16px;
     font-style: normal;
