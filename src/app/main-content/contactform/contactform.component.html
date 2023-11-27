@@ -6,7 +6,7 @@
             <p>Say hello! let's discuss your ideas and make it happen</p>
         </div>
         <div class="contactform-section-input">
-            <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+            <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" [attr.disabled]="isFormSubmitted ? true : null">
                 <div class="form-group">
                     <input type="text" id="name" class="form-control name-content" formControlName="name" required
                         placeholder="Your name">
@@ -38,7 +38,10 @@
                         Sie müssen die Datenschutzbestimmungen akzeptieren, um fortzufahren.
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid">Senden</button>
+                <div class="button-section">
+                    <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid"> {{
+                        isSubmitting ? 'Sending...' : 'Send message' }}</button>
+                </div>
             </form>
         </div>
     </div>
