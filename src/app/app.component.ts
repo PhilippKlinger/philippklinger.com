@@ -4,7 +4,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  // encapsulation: ViewEncapsulation.Emulated
+  encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
   title = 'philippklinger';

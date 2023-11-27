@@ -18,6 +18,7 @@ h2 {
     font-weight: 800;
     line-height: 100%;
     letter-spacing: 0.78px;
+    margin-top: 150px;
 }
 
 .contactform-section-head {
@@ -27,7 +28,7 @@ h2 {
     line-height: 120%;
 
     span {
-        color:#00BC8F;
+        color: #00BC8F;
         font-size: 32px;
         font-weight: 700;
     }
@@ -45,46 +46,70 @@ h2 {
     align-items: center;
 }
 
-.form-group input {
-    display: flex;
-    align-items: center;
-    border: none;
-    outline: none;
-    border-bottom: 2px solid #FFFCF3;
-    padding: 15px 25px;
-    height: 50px;
-    width: 617px;
-    gap: 10px;
-    background-color: #000;
+.form-group {
+    position: relative; 
+    margin-bottom: 10px;
+
+    input,
+    textarea {
+        display: flex;
+        align-items: center;
+        border: none;
+        outline: none;
+        border-bottom: 2px solid #FFFCF3;
+        padding: 5px 15px;
+        width: 617px;
+        gap: 10px;
+        background-color: #000;
+        color: #FFF; 
+        font-size: 18px;
+
+        ::placeholder {
+            z-index: 999;
+            color: #FFFCF3;
+            font-family: 'Overpass';
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 120%;
+            transition: transform 0.3s ease;
+            transform: translateY(0);
+        }
+
+        &:hover {
+            cursor: pointer;
+            border: 3px solid #FFFCF3;
+        }
+
+        &:focus {
+            border: 2px solid #FFFCF3; 
+            color: #FFF; 
+            caret-color: #FFF; 
+
+            &::placeholder {
+                transform: translateY(-30px); 
+            }
+        }
+    }
+
+    .text-danger {
+        color: red; 
+        padding: 5px;
+        font-size: 14px;
+    }
 }
 
-.form-group textarea {
-    display: flex;
-    align-items: center;
-    border: none;
-    outline: none;
-    border-bottom: 2px solid #FFFCF3;
-    padding: 15px 25px;
-    height: 50px;
-    width: 617px;
-    gap: 10px;
-    background-color: #000;
+.message-content {
+    height: 200px !important;
+    padding-top: 20px !important;
 }
 
-.form-group input::placeholder {
-    color:#FFFCF3;
-    font-family: 'Overpass';
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 120%;
+.name-content {
+    height: 60px !important;
 }
 
-.form-group textarea::placeholder {
+label {
     color: #FFFCF3;
-    font-family: 'Overpass';
     font-size: 16px;
-    font-style: normal;
     font-weight: 400;
-    line-height: 120%;
 }
