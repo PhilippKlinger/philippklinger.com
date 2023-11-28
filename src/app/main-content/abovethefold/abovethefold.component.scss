@@ -25,6 +25,16 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    // opacity: 0;
+    filter: blur(20px);
+    // transform: translateX(-1000px);
+    transition: all 1000ms ease-in;
+}
+
+.welcome-message.show {
+    // opacity: 1;
+    filter: blur(0);
+    // transform: translateX(0px);
 }
 
 .welcome-message-caption {
@@ -69,6 +79,8 @@ h2 {
 .underline {
     max-width: 628px;
 }
+
+
 
 @keyframes scroll-down {
     0% {

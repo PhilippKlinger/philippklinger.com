@@ -105,3 +105,79 @@ h2 {
         transform: translateX(0);
     }
 }
+
+.animate-section {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.animate-section.show {
+    opacity: 1;
+}
+
+
+.animate-icon {
+    opacity: 0;
+    transform: translateX(-100px);
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+  }
+  
+  .animate-icon:nth-child(1).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.1s; // Verzögerung für das erste Icon
+  }
+  
+  .animate-icon:nth-child(6).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.1s; // Verzögerung für das zweite Icon
+  }
+  
+  .animate-icon:nth-child(2).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.2s; // Verzögerung für das dritte Icon
+  }
+  
+  .animate-icon:nth-child(7).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.2s; // Verzögerung für das erste Icon
+  }
+  
+  .animate-icon:nth-child(3).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.3s; // Verzögerung für das zweite Icon
+  }
+  
+  .animate-icon:nth-child(8).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.3s; // Verzögerung für das dritte Icon
+  }
+  .animate-icon:nth-child(4).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.4s; // Verzögerung für das erste Icon
+  }
+  
+  .animate-icon:nth-child(9).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.4s; // Verzögerung für das zweite Icon
+  }
+  
+  .animate-icon:nth-child(5).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.5s; // Verzögerung für das dritte Icon
+  }
+  
+  .animate-icon:nth-child(10).show {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.5s; // Verzögerung für das dritte Icon
+  }
+  

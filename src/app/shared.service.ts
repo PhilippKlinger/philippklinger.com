@@ -20,6 +20,19 @@ export class SharedService {
   updateHamburgerMenuStatus(newStatus: boolean): void {
     this.checkboxStatusSubject.next(newStatus);
   }
+
+  observeIntersection(element: HTMLElement, callback: () => void): void {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          callback();
+        }
+      });
+    });
+
+    observer.observe(element);
+  }
+  
 }
 
 

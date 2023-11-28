@@ -1,10 +1,10 @@
 <div id="skills" class="wrapper">
-    <div class="skills-content-section">
+    <div class="skills-content-section animate-section">
         <h2>My skills</h2>
         <div class="skills-content-section-icons">
             <div class="skills-content-icons-section">
-                <div *ngFor="let skill of skills; let i = index" class="skills-content-section-icon">
-                    <img class="icon" [src]="icons[i]">
+                <div id="icon-{{i}}" *ngFor="let skill of skills; let i = index" class="skills-content-section-icon animate-icon">
+                    <img class="icon " [src]="icons[i]">
                     <span>{{ skill }}</span>
                 </div>
             </div>
