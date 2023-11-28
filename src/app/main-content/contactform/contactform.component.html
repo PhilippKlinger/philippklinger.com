@@ -32,10 +32,12 @@
                 </div>
                 <div class="form-group-checkbox">
                     <input type="checkbox" id="privacy" formControlName="privacy" required>
-                    <label for="privacy">Ich akzeptiere die Datenschutzbestimmungen</label>
+                    <label for="privacy">I've read the 
+                        <a routerLink="" fragment="">privacy policy</a>
+                        and agree to the processing of my data as outlined</label>
                     <div *ngIf="contactForm.get('privacy')?.touched && !contactForm.get('privacy')?.value"
                         class="text-danger">
-                        Sie müssen die Datenschutzbestimmungen akzeptieren, um fortzufahren.
+                        Please accept the privacy policy first!
                     </div>
                 </div>
                 <div class="button-section">

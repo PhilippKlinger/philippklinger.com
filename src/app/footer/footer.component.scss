@@ -6,8 +6,8 @@
 .footer-section {
     display: flex;
     width: 100%;
-    padding-top: 100px;
-    padding-bottom: 50px;
+    padding-top: 40px;
+    padding-bottom: 40px;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -26,4 +26,12 @@
     gap: 42px;
     flex-direction: row;
     align-items: center;
+}
+
+a:hover {
+
+    img {
+        transform: translateY(-10px);
+        transition: all 250ms ease-in-out;
+    }
 }
