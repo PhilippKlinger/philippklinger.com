@@ -25,16 +25,14 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    // opacity: 0;
-    filter: blur(20px);
-    // transform: translateX(-1000px);
-    transition: all 1000ms ease-in;
-}
+    opacity: 0;
+    // filter: blur(20px);
+    transition: all 400ms ease-in;
 
-.welcome-message.show {
-    // opacity: 1;
-    filter: blur(0);
-    // transform: translateX(0px);
+    &.show {
+        opacity: 1;
+        // filter: blur(0);
+    }
 }
 
 .welcome-message-caption {
@@ -55,6 +53,14 @@ h2 {
 
 .welcome-section-email {
     transform: rotate(-90deg) translateY(-20px);
+    // filter: blur(20px);
+    opacity: 0;
+    transition: all 500ms ease-in;
+
+    &.show {
+        opacity: 1;
+        // filter: blur(0);
+    }
 }
 
 .welcome-section-scroll-down {
@@ -62,7 +68,9 @@ h2 {
     flex-direction: column;
     align-items: center;
     overflow-y: hidden;
-
+    opacity: 0;
+    // filter: blur(20px);
+    transition: all 400ms ease-in;
     
     img {
         height: 160px;
@@ -73,6 +81,10 @@ h2 {
     span {
         z-index: 9;
         background-color: #FFFCF3;
+    }
+
+    &.show {
+       opacity: 1;
     }
 }
 

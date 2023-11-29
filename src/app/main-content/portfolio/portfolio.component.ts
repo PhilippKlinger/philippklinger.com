@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { SharedService } from 'src/app/shared.service';
 
 @Component({
   selector: 'app-portfolio',
   templateUrl: './portfolio.component.html',
   styleUrls: ['./portfolio.component.scss']
 })
-export class PortfolioComponent {
+export class PortfolioComponent implements OnInit {
   projects = [
     {
       id: 1,
@@ -49,6 +50,18 @@ export class PortfolioComponent {
 
   toggleDisplayMode() {
     this.isReverse = !this.isReverse;
+  }
+
+  constructor(private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) {}
+
+  ngOnInit() {
+    this.sharedService.observeIntersection(
+      this.el.nativeElement.querySelector('.portfolio-section'),
+      () => {
+        this.renderer.addClass(this.el.nativeElement.querySelector('.portfolio-section-head'), 'show');  
+       
+      }
+    );
   }
   
 }

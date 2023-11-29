@@ -29,13 +29,16 @@ export class SkillsComponent implements OnInit {
 
     ngOnInit(): void {
       this.sharedService.observeIntersection(
-        this.el.nativeElement.querySelector('.skills-content-icons-section'),
+        this.el.nativeElement.querySelector('.skills-content-section'),
         () => {
-          this.renderer.addClass(this.el.nativeElement.querySelector('.skills-content-section'), 'show');
+         
+            this.renderer.addClass(this.el.nativeElement.querySelector('.skills-content-section'), 'show');
             this.icons.forEach((icon, index) => {
               const iconElement = this.el.nativeElement.querySelector(`#icon-${index}`);
               this.renderer.addClass(iconElement, 'show');
             });
+       
+          
         }
       );
     }

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { SharedService } from 'src/app/shared.service';
 
 @Component({
   selector: 'app-contact-form',
@@ -12,15 +13,23 @@ export class ContactFormComponent implements OnInit {
   isFormSubmitted = false;
   isSubmitting = false;
 
-  constructor(private formBuilder: FormBuilder) { }
+  constructor(private formBuilder: FormBuilder, private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) { }
 
   ngOnInit(): void {
     this.contactForm = this.formBuilder.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      message: ['', Validators.required],
+      message: ['', [Validators.required, Validators.minLength(50)]],
       privacy: [false, Validators.requiredTrue]
     });
+
+    this.sharedService.observeIntersection(
+      this.el.nativeElement.querySelector('.contactform-section'),
+      () => {
+        this.renderer.addClass(this.el.nativeElement.querySelector('.contactform-section'), 'show');  
+       
+      }
+    );
   }
 
   async onSubmit(): Promise<void> {

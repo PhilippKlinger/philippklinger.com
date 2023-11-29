@@ -1,10 +1,13 @@
+.skills-content {
+  padding-top: 100px;
+}
+
 .skills-content-section {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
     border: 4px solid black;
-    margin-top: 20vh;
 }
 
 h2 {
@@ -108,7 +111,7 @@ h2 {
 
 .animate-section {
     opacity: 0;
-    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
 }
 
 .animate-section.show {

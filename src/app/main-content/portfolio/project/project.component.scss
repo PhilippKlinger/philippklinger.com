@@ -33,9 +33,58 @@
     }
 }
 
+.project-1 {
+    opacity: 0;
+    transform: translateY(100px);
+    // filter: blur(15px);
+    transition: all 400ms ease-in;
+
+    &.show {
+        opacity: 1;
+        transform: translateY(0);
+        // filter: blur(0);
+    }
+}
+.project-2 {
+    opacity: 0;
+    transform: translateY(100px);
+    // filter: blur(15px);
+    transition: all 400ms ease-in;
+
+    &.show {
+        opacity: 1;
+        transform: translateY(0);
+        // filter: blur(0);
+    }
+}
+.project-3 {
+    opacity: 0;
+    transform: translateY(100px);
+    // filter: blur(15px);
+    transition: all 400ms ease-in;
+
+    &.show {
+        opacity: 1;
+        transform: translateY(0);
+        // filter: blur(0);
+    }
+}
+.project-4 {
+    opacity: 0;
+    transform: translateY(100px);
+    // filter: blur(15px);
+    transition: all 400ms ease-in;
+
+    &.show {
+        opacity: 1;
+        transform: translateY(0);
+        // filter: blur(0);
+    }
+}
+
 .portfolio-section-project-reverse {
     flex-direction: row-reverse !important;
-    
+
 
     &:hover .portfolio-section-project-right-text-reverse {
         animation: slide-in-reverse 1s forwards;

@@ -1,4 +1,4 @@
-<div class="portfolio-section-project" [ngClass]="{'portfolio-section-project-reverse': isReversed}">
+<div class="portfolio-section-project project-{{ project.id }}" [ngClass]="{'portfolio-section-project-reverse': isReversed}">
     <div class="portfolio-section-project-left" [ngClass]="{'portfolio-section-project-left-reverse': isReversed}">
         <img class="project-screen" [src]="project.imageUrl">
         <img class="arrow-flip" [ngClass]="{'arrow-flip-reverse': isReversed}" src="./assets/icons/arrow-project.svg">

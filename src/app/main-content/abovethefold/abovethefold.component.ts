@@ -15,6 +15,8 @@ export class AbovethefoldComponent implements OnInit {
       this.el.nativeElement.querySelector('.welcome-message'),
       () => {
         this.renderer.addClass(this.el.nativeElement.querySelector('.welcome-message'), 'show');  
+        this.renderer.addClass(this.el.nativeElement.querySelector('.welcome-section-email'), 'show');  
+        this.renderer.addClass(this.el.nativeElement.querySelector('.welcome-section-scroll-down'), 'show');  
       }
     );
   }
