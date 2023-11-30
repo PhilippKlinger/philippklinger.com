@@ -15,6 +15,7 @@ import { AbovethefoldComponent } from './main-content/abovethefold/abovethefold.
 import { ReactiveFormsModule } from '@angular/forms';
 import { MainContentNavigationComponent } from './main-content-navigation/main-content-navigation.component';
 import { SharedService } from './shared.service';
+import { ImprintComponent } from './imprint/imprint.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { SharedService } from './shared.service';
     FooterComponent,
     ProjectComponent,
     AbovethefoldComponent,
-    MainContentNavigationComponent
+    MainContentNavigationComponent,
+    ImprintComponent
   ],
   imports: [
     BrowserModule,

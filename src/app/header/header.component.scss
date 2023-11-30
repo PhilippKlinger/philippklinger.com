@@ -90,6 +90,16 @@ header {
     width: 0;
 }
 
+.logo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    img {
+        height: 70px;
+    }
+}
+
 
 @media (max-width: 1200px) {
     .header-content {

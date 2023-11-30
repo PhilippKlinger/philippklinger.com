@@ -1,6 +1,6 @@
 .footer-content {
     background-color: black;
-    color: var(--cream, #FFFCF3);
+    color: #FFFCF3;
 }
 
 .footer-section {
@@ -16,8 +16,10 @@
 .footer-section-logo {
 
     img {
-        width: 32px;
-       filter: invert(1);
+        height: 70px;
+        background-color: white;
+        border-radius: 100%;
+        padding: 5px;
     }
 }
 
@@ -33,5 +35,28 @@ a:hover {
     img {
         transform: translateY(-10px);
         transition: all 250ms ease-in-out;
+    }
+}
+
+.legal-notice-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.legal-notice {
+    text-decoration: none;
+    text-align: right;
+    color: #FFFCF3;
+    font-family: 'Overpass';
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 120%;
+
+    &:hover {
+        font-size: 20px;
+        transition: all 250ms ease-in;
     }
 }
