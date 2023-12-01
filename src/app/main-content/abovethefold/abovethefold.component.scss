@@ -1,5 +1,5 @@
 h1 {
-    font-size: 128px;
+    font-size: clamp(40px, 10vw , 128px);
     font-style: normal;
     font-weight: 800;
     font-family: 'Syne', sans-serif;
@@ -11,7 +11,7 @@ h1 {
 
 h2 {
     text-align: center;
-    font-size: 48px;
+    font-size: clamp(16px, 4vw , 48px);
     font-style: normal;
     font-weight: 700;
     line-height: 100%;
@@ -21,17 +21,23 @@ h2 {
     padding: 8px;
 }
 
+.welcome-content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 .welcome-message {
     display: flex;
     flex-direction: column;
     align-items: center;
     opacity: 0;
-    // filter: blur(20px);
     transition: all 400ms ease-in;
 
     &.show {
         opacity: 1;
-        // filter: blur(0);
     }
 }
 
@@ -39,27 +45,23 @@ h2 {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
 }
 
 .welcome-section-bottom {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    font-size: 23px;
+    font-size: clamp(16px, 4vw , 24px);
     transform: translateY(100px);
-
-   
 }
 
 .welcome-section-email {
-    transform: rotate(-90deg) translateY(-20px);
-    // filter: blur(20px);
+    transform: rotate(-90deg);
     opacity: 0;
     transition: all 500ms ease-in;
-
     &.show {
         opacity: 1;
-        // filter: blur(0);
     }
 }
 
@@ -69,7 +71,6 @@ h2 {
     align-items: center;
     overflow-y: hidden;
     opacity: 0;
-    // filter: blur(20px);
     transition: all 400ms ease-in;
     
     img {
@@ -89,10 +90,8 @@ h2 {
 }
 
 .underline {
-    max-width: 628px;
+    width: min(620px, 60%)
 }
-
-
 
 @keyframes scroll-down {
     0% {
@@ -100,99 +99,5 @@ h2 {
     }
     100% {
         transform: translateY(100px);
-    }
-}
-
-
-@media (max-width: 1400px) {
-    h1 {
-        font-size: 108px;
-    }
-
-    h2 {
-        font-size: 38px;
-    }
-
-    .underline {
-        max-width: 550px;
-    }
-}
-
-@media (max-width: 1200px) {
-    h1 {
-        font-size: 100px;
-    }
-
-    h2 {
-        font-size: 32px;
-    }
-
-    .underline {
-        max-width: 500px;
-    }
-
-    .welcome-section-bottom {
-        max-width: 1000px;
-    }
-}
-
-@media (max-width: 1050px) {
-    h1 {
-        font-size: 86px;
-    }
-
-    h2 {
-        font-size: 28px;
-    }
-
-    .underline {
-        max-width: 450px;
-    }
-
-    .welcome-section-bottom {
-        max-width: 800px;
-    }
-}
-
-
-@media (max-width: 768px) {
-    h1 {
-        font-size: 70px;
-    }
-
-    h2 {
-        font-size: 24px;
-    }
-
-    .underline {
-        max-width: 350px;
-    }
-}
-
-@media (max-width: 576px) {
-    h1 {
-        font-size: 50px;
-    }
-
-    h2 {
-        font-size: 22px;
-    }
-
-    .underline {
-        max-width: 220px;
-    }
-}
-
-@media (max-width: 440px) {
-    h1 {
-        font-size: 40px;
-    }
-
-    h2 {
-        font-size: 20px;
-    }
-
-    .underline {
-        max-width: 180px;
     }
 }

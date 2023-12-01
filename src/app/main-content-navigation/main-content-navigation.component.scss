@@ -1,3 +1,11 @@
+.navigation-content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 .navigation-list {
     display: flex;
     flex-direction: column;
