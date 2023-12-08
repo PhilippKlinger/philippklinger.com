@@ -1,11 +1,13 @@
 .footer-content {
     background-color: black;
     color: #FFFCF3;
+    p {
+        font-size: clamp(12px, 2vw, 16px);
+    }
 }
 
 .footer-section {
     display: flex;
-    width: 100%;
     padding-bottom: 40px;
     flex-direction: row;
     justify-content: space-between;
@@ -15,7 +17,7 @@
 .footer-section-logo {
 
     img {
-        height: 70px;
+        height: clamp(32px, 5vw, 70px);
         background-color: white;
         border-radius: 100%;
         padding: 5px;
@@ -24,7 +26,7 @@
 
 .social-logos {
     display: flex;
-    gap: 42px;
+    gap: clamp(30px, 5vw, 42px);
     flex-direction: row;
     align-items: center;
 }
@@ -49,7 +51,7 @@ a:hover {
     text-align: right;
     color: #FFFCF3;
     font-family: 'Overpass';
-    font-size: 16px;
+    font-size: clamp(12px, 2vw, 16px);
     font-style: normal;
     font-weight: 400;
     line-height: 120%;

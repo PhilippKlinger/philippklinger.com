@@ -43,7 +43,7 @@
         color: black;
         text-align: center;
         font-family: 'Syne';
-        font-size: 96px;
+        font-size: clamp(36px, 10vw, 96px);
         font-style: normal;
         font-weight: 700;
         line-height: 100%;

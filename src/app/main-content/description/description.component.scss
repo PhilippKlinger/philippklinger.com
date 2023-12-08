@@ -7,9 +7,8 @@
 }
 
 h2 {
-    text-align: center;
     font-family: 'Syne';
-    font-size: 78px;
+    font-size: clamp(34px, 5vw, 78px);
     font-style: normal;
     font-weight: 800;
     line-height: 100%;
@@ -21,7 +20,7 @@ h2 {
     // filter: blur(15px);
     transition: all 400ms ease-in;
     opacity: 0;
-    
+
     &.show {
         transform: translateX(0);
         // filter: blur(0);
@@ -41,13 +40,12 @@ h2 {
     display: flex;
     flex-direction: column;
     position: relative;
-    width: 500px;
-    height: 500px;
+    max-width: 500px;
     transform: translateX(500px);
     // filter: blur(15px);
     transition: all 400ms ease-in;
     opacity: 0;
-    
+
     &.show {
         transform: translateX(0);
         // filter: blur(0);
@@ -81,14 +79,17 @@ h2 {
     flex-direction: column;
     align-items: flex-end;
     justify-content: center;
+    padding-top: 20px;
 
     img {
         padding-right: 150px;
+        height: clamp(120px, 18vw, 200px)
     }
 }
 
 .description-section-content-left {
-    max-width: 610px;
+    width: min(610px, 80%);
+    margin-right: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -96,7 +97,7 @@ h2 {
     transform: translateY(-100px);
     // filter: blur(15px);
     transition: all 400ms ease-in;
-    
+
     &.show {
         opacity: 1;
         transform: translateY(0);
@@ -123,8 +124,6 @@ h2 {
     }
 }
 
-
-
 .description-section-content-left-text {
     display: inline-flex;
     flex-direction: column;
@@ -140,40 +139,36 @@ h2 {
     }
 }
 
+@media (max-width: 1050px) {
+    .description-section-content {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
 
-// @media (max-width: 1400px) {
-//     h2 {
-//         font-size: 70px;
-//     }
-// }
+    h2 {
+        text-align: center !important;
+    }
 
-// @media (max-width: 1200px) {
-//     h2 {
-//         font-size: 64px;
-//     }
-// }
+    .description-section-content-left {
+        margin-right: 0 !important;
+        margin-bottom: 40px;
+    }
 
-// @media (max-width: 1050px) {
-//     h2 {
-//         font-size: 55px;
-//     }
-// }
+    .arrow-section {
+        align-items: center;       
+    }
 
+    .arrow {
+        padding-right: 0px !important;
+    }
+}
 
-// @media (max-width: 768px) {
-//     h2 {
-//         font-size: 45px;
-//     }
-// }
+@media (max-width: 576px) {
+    button {
+        display: none;
+    }
 
-// @media (max-width: 576px) {
-//     h2 {
-//         font-size: 35px;
-//     }
-// }
-
-// @media (max-width: 440px) {
-//     h2 {
-//         font-size: 25px;
-//     }
-// }
+    .description-section-content-right {
+        max-width: 100% !important;
+    }
+}

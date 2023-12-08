@@ -7,6 +7,7 @@
     position: relative;
     padding-bottom: 50px;
     padding-top: 50px;
+    gap: 6vw;
 
     &:hover .portfolio-section-project-right-text {
         animation: slide-in 1s forwards;
@@ -33,6 +34,57 @@
     }
 }
 
+@media (max-width: 1000px) {
+    .portfolio-section-project {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        position: relative;
+        padding-bottom: 50px;
+        padding-top: 50px;
+
+        .portfolio-section-project-right-text {
+            animation: slide-in 1s forwards !important;
+            transition: all 200ms ease-in-out;
+            min-width: 480px;
+        }
+
+        .portfolio-section-project-left::before {
+            display: none;
+        }
+
+        .arrow-flip {
+            display: none;
+        }
+    }
+
+    .portfolio-section-project-right-head {
+        display: none;
+    }
+
+    .portfolio-section-head-mobile {
+        display: flex !important;
+    }
+
+    .portfolio-section-project-left {
+        filter: none !important;
+    }
+}
+
+.portfolio-section-head-mobile {
+    font-variant-numeric: lining-nums proportional-nums;
+    font-family: "Syne";
+    font-size: clamp(32px, 3vw, 45px);
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    width: 100%;
+    display: none;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
 .project-1 {
     opacity: 0;
     transform: translateY(100px);
@@ -45,6 +97,7 @@
         // filter: blur(0);
     }
 }
+
 .project-2 {
     opacity: 0;
     transform: translateY(100px);
@@ -57,6 +110,7 @@
         // filter: blur(0);
     }
 }
+
 .project-3 {
     opacity: 0;
     transform: translateY(100px);
@@ -69,6 +123,7 @@
         // filter: blur(0);
     }
 }
+
 .project-4 {
     opacity: 0;
     transform: translateY(100px);
@@ -111,6 +166,57 @@
     }
 }
 
+@media (max-width: 1000px) {
+    .portfolio-section-project-reverse {
+        display: flex;
+        flex-direction: column !important;
+        align-items: center;
+        width: 100%;
+        position: relative;
+        padding-bottom: 50px;
+        padding-top: 50px;
+
+        .portfolio-section-project-right-text-reverse {
+            animation: slide-in-reverse 1s forwards !important;
+            transition: all 200ms ease-in-out;
+            min-width: 480px;
+        }
+    }
+
+    .portfolio-section-project-right-head {
+        display: none;
+    }
+
+    .portfolio-section-head-mobile-reverse {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .portfolio-section-project-right-text {
+        min-width: 200px !important;
+        max-width: 300px !important;
+    }
+
+    .portfolio-section-project-right-text-reverse {
+        min-width: 200px !important;
+        max-width: 300px !important;
+    }
+}
+
+.portfolio-section-head-mobile-reverse {
+    font-variant-numeric: lining-nums proportional-nums;
+    font-family: "Syne";
+    font-size: clamp(32px, 3vw, 45px);
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    width: 100%;
+    display: none;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
 .portfolio-section-project-left {
     z-index: 1;
     display: flex;
@@ -121,6 +227,7 @@
     transition: all 225ms ease-in-out;
     border: 4px solid transparent;
     filter: grayscale(100%);
+    width: min(620px, 85%);
 
     &::before {
         content: "";
@@ -146,6 +253,7 @@
     transition: all 225ms ease-in-out;
     border: 4px solid transparent;
     filter: grayscale(100%);
+    width: min(620px, 85%);
 
     &::before {
         content: "";
@@ -161,9 +269,8 @@
     }
 }
 
-
 .project-screen {
-    max-width: 620px;
+    width: 100%;
 }
 
 .arrow-flip {
@@ -187,7 +294,7 @@
     text-align: right;
     font-variant-numeric: lining-nums proportional-nums;
     font-family: 'Syne';
-    font-size: 48px;
+    font-size: clamp(32px, 3vw, 45px);
     font-style: normal;
     font-weight: 700;
     line-height: 120%;
@@ -197,7 +304,7 @@
     text-align: left;
     font-variant-numeric: lining-nums proportional-nums;
     font-family: 'Syne';
-    font-size: 48px;
+    font-size: clamp(32px, 3vw, 45px);
     font-style: normal;
     font-weight: 700;
     line-height: 120%;
@@ -210,7 +317,7 @@
 
     h2 {
         font-family: 'Syne';
-        font-size: 45px;
+        font-size: clamp(32px, 2vw, 45px);
         font-style: normal;
         font-weight: 800;
         line-height: 100%;
@@ -219,7 +326,7 @@
     span {
         color: #00BC8F;
         font-family: 'Overpass';
-        font-size: 23px;
+        font-size: clamp(16px, 2vw, 23px);
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
@@ -227,7 +334,7 @@
 
     p {
         font-family: 'Overpass';
-        font-size: 16px;
+        font-size: clamp(12px, 2vw, 16px);
         font-style: normal;
         font-weight: 400;
         line-height: 120%
@@ -241,7 +348,7 @@
 
     h2 {
         font-family: 'Syne';
-        font-size: 45px;
+        font-size: clamp(32px, 2vw, 45px);
         font-style: normal;
         font-weight: 800;
         line-height: 100%;
@@ -250,7 +357,7 @@
     span {
         color: #00BC8F;
         font-family: 'Overpass';
-        font-size: 23px;
+        font-size: clamp(16px, 2vw, 23px);
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
@@ -258,7 +365,7 @@
 
     p {
         font-family: 'Overpass';
-        font-size: 16px;
+        font-size: clamp(12px, 2vw, 16px);
         font-style: normal;
         font-weight: 400;
         line-height: 120%
@@ -272,12 +379,12 @@
     width: 100%;
 
     button {
-        width: 189px;
-        height: 68px;
+        width: clamp(110px, 15vw, 185px);
+        height: clamp(40px, 5vw, 68px);
         border: 4px solid black;
         box-shadow: 5px 5px 15px 0px rgba(0, 0, 0, 0.15);
         font-family: 'Overpass';
-        font-size: 23px;
+        font-size: clamp(16px, 2vw, 23px);
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
@@ -288,6 +395,15 @@
             transform-origin: left center;
             transform: scaleX(1.15);
             transition: all ease-in-out 200ms;
+        }
+    }
+}
+
+@media (max-width:1000px) {
+    .portfolio-section-project-right-buttons {
+        button {
+            width: clamp(110px, 20vw, 185px);
+            height: clamp(40px, 6vw, 68px);
         }
     }
 }
