@@ -11,7 +11,7 @@
     align-items: center;
 
     img {
-        width: 40px;
+        width: clamp(22px, 3vw, 40px);
 
         &:hover {
             transform: scale(1.5);
@@ -25,7 +25,7 @@
 h1 {
     text-align: left;
     font-family: 'Syne';
-    font-size: 78px;
+    font-size: clamp(26px, 5vw, 78px);
     font-style: normal;
     font-weight: 800;
     line-height: 100%;
@@ -35,7 +35,7 @@ h1 {
 h2 {
     text-align: left;
     font-family: 'Syne';
-    font-size: 48px;
+    font-size: clamp(22px, 5vw,48px);
     font-style: normal;
     font-weight: 600;
     line-height: 100%;
@@ -44,7 +44,7 @@ h2 {
 h3 {
     text-align: left;
     font-family: 'Syne';
-    font-size: 26px;
+    font-size: clamp(18px, 3vw, 26px);
     font-style: normal;
     font-weight: 600;
     line-height: 100%;
@@ -53,7 +53,7 @@ h3 {
 h4 {
     text-align: left;
     font-family: 'Syne';
-    font-size: 24px;
+    font-size: clamp(16px, 2vw,24px);
     font-style: normal;
     font-weight: 600;
     line-height: 100%;
@@ -62,7 +62,7 @@ h4 {
 p {
     color: black;
     font-family: 'Overpass';
-    font-size: 20px;
+    font-size: clamp(14px, 2vw, 20px);
     font-style: normal;
     font-weight: 400;
     line-height: 120%;

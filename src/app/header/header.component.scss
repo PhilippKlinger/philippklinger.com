@@ -99,30 +99,3 @@ header {
         height: 70px;
     }
 }
-
-
-@media (max-width: 1200px) {
-    .header-content {
-        max-width: 1000px;
-    }
-}
-
-@media (max-width: 1050px) {
-    .header-content {
-        max-width: 760px;
-    }
-}
-
-@media (max-width: 768px) {
-    .header-content {
-        max-width: 570px;
-    }
-}
-
-@media (max-width: 576px) {
-    .header-content {
-        max-width: 400px;
-    }
-}
-
-@media (max-width: 440px) {}
