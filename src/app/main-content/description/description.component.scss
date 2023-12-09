@@ -42,13 +42,11 @@ h2 {
     position: relative;
     max-width: 500px;
     transform: translateX(500px);
-    // filter: blur(15px);
     transition: all 400ms ease-in;
     opacity: 0;
 
     &.show {
         transform: translateX(0);
-        // filter: blur(0);
         opacity: 1;
     }
 
@@ -114,6 +112,7 @@ h2 {
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
+        background: #fffcf3;
 
         &:hover {
             cursor: pointer;

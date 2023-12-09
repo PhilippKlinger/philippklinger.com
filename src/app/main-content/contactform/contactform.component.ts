@@ -12,6 +12,7 @@ export class ContactFormComponent implements OnInit {
   contactForm!: FormGroup;
   isFormSubmitted = false;
   isSubmitting = false;
+  successPopupVisible = false;
 
   constructor(private formBuilder: FormBuilder, private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) { }
 
@@ -38,9 +39,7 @@ export class ContactFormComponent implements OnInit {
         this.contactForm.disable();
         this.isFormSubmitted = true;
         this.isSubmitting = true;
-
         const formData = JSON.stringify(this.contactForm.value);
-
         const response = await fetch('https://portfoliophilipp.leahannich.de/send_mail.php', {
           method: 'POST',
           headers: {
@@ -48,24 +47,20 @@ export class ContactFormComponent implements OnInit {
           },
           body: formData
         });
-
         if (!response.ok) {
           throw new Error('Failed to submit the form.');
         }
-
-        // Display success message and reset the form
-        console.log('Form submitted successfully');
-        this.contactForm.reset();
       }
     } catch (error) {
       console.error('Error submitting the form:', error);
     } finally {
+      this.successPopupVisible = true;
       setTimeout(() => {
         this.contactForm.reset();
-      this.contactForm.enable();
-      this.isSubmitting = false;
+        this.contactForm.enable();
+        this.isSubmitting = false;
+        this.successPopupVisible = false;
       }, 2000);
-      
     }
   }
 }

@@ -317,7 +317,7 @@
 
     h2 {
         font-family: 'Syne';
-        font-size: clamp(32px, 2vw, 45px);
+        font-size: clamp(22px, 2vw, 45px);
         font-style: normal;
         font-weight: 800;
         line-height: 100%;
@@ -348,7 +348,7 @@
 
     h2 {
         font-family: 'Syne';
-        font-size: clamp(32px, 2vw, 45px);
+        font-size: clamp(22px, 2vw, 45px);
         font-style: normal;
         font-weight: 800;
         line-height: 100%;
@@ -388,6 +388,7 @@
         font-style: normal;
         font-weight: 400;
         line-height: 120%;
+        background: #fffcf3;
 
         &:hover {
             cursor: pointer;

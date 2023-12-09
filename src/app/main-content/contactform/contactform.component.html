@@ -6,7 +6,10 @@
             <p>Say hello! let's discuss your ideas and make it happen</p>
         </div>
         <div class="contactform-section-input">
-            <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" [attr.disabled]="isFormSubmitted ? true : null">
+            <div class="success-popup" *ngIf="successPopupVisible">
+                <h3>message <br> submitted <br> successfully!</h3>
+            </div>
+            <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" [attr.disabled]="isFormSubmitted ? true : null"  *ngIf="!successPopupVisible">
                 <div class="form-group">
                     <input type="text" id="name" class="form-control name-content" formControlName="name"
                         placeholder="Your name">
@@ -36,7 +39,7 @@
                 <div class="form-group-checkbox">
                     <input type="checkbox" id="privacy" formControlName="privacy">
                     <label for="privacy">I've read the
-                        <a routerLink="" fragment="">privacy policy</a>
+                        <a routerLink="/imprint">privacy policy</a>
                         and agree to the processing of my data as outlined</label>
                     <div *ngIf="(contactForm.get('name')?.valid && 
                     contactForm.get('email')?.valid && 
@@ -46,12 +49,12 @@
                 </div>
                 <div class="button-section">
                     <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid"> {{
-                        isSubmitting ? 'Sending...' : 'Send message' }}</button>
+                        isSubmitting ? 'is sending...' : 'Send message' }}</button>
                 </div>
             </form>
-            <a class="jump-to-start" routerLink="/">
-                <img src="/assets/icons/jump-to-start-arrow.svg">
-            </a>
+            <div class="jump-to-start" >
+                <img src="/assets/icons/jump-to-start-arrow.svg" routerLink="/">
+            </div>
         </div>
     </div>
 </div>
