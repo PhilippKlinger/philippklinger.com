@@ -74,7 +74,7 @@ h3 {
     textarea {
         display: flex;
         align-items: center;
-        border: none;
+        border: 2px solid transparent;
         outline: none;
         border-bottom: 2px solid #FFFCF3;
         padding: 5px 15px;
@@ -98,7 +98,7 @@ h3 {
 
         &:hover {
             cursor: pointer;
-            border: 3px solid #FFFCF3;
+            border: 2px solid #FFFCF3;
         }
 
         &:focus {

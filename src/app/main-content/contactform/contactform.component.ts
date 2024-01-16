@@ -20,7 +20,7 @@ export class ContactFormComponent implements OnInit {
     this.contactForm = this.formBuilder.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      message: ['', [Validators.required, Validators.minLength(50)]],
+      message: ['', [Validators.required, Validators.minLength(20)]],
       privacy: [false, Validators.requiredTrue]
     });
 
