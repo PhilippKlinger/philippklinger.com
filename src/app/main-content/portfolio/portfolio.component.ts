@@ -14,7 +14,7 @@ export class PortfolioComponent implements OnInit {
       technologies: 'JavaScript | HTML | CSS',
       description: 'Task manager inspired by the Kanban System. Create and organize tasks using drag and drop functions, assign users and categories',
       githubLink: 'https://github.com/PhilippKlinger/Join',
-      liveLink: 'https://projectsphilipp.leahannich.de/Join/templates/html/login.html',
+      liveLink: 'https://join.philipp-klinger.com/templates/html/login.html',
       imageUrl: './assets/projects/join.png'
     },
     {
@@ -23,7 +23,7 @@ export class PortfolioComponent implements OnInit {
       technologies: 'JavaScript | HTML | CSS',
       description: 'Immerse yourself in the thrilling adventure of a courageous Mayan as you navigate the perilous path through the jungle. Only with your skill can your hero successfully overcome all challenges.',
       githubLink: 'https://github.com/PhilippKlinger/Browsergame',
-      liveLink: 'https://projectsphilipp.leahannich.de/browsergame/index.html',
+      liveLink: 'https://elmayavaliente.philipp-klinger.com/index.html',
       imageUrl: './assets/projects/mayavaliente.png'
     },
     {
@@ -32,7 +32,7 @@ export class PortfolioComponent implements OnInit {
       technologies: 'JavaScript | HTML | CSS | API',
       description: 'An online app has been designed to offer a Pokédex-like experience by accessing a database through an API. Users can explore and gather information about various items within the database, similar to how a Pokédex provides details about different Pokémon.',
       githubLink: 'https://github.com/PhilippKlinger/Pokedex',
-      liveLink: 'https://projectsphilipp.leahannich.de/Pokedex/index.html',
+      liveLink: 'https://pokedex.philipp-klinger.com/index.html',
       imageUrl: './assets/projects/pokedex.png'
     },
     {
