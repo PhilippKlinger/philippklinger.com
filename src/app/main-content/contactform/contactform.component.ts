@@ -40,7 +40,7 @@ export class ContactFormComponent implements OnInit {
         this.isFormSubmitted = true;
         this.isSubmitting = true;
         const formData = JSON.stringify(this.contactForm.value);
-        const response = await fetch('https://portfoliophilipp.leahannich.de/send_mail.php', {
+        const response = await fetch('https://philipp-klinger.com/send_mail.php', {
           method: 'POST',
           headers: {
             'Content-type': 'application/json'
