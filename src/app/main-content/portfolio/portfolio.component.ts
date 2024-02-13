@@ -10,17 +10,17 @@ export class PortfolioComponent implements OnInit {
   projects = [
     {
       id: 1,
-      title: 'Join',
-      technologies: 'JavaScript | HTML | CSS',
-      description: 'Task manager inspired by the Kanban System. Create and organize tasks using drag and drop functions, assign users and categories',
-      githubLink: 'https://github.com/PhilippKlinger/Join',
-      liveLink: 'https://join.philipp-klinger.com/templates/html/login.html',
-      imageUrl: './assets/projects/join.png'
+      title: 'DA Bubble',
+      technologies: 'Angular | TypeScript | Firebase',
+      description: 'Slack-inspired chat messenger. Collaborate in teams, increase productivity while communicating and sharing files in channels or direct messages.',
+      githubLink: 'https://github.com/PhilippKlinger/DABubble',
+      liveLink: 'https://dabubble.philipp-klinger.com/index.html',
+      imageUrl: './assets/projects/dabubble.png'
     },
     {
       id: 2,
       title: 'Browsergame',
-      technologies: 'JavaScript | HTML | CSS',
+      technologies: 'JavaScript | OOP | HTML | CSS',
       description: 'Immerse yourself in the thrilling adventure of a courageous Mayan as you navigate the perilous path through the jungle. Only with your skill can your hero successfully overcome all challenges.',
       githubLink: 'https://github.com/PhilippKlinger/Browsergame',
       liveLink: 'https://elmayavaliente.philipp-klinger.com/index.html',
@@ -28,21 +28,12 @@ export class PortfolioComponent implements OnInit {
     },
     {
       id: 3,
-      title: 'Pokedex',
-      technologies: 'JavaScript | HTML | CSS | API',
-      description: 'An online app has been designed to offer a Pokédex-like experience by accessing a database through an API. Users can explore and gather information about various items within the database, similar to how a Pokédex provides details about different Pokémon.',
-      githubLink: 'https://github.com/PhilippKlinger/Pokedex',
-      liveLink: 'https://pokedex.philipp-klinger.com/index.html',
-      imageUrl: './assets/projects/pokedex.png'
-    },
-    {
-      id: 4,
-      title: 'DA Bubble',
-      technologies: 'Angular | TypeScript | HTML | CSS',
-      description: 'Work in Progress',
-      githubLink: 'https://github.com/yourusername/join',
-      liveLink: 'https://yourwebsite.com/join',
-      imageUrl: './assets/projects/da-bubble.jpg'
+      title: 'Join',
+      technologies: 'JavaScript | HTML | CSS',
+      description: 'Task manager inspired by the Kanban System. Create and organize tasks using drag and drop functions, assign users and categories.',
+      githubLink: 'https://github.com/PhilippKlinger/Join',
+      liveLink: 'https://join.philipp-klinger.com/templates/html/login.html',
+      imageUrl: './assets/projects/join.png'
     },
   ];
 
