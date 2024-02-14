@@ -15,7 +15,7 @@ export class PortfolioComponent implements OnInit {
       description: 'Slack-inspired chat messenger. Collaborate in teams, increase productivity while communicating and sharing files in channels or direct messages.',
       githubLink: 'https://github.com/PhilippKlinger/DABubble',
       liveLink: 'https://dabubble.philipp-klinger.com/index.html',
-      imageUrl: './assets/projects/dabubble.svg'
+      imageUrl: './assets/projects/dabubble.png'
     },
     {
       id: 2,
@@ -24,7 +24,7 @@ export class PortfolioComponent implements OnInit {
       description: 'Immerse yourself in the thrilling adventure of a courageous Mayan as you navigate the perilous path through the jungle. Only with your skill can your hero successfully overcome all challenges.',
       githubLink: 'https://github.com/PhilippKlinger/Browsergame',
       liveLink: 'https://elmayavaliente.philipp-klinger.com/index.html',
-      imageUrl: './assets/projects/browsergame.svg'
+      imageUrl: './assets/projects/browsergame.png'
     },
     {
       id: 3,
@@ -33,7 +33,7 @@ export class PortfolioComponent implements OnInit {
       description: 'Task manager inspired by the Kanban System. Create and organize tasks using drag and drop functions, assign users and categories.',
       githubLink: 'https://github.com/PhilippKlinger/Join',
       liveLink: 'https://join.philipp-klinger.com/templates/html/login.html',
-      imageUrl: './assets/projects/join.svg'
+      imageUrl: './assets/projects/join.png'
     },
   ];
 
