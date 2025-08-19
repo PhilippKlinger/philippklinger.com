@@ -20,7 +20,7 @@ export class SkillsComponent implements OnInit {
     './assets/icons/api.svg',
     './assets/icons/material.svg',];
 
-  skills = ['Agular', 'Typescript',
+  skills = ['Angular', 'Typescript',
     'JavaScript', 'HTML', 'CSS',
     'Firebase', 'Git', 'Scrum',
     'Rest-Api', 'Material'];
