@@ -18,19 +18,18 @@
     font-weight: 800;
     letter-spacing: 0.78px;
     margin: 0;
-    background: #FFFCF3;
+    background: #fffcf3;
     padding-left: 10px;
     padding-right: 10px;
     position: absolute;
     top: clamp(-50px, -3vw, -24px);
 
     &:hover {
-      color: #00BC8F !important;
+      color: #00bc8f !important;
       transition: all 200ms ease-in-out;
     }
   }
 }
-
 
 .skills-content-section-icons {
   display: inline-flex;
@@ -62,7 +61,7 @@
 
   span {
     text-align: center;
-    font-family: 'Overpass';
+    font-family: "Overpass";
     font-size: 16px;
     font-style: normal;
     font-weight: 700;
@@ -70,7 +69,7 @@
   }
 
   &:hover {
-    color: #00BC8F !important;
+    color: #00bc8f !important;
     transition: all 200ms ease-in-out;
   }
 
@@ -94,7 +93,6 @@
 }
 
 @keyframes wiggle {
-
   25% {
     transform: translateX(40%) scale(0.75);
   }
@@ -121,73 +119,16 @@
   opacity: 1;
 }
 
-
 .animate-icon {
   opacity: 0;
   transform: translateX(-100px);
   transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
 }
 
-.animate-icon:nth-child(1).show {
+.animate-icon.show {
   opacity: 1;
   transform: translateX(0);
-  transition-delay: 0.1s; // Verzögerung für das erste Icon
 }
-
-.animate-icon:nth-child(6).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.1s; // Verzögerung für das zweite Icon
-}
-
-.animate-icon:nth-child(2).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.2s; // Verzögerung für das dritte Icon
-}
-
-.animate-icon:nth-child(7).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.2s; // Verzögerung für das erste Icon
-}
-
-.animate-icon:nth-child(3).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.3s; // Verzögerung für das zweite Icon
-}
-
-.animate-icon:nth-child(8).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.3s; // Verzögerung für das dritte Icon
-}
-
-.animate-icon:nth-child(4).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.4s; // Verzögerung für das erste Icon
-}
-
-.animate-icon:nth-child(9).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.4s; // Verzögerung für das zweite Icon
-}
-
-.animate-icon:nth-child(5).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.5s; // Verzögerung für das dritte Icon
-}
-
-.animate-icon:nth-child(10).show {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: 0.5s; // Verzögerung für das dritte Icon
-}
-
 
 @media (max-width: 1090px) {
   .skills-content-icons-section {

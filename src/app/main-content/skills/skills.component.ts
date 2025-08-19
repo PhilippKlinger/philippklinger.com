@@ -9,39 +9,50 @@ import { SharedService } from 'src/app/shared.service';
 
 export class SkillsComponent implements OnInit {
 
-  icons = ['./assets/icons/angular.svg',
+  icons = [
+    './assets/icons/python.svg',
+    './assets/icons/django.svg',
+    './assets/icons/api.svg',
+    './assets/icons/postgresql.svg',
+    './assets/icons/redis.svg',
+    './assets/icons/docker.svg',
+    './assets/icons/linux.svg',
+    './assets/icons/git.svg',
+    './assets/icons/angular.svg',
     './assets/icons/ts.svg',
     './assets/icons/js.svg',
     './assets/icons/html.svg',
-    './assets/icons/css.svg',
+    './assets/icons/material.svg',
     './assets/icons/firebase.svg',
-    './assets/icons/git.svg',
     './assets/icons/scrum.svg',
-    './assets/icons/api.svg',
-    './assets/icons/material.svg',];
+  ];
 
-  skills = ['Angular', 'Typescript',
-    'JavaScript', 'HTML', 'CSS',
-    'Firebase', 'Git', 'Scrum',
-    'Rest-Api', 'Material'];
+  skills = [
+    'Python', 'Django', 'REST‑API',
+    'PostgreSQL', 'Redis',
+    'Docker', 'Linux', 'Git',
+    'Angular', 'TypeScript', 'JavaScript',
+    'HTML', 'Angular Material',
+    'Firebase', 'Scrum'
+  ];
 
-    constructor(private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) {}
+  constructor(private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) { }
 
-    ngOnInit(): void {
-      this.sharedService.observeIntersection(
-        this.el.nativeElement.querySelector('.skills-content-section'),
-        () => {
-         
-            this.renderer.addClass(this.el.nativeElement.querySelector('.skills-content-section'), 'show');
-            this.icons.forEach((icon, index) => {
-              const iconElement = this.el.nativeElement.querySelector(`#icon-${index}`);
-              this.renderer.addClass(iconElement, 'show');
-            });
-       
-          
-        }
-      );
-    }
+  ngOnInit(): void {
+    this.sharedService.observeIntersection(
+      this.el.nativeElement.querySelector('.skills-content-section'),
+      () => {
+
+        this.renderer.addClass(this.el.nativeElement.querySelector('.skills-content-section'), 'show');
+        this.icons.forEach((icon, index) => {
+          const iconElement = this.el.nativeElement.querySelector(`#icon-${index}`);
+          this.renderer.addClass(iconElement, 'show');
+        });
+
+
+      }
+    );
+  }
 }
 
 

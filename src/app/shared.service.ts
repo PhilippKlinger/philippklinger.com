@@ -29,7 +29,7 @@ export class SharedService {
         }
       });
     }, {
-      rootMargin: '-150px' // Hier kannst du einen Offset in Pixeln oder Prozent angeben
+      rootMargin: '-150px'
     });
   
     observer.observe(element);
