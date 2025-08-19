@@ -22,9 +22,9 @@ export class SkillsComponent implements OnInit {
     './assets/icons/ts.svg',
     './assets/icons/js.svg',
     './assets/icons/html.svg',
+    './assets/icons/css.svg',
     './assets/icons/material.svg',
     './assets/icons/firebase.svg',
-    './assets/icons/scrum.svg',
   ];
 
   skills = [
@@ -32,8 +32,8 @@ export class SkillsComponent implements OnInit {
     'PostgreSQL', 'Redis',
     'Docker', 'Linux', 'Git',
     'Angular', 'TypeScript', 'JavaScript',
-    'HTML', 'Angular Material',
-    'Firebase', 'Scrum'
+    'HTML', 'CSS', 'Angular Material',
+    'Firebase'
   ];
 
   constructor(private el: ElementRef, private renderer: Renderer2, private sharedService: SharedService) { }
