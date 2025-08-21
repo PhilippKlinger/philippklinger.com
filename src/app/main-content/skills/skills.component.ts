@@ -29,7 +29,7 @@ export class SkillsComponent implements OnInit {
 
   skills = [
     'Python', 'Django', 'REST‑API',
-    'PostgreSQL', 'Redis',
+    'Postgresql', 'Redis',
     'Docker', 'Linux', 'Git',
     'Angular', 'TypeScript', 'JavaScript',
     'HTML', 'CSS', 'Angular Material',

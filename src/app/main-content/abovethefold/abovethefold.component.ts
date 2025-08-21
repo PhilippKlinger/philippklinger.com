@@ -11,7 +11,7 @@ export class AbovethefoldComponent implements OnInit, OnDestroy {
     'AI-Driven Development',
     'IT Enthusiast',
     'Freelancing Digital Nomad',
-    'embracing DevSecOps'
+    'Embracing DevSecOps'
   ];
 
   private phraseDuration = 2200;
