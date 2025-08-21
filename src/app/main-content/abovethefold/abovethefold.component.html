@@ -1,16 +1,18 @@
 <div class="wrapper welcome-content">
-    <div class="welcome-message">
-        <h1>Frontend Developer</h1>
-        <div class="welcome-message-caption">
-            <img class ="underline" src="./assets/icons/underlineWelcome.png">
-            <h2>Philipp Klinger</h2>
-        </div>
+    <div class="welcome-message" role="region" aria-label="Intro">
+        <h1 class="intro-heading">Full Stack Developer</h1>
+
+        <h2 class="typing-heading" role="status" aria-live="polite">
+            <span class="typing-text">{{ visibleText }}</span>
+            <span class="caret" aria-hidden="true"></span>
+        </h2>
     </div>
+
     <div class="welcome-section-bottom">
         <span class="welcome-section-email">hello@philipp-klinger.com</span>
         <div class="welcome-section-scroll-down">
-            <img src="./assets/icons/scrollDown.png">
-            <span>Scroll <br> Down</span>
+            <img src="./assets/icons/scrollDown.png" alt="" />
+            <span>Scroll <br /> Down</span>
         </div>
     </div>
 </div>
