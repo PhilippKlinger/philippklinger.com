@@ -1,0 +1,79 @@
+@use 'breakpoints' as bp;
+
+.projects {
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--border-width) solid var(--color-accent);
+
+  li {
+    border-bottom: var(--border-width) solid var(--color-accent);
+  }
+}
+
+.project {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-surface-strong);
+  }
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.title {
+  font-family: var(--font-code);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+
+.label {
+  padding: 0.125rem var(--space-xs);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+.summary {
+  color: var(--color-text-muted);
+}
+
+.stack {
+  font-size: var(--text-sm);
+}
+
+// Accent on a dark surface: only for large or highlighted text (see tokens).
+.proof {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+@include bp.from(tablet) {
+  .project {
+    grid-template-columns: 1fr auto;
+    column-gap: var(--space-xl);
+  }
+
+  .summary,
+  .proof {
+    grid-column: 1;
+  }
+
+  .stack {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+}

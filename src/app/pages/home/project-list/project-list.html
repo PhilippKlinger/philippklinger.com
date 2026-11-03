@@ -1,0 +1,33 @@
+<section id="projekte" class="section" aria-labelledby="projects-title">
+  <p class="eyebrow" i18n>Portfolio</p>
+  <h2 id="projects-title" i18n>Projekte</h2>
+
+  <ul class="projects">
+    @for (project of projects; track project.slug) {
+      <li>
+        @if (project.cardOnly) {
+          <a class="project" [href]="project.links[0].url">
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: project }" />
+          </a>
+        } @else {
+          <a class="project" [routerLink]="['/projekte', project.slug]">
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: project }" />
+          </a>
+        }
+      </li>
+    }
+  </ul>
+</section>
+
+<!-- Row content shared by both link types (project page or repository). -->
+<ng-template #row let-project>
+  <span class="heading">
+    <span class="title">{{ project.title }}</span>
+    <span class="label">{{ project.label }}</span>
+  </span>
+  <span class="summary">{{ project.summary }}</span>
+  <span class="stack">{{ project.stack.join(' | ') }}</span>
+  @if (project.proof) {
+    <span class="proof">{{ project.proof }}</span>
+  }
+</ng-template>

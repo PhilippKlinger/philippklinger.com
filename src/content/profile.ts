@@ -2,7 +2,7 @@
 // Texts marked DRAFT are placeholders until Philipp approves the final wording.
 export const profile = {
   name: 'Philipp Klinger',
-  role: 'DevSecOps & Fullstack Developer',
+  role: 'Software Engineer · Fullstack & DevSecOps',
   location: 'Deutschland',
   email: 'hello@philipp-klinger.com',
   github: 'https://github.com/PhilippKlinger',
