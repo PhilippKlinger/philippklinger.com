@@ -1,0 +1,62 @@
+@use 'breakpoints' as bp;
+
+// Design tokens of the template "Version 2" (spec 3.4).
+// Sizes are mobile first and grow at the tablet and desktop breakpoints.
+:root {
+  --color-bg: #1c1c1c;
+  --color-glow: #0b4036;
+  --color-surface: #1f2e2b;
+  --color-surface-strong: #26524b;
+  --color-band: #383838;
+  --color-accent: #3dcfb6;
+  --color-text: #ffffff;
+  --color-text-muted: #c6c6c6;
+  // Template uses #717171, which fails WCAG AA on the background.
+  --color-text-subtle: #949494;
+  --color-error: #ec7b7b;
+
+  --font-code: 'Fira Code Variable', ui-monospace, monospace;
+  --font-text: 'Karla Variable', system-ui, sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --leading-tight: 1.2;
+  --leading-text: 1.5;
+
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-heading: 2.5rem;
+  --text-display: 3.5rem;
+
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-section: 4.5rem;
+
+  --radius-card: 1.875rem;
+  --radius-pill: 999px;
+  --border-width: 1px;
+
+  --page-gutter: 1rem;
+  --content-width: 75rem;
+
+  @include bp.from(tablet) {
+    --text-lg: 1.25rem;
+    --text-xl: 2rem;
+    --text-heading: 3rem;
+    --text-display: 5rem;
+    --page-gutter: 2.5rem;
+    --space-section: 6rem;
+  }
+
+  @include bp.from(desktop) {
+    --text-heading: 4rem;
+    --text-display: 6rem;
+    --page-gutter: 7.5rem;
+    --space-section: 8rem;
+  }
+}

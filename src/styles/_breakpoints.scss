@@ -1,0 +1,15 @@
+@use 'sass:map';
+
+// Breakpoints of the design template (mobile 390, tablet 768, desktop 1440).
+// Media queries cannot read custom properties, so they live here as Sass.
+$breakpoints: (
+  tablet: 768px,
+  desktop: 1440px,
+);
+
+// Mobile first: styles inside apply from the given breakpoint upwards.
+@mixin from($name) {
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}

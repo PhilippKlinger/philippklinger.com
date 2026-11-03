@@ -1,0 +1,19 @@
+// Self-hosted variable fonts from Fontsource (SIL OFL). Only the latin subset,
+// one woff2 file per family covers every weight the design uses.
+@font-face {
+  font-family: 'Fira Code Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('@fontsource-variable/fira-code/files/fira-code-latin-wght-normal.woff2')
+    format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Karla Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('@fontsource-variable/karla/files/karla-latin-wght-normal.woff2')
+    format('woff2-variations');
+}
