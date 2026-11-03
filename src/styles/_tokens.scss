@@ -42,7 +42,7 @@
   --border-width: 1px;
 
   --page-gutter: 1rem;
-  --content-width: 75rem;
+  --content-width: 78rem;
 
   @include bp.from(tablet) {
     --text-lg: 1.25rem;
@@ -56,7 +56,7 @@
   @include bp.from(desktop) {
     --text-heading: 4rem;
     --text-display: 6rem;
-    --page-gutter: 7.5rem;
+    --page-gutter: 6rem;
     --space-section: 8rem;
   }
 }

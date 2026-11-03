@@ -1,0 +1,33 @@
+<header class="header">
+  <a class="logo" routerLink="/" i18n-aria-label aria-label="Philipp Klinger, zur Startseite">
+    <span class="logo-mark" aria-hidden="true">PK</span>
+    <span class="logo-name" aria-hidden="true">Philipp<br />Klinger</span>
+  </a>
+
+  <button
+    class="menu-button"
+    type="button"
+    aria-controls="main-nav"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="toggleMenu()"
+  >
+    <span class="visually-hidden" i18n>Menü</span>
+    <span class="menu-icon" aria-hidden="true"></span>
+  </button>
+
+  <nav
+    id="main-nav"
+    class="nav"
+    [class.open]="menuOpen()"
+    i18n-aria-label
+    aria-label="Hauptnavigation"
+  >
+    <ul>
+      @for (item of navigation; track item.fragment) {
+        <li>
+          <a routerLink="/" [fragment]="item.fragment" (click)="closeMenu()">{{ item.label }}</a>
+        </li>
+      }
+    </ul>
+  </nav>
+</header>

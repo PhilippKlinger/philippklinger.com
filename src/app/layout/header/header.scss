@@ -1,0 +1,134 @@
+@use 'breakpoints' as bp;
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: var(--space-md) var(--page-gutter);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.logo-mark {
+  font-family: var(--font-code);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-accent);
+}
+
+.logo-name {
+  display: none;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+// Three lines drawn with one element and its two pseudo elements.
+.menu-button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.menu-icon,
+.menu-icon::before,
+.menu-icon::after {
+  display: block;
+  width: 2rem;
+  height: 2px;
+  background: var(--color-text);
+}
+
+.menu-icon {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+
+  &::before {
+    top: -0.625rem;
+  }
+
+  &::after {
+    top: 0.625rem;
+  }
+}
+
+.nav {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: var(--space-md) var(--page-gutter);
+  background: var(--color-bg);
+
+  &.open {
+    display: block;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    display: block;
+    padding-block: var(--space-xs);
+    font-family: var(--font-code);
+    font-size: var(--text-lg);
+    color: var(--color-text);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+}
+
+@include bp.from(tablet) {
+  .menu-button {
+    display: none;
+  }
+
+  // Design: navigation on the left, logo on the right.
+  .nav {
+    display: block;
+    position: static;
+    order: -1;
+    padding: 0;
+    background: none;
+
+    ul {
+      flex-direction: row;
+      gap: var(--space-md);
+    }
+  }
+
+  .logo-name {
+    display: block;
+  }
+}
