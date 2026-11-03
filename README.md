@@ -1,59 +1,60 @@
-# Philippklinger
+# philippklinger.com
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.5.
+[![CI](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml)
 
-## Development server
+Portfolio-Website von Philipp Klinger (DevSecOps & Fullstack). Die Seite stellt Projekte mit Nachweisen vor und ist selbst ein Beleg: Jede Änderung läuft über Pull Request, automatische Prüfungen und einen nachvollziehbaren Build.
 
-To start a local development server, run:
+## Herkunft
 
-```bash
-ng serve
+**Neuaufbau 2026.** Die Vorgängerversion entstand in der Weiterbildung bei der Developer Akademie (Angular 16, Akademie-Vorlage) und ist über den Tag [`v1-legacy`](https://github.com/PhilippKlinger/philippklinger.com/tree/v1-legacy) erhalten.
+
+Das Design basiert auf einer Portfolio-Vorlage der Developer Akademie GmbH, angepasst und erweitert.
+
+**Eigener Beitrag:** Neuaufbau auf Angular 22 mit statischem Prerendering, eigene Seitenstruktur, Design-Tokens mit WCAG-AA-Kontrasten, Quality Gates in der CI und abgesicherter `main`-Branch.
+
+## Stack
+
+| Bereich   | Umsetzung                                                                                 |
+| --------- | ----------------------------------------------------------------------------------------- |
+| Framework | Angular 22, Standalone Components, zoneless                                               |
+| Rendering | statisch vorgerendert (`outputMode: "static"`), kein Server zur Laufzeit                  |
+| Styles    | SCSS mit Design-Tokens (Custom Properties), Schriften Fira Code und Karla selbst gehostet |
+| Tests     | Vitest                                                                                    |
+| Qualität  | ESLint, Prettier                                                                          |
+| Hosting   | statischer Webspace (Apache)                                                              |
+
+## Ablauf
+
+```mermaid
+flowchart LR
+  Dev[Branch] --> PR[Pull Request]
+  PR --> CI["CI: Format, Lint, Tests, Build,<br/>Bundle-Grenze, Platzhalter, Audit, SBOM"]
+  PR --> Sec["gitleaks + CodeQL"]
+  CI & Sec --> Main["main (Ruleset: nur per PR,<br/>Checks müssen grün sein)"]
+  Main --> Dist["dist/ (statisches HTML je Route)"]
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Die Workflows sind in [`docs/CI_CD_ERKLAERUNG.md`](docs/CI_CD_ERKLAERUNG.md) Schritt für Schritt erklärt. Das automatische Deployment auf den Webspace folgt.
 
-## Code scaffolding
+## Lokal starten
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Voraussetzung: Node.js 24 und npm.
 
-```bash
-ng generate component component-name
+| Zweck                                                 | Befehl                 |
+| ----------------------------------------------------- | ---------------------- |
+| Abhängigkeiten installieren                           | `npm ci`               |
+| Entwicklungsserver (http://localhost:4200)            | `npm start`            |
+| Unit-Tests                                            | `npm test`             |
+| Lint                                                  | `npm run lint`         |
+| Formatierung prüfen                                   | `npm run format:check` |
+| Produktions-Build nach `dist/philippklinger/browser/` | `npm run build`        |
+
+## Projektstruktur
+
 ```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
+src/
+  app/pages/   eine Komponente je Seite (Start, Impressum, Datenschutz, 404)
+  styles/      Design-Tokens, Breakpoints, Schriften, Basis-Styles
+docs/          Erklärung der CI-Workflows
 ```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
