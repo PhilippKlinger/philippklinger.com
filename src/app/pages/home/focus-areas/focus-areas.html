@@ -1,0 +1,18 @@
+<section id="schwerpunkte" class="section" aria-labelledby="focus-title">
+  <p class="eyebrow" i18n>Was ich mache</p>
+  <h2 id="focus-title" i18n>Schwerpunkte</h2>
+
+  <ul class="areas">
+    @for (area of focusAreas; track area.title) {
+      <li class="card">
+        <h3>{{ area.title }}</h3>
+        <p class="description">{{ area.description }}</p>
+        <ul class="tools">
+          @for (tool of area.tools; track tool) {
+            <li>{{ tool }}</li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+</section>

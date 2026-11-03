@@ -25,6 +25,10 @@ h3 {
   color: var(--color-accent);
 }
 
+h2 {
+  font-size: var(--text-heading);
+}
+
 p {
   margin: 0;
 }
@@ -48,6 +52,29 @@ img {
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin-inline: auto;
   padding: calc(var(--header-height) + var(--space-lg)) var(--page-gutter) var(--space-section);
+}
+
+// Section of the start page: content width and vertical rhythm.
+.section {
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: var(--space-section) var(--page-gutter) 0;
+  scroll-margin-top: var(--space-lg);
+}
+
+// Small label above a heading ("Über mich", "Projekte").
+.eyebrow {
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-lg);
+  color: var(--color-accent);
+}
+
+// Card of the template: dark green surface with an accent border.
+.card {
+  padding: var(--space-lg) var(--space-md);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 }
 
 // Visible only when focused with the keyboard.

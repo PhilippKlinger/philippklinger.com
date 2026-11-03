@@ -1,0 +1,41 @@
+@use 'breakpoints' as bp;
+
+.areas {
+  display: grid;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+h3 {
+  font-size: var(--text-xl);
+}
+
+.description {
+  margin-block: var(--space-sm) var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.25rem var(--space-sm);
+    border: var(--border-width) solid var(--color-text-subtle);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+  }
+}
+
+@include bp.from(desktop) {
+  .areas {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

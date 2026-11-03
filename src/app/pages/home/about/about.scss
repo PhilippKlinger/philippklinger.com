@@ -1,0 +1,52 @@
+@use 'breakpoints' as bp;
+
+.about {
+  display: grid;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.portrait {
+  width: 100%;
+  max-width: 28rem;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+}
+
+.intro {
+  margin-block: var(--space-md);
+}
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+
+  li {
+    position: relative;
+    padding-left: var(--space-md);
+  }
+
+  // Accent marker instead of the template's icons.
+  li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    font-family: var(--font-code);
+    font-weight: var(--weight-bold);
+    color: var(--color-accent);
+  }
+}
+
+@include bp.from(tablet) {
+  .about {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+}
