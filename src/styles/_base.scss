@@ -43,6 +43,13 @@ img {
   outline-offset: 4px;
 }
 
+// Layout helper for subpages: content width and room below the header.
+.page {
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: calc(var(--header-height) + var(--space-lg)) var(--page-gutter) var(--space-section);
+}
+
 // Visible only when focused with the keyboard.
 .skip-link {
   position: absolute;

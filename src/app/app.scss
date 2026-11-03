@@ -1,9 +1,12 @@
-main {
-  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
-  margin-inline: auto;
-  padding: var(--space-section) var(--page-gutter);
-}
-
 main:focus {
   outline: none;
+}
+
+// The header overlays the hero, so it sits on top of the page.
+app-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
 }

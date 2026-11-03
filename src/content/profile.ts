@@ -9,6 +9,14 @@ export const profile = {
   linkedin: 'https://www.linkedin.com/in/philipp-klinger',
 };
 
+// DRAFT: availability line below the hero, wording to be approved.
+export const availability = [
+  'Offen für Festanstellung',
+  'DevSecOps & Fullstack',
+  'Remote oder hybrid',
+  'Verfügbar ab sofort',
+];
+
 export const navigation = [
   { label: 'Über mich', fragment: 'ueber-mich' },
   { label: 'Schwerpunkte', fragment: 'schwerpunkte' },

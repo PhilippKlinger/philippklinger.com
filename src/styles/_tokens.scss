@@ -42,6 +42,8 @@
   --border-width: 1px;
 
   --page-gutter: 1rem;
+  // Header overlays the page; content below starts after this height.
+  --header-height: 6rem;
   --content-width: 78rem;
 
   @include bp.from(tablet) {
@@ -55,7 +57,7 @@
 
   @include bp.from(desktop) {
     --text-heading: 4rem;
-    --text-display: 6rem;
+    --text-display: 7.5rem;
     --page-gutter: 6rem;
     --space-section: 8rem;
   }
