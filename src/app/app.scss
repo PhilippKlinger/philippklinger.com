@@ -1,0 +1,9 @@
+main {
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: var(--space-section) var(--page-gutter);
+}
+
+main:focus {
+  outline: none;
+}
