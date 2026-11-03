@@ -1,0 +1,4 @@
+# Always check out LF, also on Windows with core.autocrlf=true (Prettier expects LF).
+* text=auto eol=lf
+*.ico binary
+*.woff2 binary
