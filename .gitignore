@@ -42,3 +42,15 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Secrets: only the example file is versioned
+.env
+.env.*
+!.env.example
+
+# Private workspace material never belongs in this public repo
+# (audits, findings, notes and legacy server scripts live in a separate private repo)
+findings/
+private/
+*.private.*
+*.php
