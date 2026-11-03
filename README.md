@@ -35,7 +35,7 @@ flowchart LR
   Main --> Dist["dist/ (statisches HTML je Route)"]
 ```
 
-Die Workflows sind in [`docs/CI_CD_ERKLAERUNG.md`](docs/CI_CD_ERKLAERUNG.md) Schritt für Schritt erklärt. Das automatische Deployment auf den Webspace folgt.
+Die Workflows liegen in [`.github/workflows/`](.github/workflows/). Das automatische Deployment auf den Webspace folgt.
 
 ## Lokal starten
 
@@ -56,5 +56,5 @@ Voraussetzung: Node.js 24 und npm.
 src/
   app/pages/   eine Komponente je Seite (Start, Impressum, Datenschutz, 404)
   styles/      Design-Tokens, Breakpoints, Schriften, Basis-Styles
-docs/          Erklärung der CI-Workflows
+.github/       CI-Workflows und Dependabot
 ```

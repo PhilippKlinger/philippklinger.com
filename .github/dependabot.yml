@@ -10,6 +10,13 @@ updates:
       dev-tools:
         dependency-type: development
         exclude-patterns: ['@angular/*', '@angular-devkit/*', 'angular-eslint']
+    ignore:
+      # Angular pins TypeScript to a minor range; it is raised together with `ng update`.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # Node types follow the Node major used in CI, not the latest Node release.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
 
   # Keeps the SHA-pinned actions up to date.
   - package-ecosystem: github-actions
