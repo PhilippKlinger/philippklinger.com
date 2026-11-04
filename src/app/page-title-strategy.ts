@@ -1,29 +1,59 @@
-import { inject, Injectable } from '@angular/core';
+import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, TitleStrategy } from '@angular/router';
+import { siteUrl } from '../content/site';
 
-// Sets the page title and the meta description from the route config.
-// Runs during prerendering too, so every static page ships its own description.
+// Sets title, meta description, canonical URL and Open Graph tags from the
+// route config. Runs during prerendering too, so every static page ships them.
 @Injectable({ providedIn: 'root' })
 export class PageTitleStrategy extends TitleStrategy {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly document = inject(DOCUMENT);
 
   override updateTitle(snapshot: RouterStateSnapshot): void {
-    const title = this.buildTitle(snapshot);
-    if (title !== undefined) {
-      this.title.setTitle(title);
-    }
-
-    let route = snapshot.root;
-    while (route.firstChild) {
-      route = route.firstChild;
-    }
+    const title = this.buildTitle(snapshot) ?? this.title.getTitle();
+    const route = deepestChild(snapshot.root);
     const description = route.data['description'] as string | undefined;
-    if (description) {
-      this.meta.updateTag({ name: 'description', content: description });
+    const canonical = route.data['canonical'] === false ? null : canonicalUrl(snapshot.url);
+
+    this.title.setTitle(title);
+    this.setMeta('name', 'description', description);
+    this.setMeta('property', 'og:title', title);
+    this.setMeta('property', 'og:description', description);
+    this.setMeta('property', 'og:type', 'website');
+    this.setMeta('property', 'og:locale', 'de_DE');
+    this.setMeta('property', 'og:url', canonical ?? undefined);
+    this.setCanonical(canonical);
+  }
+
+  private setMeta(attribute: 'name' | 'property', key: string, content?: string): void {
+    if (content) {
+      this.meta.updateTag({ [attribute]: key, content });
     } else {
-      this.meta.removeTag('name="description"');
+      this.meta.removeTag(`${attribute}="${key}"`);
     }
   }
+
+  // Angular has no service for <link>, so the element is managed directly.
+  private setCanonical(href: string | null): void {
+    let link = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!href) {
+      link?.remove();
+      return;
+    }
+    link ??= this.document.head.appendChild(this.document.createElement('link'));
+    link.rel = 'canonical';
+    link.href = href;
+  }
+}
+
+function deepestChild(route: ActivatedRouteSnapshot): ActivatedRouteSnapshot {
+  return route.firstChild ? deepestChild(route.firstChild) : route;
+}
+
+/** Absolute URL without query or fragment, with the trailing slash Apache uses. */
+function canonicalUrl(url: string): string {
+  const path = url.split(/[?#]/)[0];
+  return siteUrl + (path.endsWith('/') ? path : `${path}/`);
 }

@@ -8,6 +8,8 @@ const notFoundTitle = 'Seite nicht gefunden – Philipp Klinger';
 const notFoundData = {
   description:
     'Diese Adresse gibt es auf philippklinger.com nicht (mehr). Weiter zur Startseite von Philipp Klinger.',
+  // An error page has no canonical address of its own.
+  canonical: false,
 };
 
 // Project pages (/projekte/:slug) follow in stage 3 together with their content.
