@@ -1,0 +1,35 @@
+// Layout of the template's "Legal Notice", shared by /impressum and /datenschutz.
+@mixin page {
+  .legal {
+    display: grid;
+    gap: var(--space-lg);
+    max-width: calc(var(--reading-width) + 2 * var(--page-gutter));
+  }
+
+  // Heading size, not display size: "Datenschutz" must fit 390 px.
+  h1 {
+    font-size: var(--text-heading);
+    text-align: center;
+  }
+
+  h2 {
+    margin-bottom: var(--space-xs);
+    font-family: var(--font-text);
+    font-size: var(--text-xl);
+    color: var(--color-text);
+  }
+
+  p,
+  li {
+    color: var(--color-accent);
+  }
+
+  ul {
+    margin: var(--space-xs) 0 0;
+    padding-left: var(--space-md);
+  }
+
+  section > p + p {
+    margin-top: var(--space-sm);
+  }
+}
