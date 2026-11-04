@@ -11,6 +11,11 @@ const output = 'e2e-report/summary.md';
 // Strips terminal colour codes from Playwright error messages.
 const ansi = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g');
 
+// Markdown table cell: escape backslashes first, then the column separator.
+function cell(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+}
+
 function firstLine(test: TestCase): string {
   const result = test.results.at(-1);
   const message = result?.error?.message ?? result?.errors[0]?.message ?? '';
@@ -19,7 +24,7 @@ function firstLine(test: TestCase): string {
       .replace(ansi, '')
       .split('\n')
       .find((l) => l.trim()) ?? '';
-  return line.trim().replace(/\|/g, '\\|').slice(0, 200);
+  return line.trim().slice(0, 200);
 }
 
 class SummaryReporter implements Reporter {
@@ -59,7 +64,7 @@ class SummaryReporter implements Reporter {
     if (failed.size > 0) {
       lines.push('| Prüfung | Viewports | Fehler |', '|---|---|---|');
       for (const [title, { projects, error }] of failed) {
-        lines.push(`| ${title.replace(/\|/g, '\\|')} | ${projects.join(', ')} | ${error} |`);
+        lines.push(`| ${cell(title)} | ${projects.join(', ')} | ${cell(error)} |`);
       }
       lines.push('');
     }
