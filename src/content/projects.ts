@@ -37,8 +37,15 @@ export const projects: Project[] = [
     label: 'Eigenes Produkt',
     summary:
       'App für kurze tägliche Check-ins, entwickelt aus eigener Erfahrung mit Neurodivergenz.',
-    stack: ['Angular', 'TypeScript', 'Firebase'],
-    links: [{ label: 'Store', url: 'https://platzhalter.invalid/neuro-check-in/store' }],
+    stack: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'Sentry'],
+    // The row links to the website; the store link follows on the project page.
+    links: [
+      { label: 'Website', url: 'https://neurocheckin.de' },
+      {
+        label: 'Google Play',
+        url: 'https://play.google.com/store/apps/details?id=com.philippklinger.neurocheckin',
+      },
+    ],
     preview: { src: 'images/projects/neuro-check-in.webp', width: 640, height: 336 },
   },
   {

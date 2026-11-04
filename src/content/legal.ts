@@ -1,5 +1,5 @@
 // Texts of /impressum and /datenschutz.
-// DRAFT: written by Claude, no legal advice; Philipp approves the wording.
+// Written by Claude, no legal advice; wording approved by Philipp (2026-11-04).
 // Only verifiable facts; hosting wording as on neurocheckin.de (AVV with All-Inkl
 // of 2022-09-19 on file there, customer account of Philipp).
 
