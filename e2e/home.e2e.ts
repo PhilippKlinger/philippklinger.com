@@ -138,7 +138,8 @@ test.describe('Hero', () => {
   });
 
   test('[Vorlage] Band-Einträge stehen einzeilig in einer Reihe', async ({ page }) => {
-    const items = await page.locator('.band li').evaluateAll((lis) =>
+    // Visible copy of the marquee; the screen-reader list is 1px and not measured.
+    const items = await page.locator('.band-track li').evaluateAll((lis) =>
       lis.map((li) => {
         const style = getComputedStyle(li);
         return {
@@ -149,7 +150,7 @@ test.describe('Hero', () => {
       }),
     );
     for (const item of items) expect(item.lines, `„${item.text}“ bricht um`).toBeLessThanOrEqual(1);
-    // One row: the tilt moves items by a few pixels, a second row by a whole line.
+    // One row: a second row would move items by a whole line.
     const tops = items.map((item) => item.top);
     expect(Math.max(...tops) - Math.min(...tops), 'Einträge stehen untereinander').toBeLessThan(80);
   });
@@ -172,14 +173,13 @@ test.describe('Hero', () => {
       );
     const pause = await page
       .locator('.band')
-      .getByRole('button', { name: /Pause|Anhalten/ })
+      .getByRole('button', { name: /pause|anhalten/i })
       .count();
     expect(running === 0 || pause === 1).toBe(true);
   });
 
   test('[Vorlage Widescreen] Band läuft über die volle Breite', async ({ page }) => {
     const band = await page.locator('.band').boundingBox();
-    // The template tilts the band, so it may be wider than the viewport.
     expect(band!.x).toBeLessThanOrEqual(1);
     expect(band!.x + band!.width).toBeGreaterThanOrEqual(width(page) - 1);
   });
@@ -331,16 +331,49 @@ test.describe('Zustände und Bewegung', () => {
     }
   });
 
-  test('[Spec 3.4 Motion] Lichtfleck folgt dem Cursor', async ({ page }) => {
+  test('[PK-22] Lichtfleck folgt dem Cursor in allen Abschnitten', async ({ page }) => {
     test.skip(isMobile(page), 'nur bei hover: hover');
     const light = page.locator('[data-cursor-light]');
-    await expect(light, 'kein Lichtfleck vorhanden').toHaveCount(1);
+    await expect(light, 'genau ein Lichtfleck auf App-Ebene').toHaveCount(1);
     await expect(light).toHaveAttribute('aria-hidden', 'true');
-    const position = () => light.evaluate((el) => el.getBoundingClientRect().x);
-    await page.mouse.move(200, 300);
-    const before = await position();
-    await page.mouse.move(900, 500);
-    await expect.poll(position, { timeout: 2000 }).not.toBe(before);
+    await expect(light).toHaveCSS('position', 'fixed');
+    await expect(light).toHaveCSS('pointer-events', 'none');
+    // The light eases in (0.3 s), so compare its own resting places, inside the viewport.
+    const centre = () =>
+      light.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return Math.round(box.x + box.width / 2);
+      });
+    const [left, right] = [100, width(page) - 100];
+    for (const id of ['ueber-mich', 'skills', 'projekte', 'kontakt']) {
+      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+      await page.mouse.move(left, 300);
+      await expect.poll(centre, { message: `#${id} links` }).toBe(left);
+      await page.mouse.move(right, 400);
+      await expect.poll(centre, { message: `#${id} rechts` }).toBe(right);
+    }
+  });
+
+  test('[PK-22] Lichtfleck liegt hinter dem Inhalt', async ({ page }) => {
+    test.skip(isMobile(page), 'nur bei hover: hover');
+    await page.mouse.move(400, 400);
+    // Whatever sits at the cursor is content, never the light.
+    const hit = await page.evaluate(() =>
+      document.elementFromPoint(400, 400)?.closest('[data-cursor-light]'),
+    );
+    expect(hit).toBeNull();
+    expect(
+      Number(
+        await page.locator('[data-cursor-light]').evaluate((el) => getComputedStyle(el).zIndex),
+      ),
+    ).toBeLessThan(0);
+  });
+
+  test('[PK-22] Lichtfleck auch auf Unterseiten, aus auf Touch', async ({ page }) => {
+    await page.goto('/impressum/');
+    const light = page.locator('[data-cursor-light]');
+    await expect(light).toHaveCount(1);
+    if (isMobile(page)) await expect(light).toBeHidden();
   });
 
   test('[Spec 3.4 Motion] Reduced-Motion: keine laufende Animation, Lichtfleck still', async ({
@@ -360,5 +393,129 @@ test.describe('Zustände und Bewegung', () => {
     );
     expect(running).toBe(0);
     await expect(page.locator('[data-cursor-light]:visible')).toHaveCount(0);
+  });
+});
+
+test.describe('Band (PK-21)', () => {
+  const runningIn = (page: Page) =>
+    page
+      .locator('.band-track')
+      .evaluate(
+        (track) =>
+          track.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
+      );
+
+  test('[PK-21] gerade, ohne Hintergrundblock, mit Haarlinien oben und unten', async ({ page }) => {
+    const band = page.locator('.band');
+    await expect(band).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(band).toHaveCSS('transform', 'none');
+    await expect(band).toHaveCSS('border-top-width', '1px');
+    await expect(band).toHaveCSS('border-bottom-width', '1px');
+    await expect(band).toHaveCSS('mask-image', /gradient/);
+    await expect(page.locator('.band-track li').first()).toHaveCSS('font-family', /Fira Code/);
+  });
+
+  test('[PK-21] läuft von rechts nach links', async ({ page }) => {
+    const x = () =>
+      page
+        .locator('.band-items')
+        .first()
+        .evaluate((el) => el.getBoundingClientRect().x);
+    const before = await x();
+    await page.waitForTimeout(600);
+    expect(await x(), 'Band bewegt sich nicht nach links').toBeLessThan(before);
+  });
+
+  test('[PK-21 · WCAG 2.2.2] Pause-Knopf hält an und setzt fort', async ({ page }) => {
+    expect(await runningIn(page)).toBeGreaterThan(0);
+    const pause = page.locator('.band').getByRole('button', { name: 'Laufband anhalten' });
+    await expect(pause).toHaveAttribute('aria-pressed', 'false');
+    await pause.click();
+    await expect(pause).toHaveAttribute('aria-pressed', 'true');
+    await page.mouse.move(0, 0);
+    await expect.poll(() => runningIn(page)).toBe(0);
+    await pause.click();
+    // Focus inside the band pauses too, so leave it for the resume check.
+    await pause.blur();
+    await page.mouse.move(0, 0);
+    await expect.poll(() => runningIn(page)).toBeGreaterThan(0);
+  });
+
+  test('[PK-21] Hover und Tastaturfokus pausieren', async ({ page }) => {
+    test.skip(isMobile(page), 'kein Hover auf Touch');
+    await page.locator('.band').hover();
+    await expect.poll(() => runningIn(page)).toBe(0);
+    await page.mouse.move(0, 0);
+    await expect.poll(() => runningIn(page)).toBeGreaterThan(0);
+    await page.locator('.band').getByRole('button').focus();
+    await expect.poll(() => runningIn(page)).toBe(0);
+  });
+
+  test('[PK-21] Text einmal für Screenreader, die Laufschrift ist dekorativ', async ({ page }) => {
+    await expect(page.locator('.band-track')).toHaveAttribute('aria-hidden', 'true');
+    const read = page.locator('.band > ul li');
+    await expect(read).toHaveText([
+      'Offen für Festanstellung',
+      'DevSecOps & Fullstack',
+      'Remote oder hybrid',
+      'Verfügbar ab sofort',
+    ]);
+  });
+
+  test('[PK-21] Reduced Motion: Band steht, kein Pause-Knopf nötig', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    expect(await runningIn(page)).toBe(0);
+    await expect(page.locator('.band').getByRole('button')).toBeHidden();
+  });
+});
+
+test.describe('Mikro-Interaktionen (PK-28)', () => {
+  const dot = (link: ReturnType<Page['locator']>) =>
+    link.evaluate((el) => getComputedStyle(el, '::before').opacity);
+
+  test('[PK-28] Scroll-Pfeil schwebt, höchstens 5 Sekunden (WCAG 2.2.2)', async ({ page }) => {
+    const timing = await page
+      .locator('.scroll-down span')
+      .evaluate((el) => el.getAnimations().map((a) => a.effect?.getComputedTiming()));
+    expect(timing.length, 'Pfeil ist nicht animiert').toBeGreaterThan(0);
+    for (const t of timing) expect(Number(t?.endTime)).toBeLessThanOrEqual(5000);
+  });
+
+  test('[PK-28] Punkt neben Social-Icons bei Hover und gleich bei Fokus', async ({ page }) => {
+    for (const link of await page.locator('.social a').all()) {
+      expect(await dot(link)).toBe('0');
+      await link.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect.poll(() => dot(link)).toBe('1');
+      if (!isMobile(page)) {
+        await page.locator('body').click({ position: { x: 1, y: 1 } });
+        await link.hover();
+        await expect.poll(() => dot(link)).toBe('1');
+        await page.mouse.move(0, 0);
+      }
+    }
+  });
+
+  test('[PK-28] Button-Text läuft bei Hover und Fokus durch', async ({ page }) => {
+    const button = page.locator('.hero .button').first();
+    const label = button.locator('.button-label');
+    const offset = () => label.evaluate((el) => getComputedStyle(el).translate);
+    const rest = await offset();
+    await button.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect.poll(offset).not.toBe(rest);
+    await expect(button).toHaveAccessibleName('Projekte ansehen');
+  });
+
+  test('[PK-28] Reduced Motion: Pfeil steht still', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const count = await page
+      .locator('.scroll-down span')
+      .evaluate((el) => el.getAnimations().length);
+    expect(count).toBe(0);
   });
 });
