@@ -1,0 +1,8 @@
+// Diagonal accent stripes behind images (PK-29), tokens only.
+@mixin stripes($angle, $gap) {
+  background: repeating-linear-gradient(
+    $angle,
+    var(--color-accent) 0 0.125rem,
+    transparent 0.125rem $gap
+  );
+}
