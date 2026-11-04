@@ -36,9 +36,11 @@ for (const path of pages) {
     }) => {
       await page.goto(path);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-      expect(canonical, 'canonical: absolute URL mit Slash am Ende').toMatch(
-        new RegExp(`^https://[^/]+${path.replace(/\//g, '\\/')}$`),
-      );
+      expect(canonical, 'canonical fehlt').toBeTruthy();
+      const url = new URL(canonical!);
+      expect(url.protocol, 'canonical: absolute https-URL').toBe('https:');
+      expect(url.pathname, 'canonical: Pfad dieser Seite mit Slash am Ende').toBe(path);
+      expect(url.search + url.hash, 'canonical: ohne Query und Anker').toBe('');
       const og = async (property: string) =>
         page.locator(`meta[property="og:${property}"]`).getAttribute('content');
       expect(await og('url')).toBe(canonical);
