@@ -58,6 +58,7 @@ export const projects: Project[] = [
     stack: ['Angular', 'Django', 'PostgreSQL', 'Redis', 'Docker', 'GitHub Actions'],
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/videoflix-backend' }],
     proof: 'CI → Image → Deploy → Betrieb',
+    preview: { src: 'images/projects/videoflix.webp', width: 640, height: 336 },
   },
   {
     slug: 'conduit',
@@ -67,6 +68,7 @@ export const projects: Project[] = [
       'Fullstack-Anwendung, mit Docker Compose containerisiert; GitHub Actions für Image-Builds, GHCR-Publishing und automatisiertes Staging-Deployment mit Healthchecks.',
     stack: ['Angular', 'Django', 'Docker', 'GitHub Actions'],
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/conduit-container' }],
+    preview: { src: 'images/projects/conduit.webp', width: 640, height: 336 },
   },
   {
     slug: 'developer-workspace-kit',
@@ -77,5 +79,7 @@ export const projects: Project[] = [
     stack: ['Node.js', 'Claude Code', 'GitHub Actions'],
     // TODO(before production): replace with the public kit repository (PK-25).
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger' }],
+    // DRAFT: placeholder image until a real terminal capture exists
+    preview: { src: 'images/projects/developer-workspace-kit.webp', width: 640, height: 336 },
   },
 ];
