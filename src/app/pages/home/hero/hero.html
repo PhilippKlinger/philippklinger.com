@@ -1,7 +1,12 @@
 <section class="hero" aria-labelledby="hero-title">
+  <!-- Light that follows the cursor (template); CSS shows it only with hover and motion. -->
+  <div class="cursor-light" data-cursor-light aria-hidden="true" [style.translate]="light()"></div>
+
   <div class="intro">
     <p class="role">{{ profile.role }}</p>
     <h1 id="hero-title" class="name">{{ profile.name }}</h1>
+    <p class="claim">{{ profile.claim }}</p>
+    <p class="claim">{{ profile.aiNote }}</p>
     <div class="actions">
       <a class="button" routerLink="/" fragment="projekte" i18n>Projekte ansehen</a>
       <a class="button" routerLink="/" fragment="kontakt" i18n>Kontakt</a>
@@ -20,7 +25,15 @@
 
   <ul class="social">
     <li>
-      <a class="email" [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+      <a class="email" [href]="'mailto:' + profile.email">
+        <!-- Mobile shows an icon like the template, the address stays the link name. -->
+        <svg class="email-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"
+          />
+        </svg>
+        <span class="email-text">{{ profile.email }}</span>
+      </a>
     </li>
     <li>
       <a class="icon" [href]="profile.github" aria-label="GitHub">
