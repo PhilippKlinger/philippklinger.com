@@ -48,6 +48,18 @@ describe('PageTitleStrategy', () => {
     expect(meta.getTag('property="og:description"')?.content).toBe('Beschreibung A');
   });
 
+  it('sets the share image as absolute URL with size and alt text', async () => {
+    await TestBed.inject(Router).navigateByUrl('/a');
+    const meta = TestBed.inject(Meta);
+    expect(meta.getTag('property="og:image"')?.content).toBe(
+      'https://philipp-klinger.com/images/og.png',
+    );
+    expect(meta.getTag('property="og:image:width"')?.content).toBe('1200');
+    expect(meta.getTag('property="og:image:height"')?.content).toBe('630');
+    expect(meta.getTag('property="og:image:alt"')?.content).toContain('Philipp Klinger');
+    expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
+  });
+
   it('drops the canonical URL on pages that opt out (404)', async () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/a');
