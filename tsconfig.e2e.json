@@ -1,0 +1,10 @@
+/* Type check for the Playwright tests and config (they are not part of the Angular build). */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["e2e/**/*.ts", "playwright.config.ts"]
+}

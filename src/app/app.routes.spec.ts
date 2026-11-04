@@ -29,6 +29,14 @@ describe('routes', () => {
     }
   });
 
+  it('gives every route a meta description of 50 to 160 characters', () => {
+    for (const route of routes) {
+      const description = route.data?.['description'] as string | undefined;
+      expect(description?.length, `route "${route.path}"`).toBeGreaterThanOrEqual(50);
+      expect(description?.length, `route "${route.path}"`).toBeLessThanOrEqual(160);
+    }
+  });
+
   it.each(pagePaths)('renders exactly one h1 on "%s"', async (path) => {
     const page = await renderRouteComponent(path);
     expect(page.querySelectorAll('h1')).toHaveLength(1);

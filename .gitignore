@@ -54,3 +54,9 @@ findings/
 private/
 *.private.*
 *.php
+
+# End-to-end and Lighthouse output (CI artifacts)
+/test-results/
+/playwright-report/
+/e2e-report/
+/.lighthouseci/

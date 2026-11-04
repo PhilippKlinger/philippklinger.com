@@ -3,3 +3,7 @@ coverage/
 .angular/
 node_modules/
 package-lock.json
+test-results/
+playwright-report/
+e2e-report/
+.lighthouseci/
