@@ -31,6 +31,25 @@ for (const path of pages) {
       expect(description.length, 'meta description: 50 bis 160 Zeichen').toBeLessThanOrEqual(160);
     });
 
+    test('[SEO · Regel web-quality] canonical und Open Graph passen zur Seite', async ({
+      page,
+    }) => {
+      await page.goto(path);
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+      expect(canonical, 'canonical: absolute URL mit Slash am Ende').toMatch(
+        new RegExp(`^https://[^/]+${path.replace(/\//g, '\\/')}$`),
+      );
+      const og = async (property: string) =>
+        page.locator(`meta[property="og:${property}"]`).getAttribute('content');
+      expect(await og('url')).toBe(canonical);
+      expect(await og('title')).toBe(await page.title());
+      expect(await og('description')).toBe(
+        await page.locator('meta[name="description"]').getAttribute('content'),
+      );
+      expect(await og('type')).toBe('website');
+      expect(await og('locale')).toBe('de_DE');
+    });
+
     test('[WCAG 1.3.1] genau eine h1 und ein main', async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('h1')).toHaveCount(1);
