@@ -10,3 +10,30 @@ app-header {
   right: 0;
   z-index: 10;
 }
+
+// Fixed behind all content (z-index -1 paints above the page background only),
+// so texts are never tinted. Half strength keeps even the subtle footer grey
+// at ≥ 4.5:1 on the brightest spot (PK-22).
+.cursor-light {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 40rem;
+  height: 40rem;
+  margin: -20rem 0 0 -20rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-glow) 50%, transparent),
+    transparent
+  );
+  translate: 75vw 30vh;
+  transition: translate 0.3s ease-out;
+  pointer-events: none;
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    display: block;
+  }
+}
