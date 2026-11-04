@@ -1,9 +1,9 @@
 import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, TitleStrategy } from '@angular/router';
-import { siteUrl } from '../content/site';
+import { shareImage, siteUrl } from '../content/site';
 
-// Sets title, meta description, canonical URL and Open Graph tags from the
+// Sets title, meta description, canonical URL, Open Graph and Twitter tags from the
 // route config. Runs during prerendering too, so every static page ships them.
 @Injectable({ providedIn: 'root' })
 export class PageTitleStrategy extends TitleStrategy {
@@ -24,7 +24,17 @@ export class PageTitleStrategy extends TitleStrategy {
     this.setMeta('property', 'og:type', 'website');
     this.setMeta('property', 'og:locale', 'de_DE');
     this.setMeta('property', 'og:url', canonical ?? undefined);
+    this.setShareImage();
     this.setCanonical(canonical);
+  }
+
+  // Same image on every page; crawlers need an absolute URL and the size up front.
+  private setShareImage(): void {
+    this.setMeta('property', 'og:image', `${siteUrl}/${shareImage.src}`);
+    this.setMeta('property', 'og:image:width', String(shareImage.width));
+    this.setMeta('property', 'og:image:height', String(shareImage.height));
+    this.setMeta('property', 'og:image:alt', shareImage.alt);
+    this.setMeta('name', 'twitter:card', 'summary_large_image');
   }
 
   private setMeta(attribute: 'name' | 'property', key: string, content?: string): void {

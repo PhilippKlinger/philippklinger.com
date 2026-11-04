@@ -20,6 +20,7 @@ const types = {
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.webp': 'image/webp',
   '.avif': 'image/avif',
@@ -35,7 +36,7 @@ if (!existsSync(join(root, 'index.html'))) {
   process.exit(1);
 }
 
-const compressible = new Set(['.html', '.js', '.css', '.json', '.txt', '.svg']);
+const compressible = new Set(['.html', '.js', '.css', '.json', '.txt', '.xml', '.svg']);
 
 // Same policy as on the host: read it from the .htaccess instead of copying it.
 function readCsp() {

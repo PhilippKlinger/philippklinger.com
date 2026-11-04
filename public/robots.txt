@@ -1,0 +1,6 @@
+# Crawlers may read every page. The preview host is kept out of search
+# results by the X-Robots-Tag header in .htaccess, not by this file.
+User-agent: *
+Allow: /
+
+Sitemap: https://philipp-klinger.com/sitemap.xml
