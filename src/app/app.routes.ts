@@ -7,7 +7,7 @@ import { Privacy } from './pages/privacy/privacy';
 const notFoundTitle = 'Seite nicht gefunden – Philipp Klinger';
 const notFoundData = {
   description:
-    'Diese Adresse gibt es auf philippklinger.com nicht (mehr). Weiter zur Startseite von Philipp Klinger.',
+    'Diese Adresse gibt es auf philipp-klinger.com nicht (mehr). Weiter zur Startseite von Philipp Klinger.',
   // An error page has no canonical address of its own.
   canonical: false,
 };
@@ -30,7 +30,7 @@ export const routes: Routes = [
     title: 'Impressum – Philipp Klinger',
     data: {
       description:
-        'Impressum von philippklinger.com: Anbieterkennzeichnung nach § 5 DDG und Kontakt zu Philipp Klinger.',
+        'Impressum von philipp-klinger.com: Anbieterkennzeichnung nach § 5 DDG und Kontakt zu Philipp Klinger.',
     },
   },
   {
@@ -39,7 +39,7 @@ export const routes: Routes = [
     title: 'Datenschutz – Philipp Klinger',
     data: {
       description:
-        'Datenschutzerklärung von philippklinger.com: welche Daten beim Besuch anfallen und wie sie verarbeitet werden.',
+        'Datenschutzerklärung von philipp-klinger.com: welche Daten beim Besuch anfallen und wie sie verarbeitet werden.',
     },
   },
   { path: '404', component: NotFound, title: notFoundTitle, data: notFoundData },

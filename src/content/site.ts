@@ -1,6 +1,5 @@
 // Public address of the site, base of canonical and Open Graph URLs.
-// Assumption until the domain question (B15) is settled: the repository name.
-export const siteUrl = 'https://philippklinger.com';
+export const siteUrl = 'https://philipp-klinger.com';
 
 // DRAFT: texts of "So ist diese Seite gebaut" and "Kontakt", wording to be approved.
 export const siteBuild = {
