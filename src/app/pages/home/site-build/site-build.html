@@ -1,0 +1,18 @@
+<!-- Takes the place of the template's testimonials (spec 3.4). -->
+<section id="so-gebaut" class="section" aria-labelledby="site-build-title">
+  <p class="eyebrow" i18n>Transparenz</p>
+  <h2 id="site-build-title" i18n>So ist diese Seite gebaut</h2>
+
+  <div class="card">
+    <p class="intro">{{ siteBuild.intro }}</p>
+    <dl class="points">
+      @for (point of siteBuild.points; track point.term) {
+        <div>
+          <dt>{{ point.term }}</dt>
+          <dd>{{ point.text }}</dd>
+        </div>
+      }
+    </dl>
+    <a [href]="siteBuild.repository" i18n>Quellcode und Pipeline auf GitHub</a>
+  </div>
+</section>

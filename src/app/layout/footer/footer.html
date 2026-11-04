@@ -1,0 +1,20 @@
+<footer class="footer">
+  <div class="identity">
+    <a class="logo" routerLink="/" i18n-aria-label aria-label="PK, Philipp Klinger, zur Startseite">
+      <span aria-hidden="true">PK</span>
+    </a>
+    <p>{{ profile.role }}</p>
+    <p>{{ profile.location }}</p>
+  </div>
+
+  <p class="copyright">© {{ profile.name }} {{ year }}</p>
+
+  <ul class="links">
+    <li><a [href]="profile.github">GitHub</a></li>
+    <li><a [href]="profile.linkedin">LinkedIn</a></li>
+    <li><a [href]="'mailto:' + profile.email" i18n>E-Mail</a></li>
+    <!-- Plain links with trailing slash: the canonical URL on Apache, no 301. -->
+    <li><a href="/impressum/" i18n>Impressum</a></li>
+    <li><a href="/datenschutz/" i18n>Datenschutz</a></li>
+  </ul>
+</footer>

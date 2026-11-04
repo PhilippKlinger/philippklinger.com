@@ -1,0 +1,42 @@
+<section id="projekte" class="section" aria-labelledby="projects-title">
+  <p class="eyebrow" i18n>Portfolio</p>
+  <h2 id="projects-title" i18n>Projekte</h2>
+
+  <ul class="projects">
+    @for (project of projects; track project.slug) {
+      <li>
+        <!-- Trailing slash: canonical URL on Apache, no 301. -->
+        <a
+          class="project"
+          [href]="project.hasPage ? '/projekte/' + project.slug + '/' : project.links[0].url"
+        >
+          <ng-container *ngTemplateOutlet="row; context: { $implicit: project }" />
+        </a>
+      </li>
+    }
+  </ul>
+</section>
+
+<!-- Row content shared by both link types (project page or repository). -->
+<ng-template #row let-project>
+  <span class="heading">
+    <span class="title">{{ project.title }}</span>
+    <span class="label">{{ project.label }}</span>
+  </span>
+  <span class="summary">{{ project.summary }}</span>
+  <span class="stack">{{ project.stack.join(' | ') }}</span>
+  @if (project.proof) {
+    <span class="proof">{{ project.proof }}</span>
+  }
+  @if (project.preview; as preview) {
+    <img
+      class="preview"
+      [src]="preview.src"
+      [width]="preview.width"
+      [height]="preview.height"
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+    />
+  }
+</ng-template>

@@ -42,7 +42,11 @@
   --border-width: 1px;
 
   --page-gutter: 1rem;
-  --content-width: 75rem;
+  // Header overlays the page; content below starts after this height.
+  --header-height: 6rem;
+  --content-width: 78rem;
+  // Long texts (legal pages) as in the template's "Legal Notice".
+  --reading-width: 60rem;
 
   @include bp.from(tablet) {
     --text-lg: 1.25rem;
@@ -55,8 +59,8 @@
 
   @include bp.from(desktop) {
     --text-heading: 4rem;
-    --text-display: 6rem;
-    --page-gutter: 7.5rem;
+    --text-display: 7.5rem;
+    --page-gutter: 6rem;
     --space-section: 8rem;
   }
 }

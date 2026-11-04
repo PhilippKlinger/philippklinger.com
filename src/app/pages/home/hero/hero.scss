@@ -1,0 +1,242 @@
+@use 'breakpoints' as bp;
+
+// Full viewport height (svh avoids the jump of mobile browser bars).
+.hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  // Side bars: three 2.75rem targets plus their line that runs behind the band.
+  --side-gap: var(--space-xs);
+  --side-line: calc(var(--space-section) + var(--space-xl) + var(--space-xs));
+  // Below desktop the side bars sit under the centred text, so the hero reserves their height.
+  padding: var(--header-height) var(--page-gutter)
+    calc(3 * 2.75rem + 3 * var(--side-gap) + var(--side-line) + var(--space-sm));
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 45%), transparent 25%),
+    linear-gradient(100deg, var(--color-bg) 35%, var(--color-glow));
+}
+
+// Hidden unless the device can hover and motion is welcome (spec 3.4).
+.cursor-light {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40rem;
+  height: 40rem;
+  margin: -20rem 0 0 -20rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--color-glow), transparent);
+  translate: 75vw 30vh;
+  transition: translate 0.3s ease-out;
+  pointer-events: none;
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    display: block;
+  }
+}
+
+// Positioned, so it paints above the cursor light.
+.intro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.role {
+  font-family: var(--font-code);
+  font-size: var(--text-xl);
+}
+
+.name {
+  font-family: var(--font-text);
+  font-size: var(--text-display);
+  color: var(--color-text);
+}
+
+.claim {
+  max-width: 40rem;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.button {
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-width) solid var(--color-text);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+}
+
+// Decorative side elements: scroll hint left, contact right, each with a line.
+.scroll-down,
+.social {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--side-gap);
+
+  // The line runs behind the band, so arrow and icons stay above it (template).
+  &::after {
+    content: '';
+    width: var(--border-width);
+    height: var(--side-line);
+    background: var(--color-accent);
+  }
+}
+
+.scroll-down {
+  left: var(--page-gutter);
+  color: var(--color-text);
+  text-decoration: none;
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 3rem;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-pill);
+  }
+}
+
+.social {
+  right: var(--page-gutter);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.email {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.email-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: var(--color-accent);
+}
+
+// Mobile: icon only, the address stays the accessible name.
+.email-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+
+  svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    fill: var(--color-accent);
+  }
+
+  &:hover svg {
+    fill: var(--color-text);
+  }
+}
+
+// Static availability line; the template's marquee would need a pause control.
+.band {
+  position: absolute;
+  bottom: var(--space-xl);
+  left: -5%;
+  width: 110%;
+  padding-block: var(--space-sm);
+  background: var(--color-band);
+  transform: rotate(-3deg);
+}
+
+.band-items {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xl);
+  margin: 0;
+  padding: 0 var(--page-gutter);
+  list-style: none;
+  font-size: var(--text-base);
+  white-space: nowrap;
+  color: var(--color-accent);
+
+  li + li::before {
+    content: '•';
+    margin-right: var(--space-xl);
+  }
+}
+
+@include bp.from(tablet) {
+  .hero {
+    --side-gap: var(--space-sm);
+    --side-line: calc(var(--space-section) + var(--space-xl) + var(--space-lg));
+  }
+
+  .claim {
+    font-size: var(--text-lg);
+  }
+
+  .email {
+    display: block;
+    width: auto;
+    height: auto;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .email-icon {
+    display: none;
+  }
+
+  .email-text {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+
+  .band-items {
+    font-size: var(--text-lg);
+  }
+}
+
+// Side bars stand left and right of the centred text, no reserved height needed.
+@include bp.from(desktop) {
+  .hero {
+    padding-bottom: calc(var(--space-section) + var(--space-xl));
+  }
+}

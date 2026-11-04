@@ -18,6 +18,7 @@ for (const path of [...pages, notFoundPage]) {
           .slice(0, 3)
           .join(' | ')}`,
     );
-    expect(readable).toEqual([]);
+    // The message is the first error line, so the CI summary names the rules.
+    expect(violations.length, readable.join(' ; ')).toBe(0);
   });
 }

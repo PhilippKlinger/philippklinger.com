@@ -1,1 +1,35 @@
-<h1 i18n>Datenschutz</h1>
+<div class="page legal">
+  <h1 i18n>Datenschutz</h1>
+
+  <p>{{ privacy.intro }}</p>
+
+  <section>
+    <h2>{{ privacy.controllerHeading }}</h2>
+    <p>
+      @for (line of address; track line) {
+        {{ line }}<br />
+      }
+    </p>
+    <p>
+      E-Mail: <a [href]="'mailto:' + email">{{ email }}</a>
+    </p>
+  </section>
+
+  @for (section of privacy.sections; track section.heading) {
+    <section>
+      <h2>{{ section.heading }}</h2>
+      @for (paragraph of section.paragraphs; track paragraph) {
+        <p>{{ paragraph }}</p>
+      }
+      @if (section.items) {
+        <ul>
+          @for (item of section.items; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <p>{{ privacy.version }}</p>
+</div>

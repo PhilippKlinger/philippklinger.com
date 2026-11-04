@@ -15,5 +15,10 @@ for (const path of pages) {
       fullPage: true,
       animations: 'disabled',
     });
+    // First screen only: what a visitor sees before scrolling (hero in the template).
+    await page.screenshot({
+      path: `e2e-report/screens/${testInfo.project.name}-${name}-erster-bildschirm.png`,
+      animations: 'disabled',
+    });
   });
 }
