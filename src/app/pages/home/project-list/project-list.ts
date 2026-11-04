@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component } from '@angular/core';
 import { projects } from '../../../../content/projects';
+import { docsUrl } from '../../../../content/site';
 
 @Component({
   selector: 'app-project-list',
@@ -10,4 +11,5 @@ import { projects } from '../../../../content/projects';
 })
 export class ProjectList {
   protected readonly projects = projects;
+  protected readonly docsUrl = docsUrl;
 }

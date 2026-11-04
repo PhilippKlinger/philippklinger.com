@@ -21,17 +21,17 @@ test.beforeEach(async ({ page }) => {
 test.describe('Aufbau', () => {
   test('[Spec 3.4] Abschnitte in der Reihenfolge der Vorlage', async ({ page }) => {
     const ids = await page.locator('main section[id]').evaluateAll((s) => s.map((el) => el.id));
-    expect(ids).toEqual(['ueber-mich', 'schwerpunkte', 'projekte', 'so-gebaut', 'kontakt']);
+    expect(ids).toEqual(['ueber-mich', 'skills', 'projekte', 'kontakt']);
   });
 
   test('[Spec 3.4] jeder Navigationseintrag hat ein Ziel auf der Startseite', async ({ page }) => {
-    for (const id of ['ueber-mich', 'schwerpunkte', 'projekte', 'kontakt']) {
+    for (const id of ['ueber-mich', 'skills', 'projekte', 'kontakt']) {
       await expect(page.locator(`#${id}`), `#${id}`).toHaveCount(1);
     }
   });
 
   test('[Verhalten] Anker-Sprung zeigt die Überschrift unverdeckt', async ({ page }) => {
-    for (const id of ['ueber-mich', 'schwerpunkte', 'projekte']) {
+    for (const id of ['ueber-mich', 'skills', 'projekte']) {
       await page.goto(`/#${id}`);
       const heading = page.locator(`#${id} h2`);
       await expect(heading).toBeInViewport();
@@ -50,7 +50,7 @@ test.describe('Hero', () => {
     const hero = page.locator('.hero');
     await expect(hero.locator('h1')).toHaveText('Philipp Klinger');
     await expect(hero).toContainText('Software Engineer · Fullstack & DevSecOps');
-    // Kernsatz + KI-Satz (DECISIONS 03.11.): at least one sentence below the name.
+    // Kernsatz only; the AI sentence moved to "Über mich" (Grill 2026-11-04).
     const claim = hero.locator('h1 ~ p, .claim');
     await expect(claim.first(), 'Kernsatz fehlt').toBeVisible();
     expect((await claim.allInnerTexts()).join(' ').length).toBeGreaterThan(40);
@@ -190,15 +190,13 @@ test.describe('Abschnitte', () => {
     const about = page.locator('#ueber-mich');
     await expect(about.getByRole('img', { name: /Philipp Klinger/ })).toBeVisible();
     await expect(about.locator('.card li')).toHaveCount(3);
+    await expect(about.locator('.card')).toContainText('KI nutze ich als Werkzeug');
+    await expect(page.locator('.hero')).not.toContainText('KI nutze ich');
   });
 
-  test('[Spec 3.4/5] Schwerpunkte: 3 Karten mit je 4–6 Werkzeugen', async ({ page }) => {
-    const areas = page.locator('#schwerpunkte .areas > li');
-    await expect(areas.locator('h3')).toHaveText([
-      'Entwicklung',
-      'Auslieferung & Sicherheit',
-      'Betrieb',
-    ]);
+  test('[Spec 3.4/5] Skills: 3 Karten mit je 4–6 Werkzeugen', async ({ page }) => {
+    const areas = page.locator('#skills .areas > li');
+    await expect(areas.locator('h3')).toHaveText(['Development', 'CI/CD & Security', 'Operations']);
     for (const count of await areas.evaluateAll((cards) =>
       cards.map((card) => card.querySelectorAll('.tools li').length),
     )) {
@@ -213,7 +211,7 @@ test.describe('Abschnitte', () => {
       'Neuro Check-in',
       'Videoflix',
       'Conduit',
-      'Truck Signs API',
+      'Developer Workspace Kit',
     ]);
     for (const row of await rows.all()) {
       await expect(row.locator('.label')).not.toBeEmpty();
@@ -242,15 +240,12 @@ test.describe('Abschnitte', () => {
     await expect(preview).toBeVisible();
   });
 
-  test('[Spec 3.4] „So ist diese Seite gebaut“ mit Repo-Link und Datenschutz-Satz', async ({
-    page,
-  }) => {
-    const section = page.locator('#so-gebaut');
-    await expect(section.locator('h2')).toHaveText('So ist diese Seite gebaut');
+  test('[PK-27] Link auf Dokumentation und weitere Projekte unter der Liste', async ({ page }) => {
     await expect(
-      section.locator('a[href="https://github.com/PhilippKlinger/philippklinger.com"]'),
-    ).toBeVisible();
-    await expect(section).toContainText(/keine Analyse-Cookies/i);
+      page
+        .locator('#projekte .more')
+        .getByRole('link', { name: 'Weitere Projekte und technische Dokumentation' }),
+    ).toHaveAttribute('href', 'https://philippklinger.github.io/my-dso-blog/');
   });
 
   test('[Spec 3.4/5] Kontakt mit E-Mail, LinkedIn, GitHub und Verfügbarkeit', async ({ page }) => {

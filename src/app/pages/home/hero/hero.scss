@@ -61,7 +61,7 @@
 }
 
 .claim {
-  max-width: 40rem;
+  max-width: var(--reading-width);
   font-size: var(--text-base);
   color: var(--color-text-muted);
 }
@@ -204,10 +204,6 @@
   .hero {
     --side-gap: var(--space-sm);
     --side-line: calc(var(--space-section) + var(--space-xl) + var(--space-lg));
-  }
-
-  .claim {
-    font-size: var(--text-lg);
   }
 
   .email {

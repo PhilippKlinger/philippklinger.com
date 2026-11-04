@@ -21,7 +21,7 @@ export const routes: Routes = [
     title: 'Philipp Klinger – DevSecOps & Fullstack',
     data: {
       description:
-        'Philipp Klinger, Software Engineer für Fullstack und DevSecOps: Projekte mit Tests, CI/CD, Sicherheitsprüfungen und Betrieb.',
+        'Philipp Klinger, Software Engineer für Fullstack und DevSecOps: Projekte mit automatisierten Tests, CI/CD, Security-Checks und Operations.',
     },
   },
   {

@@ -5,14 +5,12 @@ import { pages } from './support/site';
 // Header and footer on every page, checked against the template "Version 2"
 // (docs/design in the private workspace) and spec 3.4.
 
-const navLabels = ['Über mich', 'Schwerpunkte', 'Projekte', 'Kontakt'];
+const navLabels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 
 for (const path of pages) {
   test.describe(`Layout ${path}`, () => {
-    test('[Spec 3.4] Navigation: Über mich · Schwerpunkte · Projekte · Kontakt', async ({
-      page,
-    }) => {
+    test('[Spec 3.4] Navigation: Über mich · Skills · Projekte · Kontakt', async ({ page }) => {
       await page.goto(path);
       const nav = page.getByRole('navigation', { name: 'Hauptnavigation' });
       if (isMobile(page)) await page.getByRole('button', { name: 'Menü' }).click();
@@ -24,9 +22,15 @@ for (const path of pages) {
       const footer = page.locator('footer');
       await expect(footer).toContainText('Software Engineer · Fullstack & DevSecOps');
       await expect(footer).toContainText(`© Philipp Klinger ${new Date().getFullYear()}`);
-      for (const name of ['GitHub', 'LinkedIn', 'E-Mail', 'Impressum', 'Datenschutz']) {
+      for (const name of ['GitHub', 'LinkedIn', 'E-Mail', 'Docs', 'Impressum', 'Datenschutz']) {
         await expect(footer.getByRole('link', { name, exact: true })).toBeVisible();
       }
+      // Short build note instead of the former section (Grill 2026-11-04).
+      await expect(footer.locator('.built')).toContainText('Built with Angular');
+      await expect(footer.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute(
+        'href',
+        'https://github.com/PhilippKlinger/philippklinger.com',
+      );
       await expect(footer.getByRole('link', { name: 'Impressum', exact: true })).toHaveAttribute(
         'href',
         '/impressum/',
