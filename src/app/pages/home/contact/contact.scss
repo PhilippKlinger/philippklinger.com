@@ -1,0 +1,42 @@
+@use 'breakpoints' as bp;
+
+.contact {
+  display: grid;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-section);
+}
+
+.intro {
+  margin-top: var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.availability {
+  margin-top: var(--space-sm);
+  font-family: var(--font-code);
+  color: var(--color-accent);
+}
+
+.channels {
+  display: grid;
+  gap: var(--space-sm);
+  align-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-lg);
+
+  // Touch targets of at least 44 px (web-quality rule).
+  a {
+    display: inline-block;
+    min-height: 2.75rem;
+    padding-block: var(--space-xs);
+  }
+}
+
+@include bp.from(tablet) {
+  .contact {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+}

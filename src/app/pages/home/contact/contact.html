@@ -1,0 +1,17 @@
+<!-- Text left like the template; the form on the right follows in stage 3. -->
+<section id="kontakt" class="section contact" aria-labelledby="contact-title">
+  <div>
+    <p class="eyebrow" i18n>Kontakt</p>
+    <h2 id="contact-title" i18n>Lassen Sie uns sprechen</h2>
+    <p class="intro">{{ contact.intro }}</p>
+    <p class="availability">{{ contact.availability }}</p>
+  </div>
+
+  <ul class="channels">
+    <li>
+      <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+    </li>
+    <li><a [href]="profile.linkedin">LinkedIn</a></li>
+    <li><a [href]="profile.github">GitHub</a></li>
+  </ul>
+</section>
