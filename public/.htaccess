@@ -22,7 +22,7 @@ RewriteRule ^navigation/?$ / [R=301,L]
 RewriteRule ^index\.csr\.html$ - [R=404,L]
 
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml text/plain
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml text/plain application/xml text/xml
 </IfModule>
 
 <IfModule mod_headers.c>
@@ -32,6 +32,10 @@ RewriteRule ^index\.csr\.html$ - [R=404,L]
   </FilesMatch>
   <FilesMatch "\.(html|json)$">
     Header set Cache-Control "no-cache"
+  </FilesMatch>
+  # Images keep their name when they change, so they are cached for 30 days only.
+  <FilesMatch "\.(webp|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
 
   # Inline styles come from Angular's component styles; scripts only from this server.
