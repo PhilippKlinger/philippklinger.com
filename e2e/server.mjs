@@ -3,10 +3,12 @@
 // - "/impressum" redirects with 301 to "/impressum/" (mod_dir DirectorySlash)
 // - "/impressum/" serves "impressum/index.html"
 // - unknown paths get status 404 with the prerendered "404/index.html"
+// - text responses are gzip-compressed when the client accepts it (mod_deflate)
 // No dependencies on purpose: node:http is enough for a test server.
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
+import { createGzip } from 'node:zlib';
 
 const root = resolve(process.argv[2] ?? 'dist/philippklinger/browser');
 const port = Number(process.env.PORT ?? 4300);
@@ -32,9 +34,17 @@ if (!existsSync(join(root, 'index.html'))) {
   process.exit(1);
 }
 
-function send(res, status, file) {
-  res.writeHead(status, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' });
-  createReadStream(file).pipe(res);
+const compressible = new Set(['.html', '.js', '.css', '.json', '.txt', '.svg']);
+
+function send(req, res, status, file) {
+  const headers = { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' };
+  const compress = compressible.has(extname(file));
+  const gzip = compress && /gzip/.test(req.headers['accept-encoding'] ?? '');
+  if (compress) headers['Vary'] = 'Accept-Encoding';
+  if (gzip) headers['Content-Encoding'] = 'gzip';
+  res.writeHead(status, headers);
+  const stream = createReadStream(file);
+  (gzip ? stream.pipe(createGzip()) : stream).pipe(res);
 }
 
 createServer((req, res) => {
@@ -49,7 +59,7 @@ createServer((req, res) => {
 
   // Never serve anything outside the build folder.
   if (file !== root && !file.startsWith(root + sep)) {
-    return send(res, 404, join(root, '404', 'index.html'));
+    return send(req, res, 404, join(root, '404', 'index.html'));
   }
 
   if (existsSync(file) && statSync(file).isDirectory()) {
@@ -58,12 +68,12 @@ createServer((req, res) => {
       return res.end();
     }
     const index = join(file, 'index.html');
-    if (existsSync(index)) return send(res, 200, index);
+    if (existsSync(index)) return send(req, res, 200, index);
   } else if (existsSync(file)) {
-    return send(res, 200, file);
+    return send(req, res, 200, file);
   }
 
-  return send(res, 404, join(root, '404', 'index.html'));
+  return send(req, res, 404, join(root, '404', 'index.html'));
 }).listen(port, () => {
   console.log(`Static build on http://localhost:${port} (${root})`);
 });
