@@ -39,7 +39,7 @@ const compressible = new Set(['.html', '.js', '.css', '.json', '.txt', '.svg']);
 function send(req, res, status, file) {
   const headers = { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' };
   const compress = compressible.has(extname(file));
-  const gzip = compress && /gzip/.test(req.headers['accept-encoding'] ?? '');
+  const gzip = compress && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '');
   if (compress) headers['Vary'] = 'Accept-Encoding';
   if (gzip) headers['Content-Encoding'] = 'gzip';
   res.writeHead(status, headers);
