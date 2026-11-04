@@ -26,11 +26,23 @@ h3 {
   list-style: none;
 
   li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
     padding: 0.25rem var(--space-sm);
     border: var(--border-width) solid var(--color-text-subtle);
     border-radius: var(--radius-pill);
     font-family: var(--font-code);
     font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  // Sized to the text, one token colour for all logos (no brand colours).
+  svg {
+    flex: none;
+    width: 1.25em;
+    height: 1.25em;
+    fill: var(--color-accent);
   }
 }
 

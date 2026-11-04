@@ -1,9 +1,11 @@
 // DRAFT: skills of the start page, wording to be approved.
 // Titles in English like the final CV (Grill 2026-11-04), text in German.
+import type { ToolName } from './tool-icons';
+
 export interface FocusArea {
   title: string;
   description: string;
-  tools: string[];
+  tools: ToolName[];
 }
 
 export const focusAreas: FocusArea[] = [
