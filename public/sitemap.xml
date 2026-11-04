@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Prerendered pages with the trailing slash Apache uses; e2e/seo.e2e.ts keeps it in sync. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://philipp-klinger.com/</loc>
+  </url>
+  <url>
+    <loc>https://philipp-klinger.com/impressum/</loc>
+  </url>
+  <url>
+    <loc>https://philipp-klinger.com/datenschutz/</loc>
+  </url>
+</urlset>
