@@ -519,3 +519,89 @@ test.describe('Mikro-Interaktionen (PK-28)', () => {
     expect(count).toBe(0);
   });
 });
+
+test.describe('Hover-Grafiken (PK-29)', () => {
+  const stripes = (element: ReturnType<Page['locator']>) =>
+    element.evaluate((el) => {
+      const style = getComputedStyle(el, '::before');
+      return { image: style.backgroundImage, opacity: style.opacity };
+    });
+  /** Stable reference points: nothing may move when a graphic appears. */
+  const layout = (page: Page) =>
+    page.evaluate(() => ({
+      height: document.documentElement.scrollHeight,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      list: document.querySelector('.projects')?.getBoundingClientRect().height,
+      about: document.querySelector('.about')?.getBoundingClientRect().height,
+    }));
+
+  test('[PK-29] Porträt in Graustufen', async ({ page }) => {
+    await expect(page.locator('.portrait')).toHaveCSS('filter', 'grayscale(1)');
+  });
+
+  test('[PK-29] Streifen hinter dem Porträt erscheinen bei Hover', async ({ page }) => {
+    test.skip(isMobile(page), 'kein Hover auf Touch');
+    const media = page.locator('.portrait-media');
+    expect((await stripes(media)).opacity).toBe('0');
+    expect((await stripes(media)).image).toContain('repeating-linear-gradient');
+    await media.scrollIntoViewIfNeeded();
+    const before = await layout(page);
+    await media.hover();
+    await expect.poll(async () => (await stripes(media)).opacity).toBe('1');
+    expect(await layout(page), 'Hover verschiebt das Layout').toEqual(before);
+  });
+
+  test('[PK-29] Streifen hinter der Projekt-Vorschau bei Hover und bei Fokus', async ({ page }) => {
+    test.skip(isMobile(page), 'Vorschau nur ab Tablet (Vorlage)');
+    for (const row of await page.locator('#projekte a.project').all()) {
+      const preview = row.locator('.preview-media');
+      await row.scrollIntoViewIfNeeded();
+      const before = await layout(page);
+      await row.hover();
+      await expect(preview).toBeVisible();
+      expect((await stripes(preview)).image).toContain('repeating-linear-gradient');
+      await expect.poll(async () => (await stripes(preview)).opacity).toBe('1');
+      expect(await layout(page), 'Hover verschiebt das Layout').toEqual(before);
+      await page.mouse.move(0, 0);
+      await row.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(preview).toBeVisible();
+    }
+  });
+
+  test('[PK-29] Vorschau sitzt je Zeile anders: oben, Mitte, unten', async ({ page }) => {
+    test.skip(isMobile(page), 'Vorschau nur ab Tablet (Vorlage)');
+    const rows = await page.locator('#projekte .projects > li').all();
+    // Hovering scrolls the row into view, so measure the list afterwards.
+    const place = async (index: number) => {
+      await rows[index].locator('a.project').hover();
+      return {
+        box: (await rows[index].locator('.preview-media').boundingBox())!,
+        list: (await page.locator('.projects').boundingBox())!,
+      };
+    };
+    const { box: first, list: top } = await place(0);
+    expect(Math.abs(first.y - top.y), 'erste Vorschau beginnt nicht oben').toBeLessThanOrEqual(2);
+    const { box: last, list } = await place(rows.length - 1);
+    expect(
+      Math.abs(last.y + last.height - (list.y + list.height)),
+      'letzte Vorschau endet nicht unten',
+    ).toBeLessThanOrEqual(2);
+  });
+
+  test('[PK-29] Reduced Motion: Streifen erscheinen ohne Bewegung', async ({ page }) => {
+    test.skip(isMobile(page), 'kein Hover auf Touch');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const row = page.locator('#projekte a.project').first();
+    await row.hover();
+    await expect(row.locator('.preview-media')).toBeVisible();
+    const moving = await row
+      .locator('.preview-media')
+      .evaluate(
+        (el) => el.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
+      );
+    expect(moving).toBe(0);
+  });
+});

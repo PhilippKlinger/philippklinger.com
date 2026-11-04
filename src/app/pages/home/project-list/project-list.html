@@ -33,14 +33,16 @@
     <span class="proof">{{ project.proof }}</span>
   }
   @if (project.preview; as preview) {
-    <img
-      class="preview"
-      [src]="preview.src"
-      [width]="preview.width"
-      [height]="preview.height"
-      alt=""
-      aria-hidden="true"
-      loading="lazy"
-    />
+    <span class="preview-media">
+      <img
+        class="preview"
+        [src]="preview.src"
+        [width]="preview.width"
+        [height]="preview.height"
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+      />
+    </span>
   }
 </ng-template>
