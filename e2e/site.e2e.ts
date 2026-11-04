@@ -145,6 +145,20 @@ test('[Hosting] unbekannte Adresse liefert Status 404 mit Weg zur Startseite', a
   await expect(page.locator('main a[href="/"]')).toBeVisible();
 });
 
+// Apache compresses text with mod_deflate; the .htaccess (ci/deploy) must keep it on.
+test('[Hosting] HTML, JavaScript und CSS kommen komprimiert an', async ({ page, request }) => {
+  const assets: string[] = ['/'];
+  page.on('response', (response) => {
+    if (/\.(js|css)$/.test(new URL(response.url()).pathname)) assets.push(response.url());
+  });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  expect(assets.length, 'keine Skripte oder Styles geladen').toBeGreaterThan(1);
+  for (const url of assets) {
+    const response = await request.get(url, { headers: { 'Accept-Encoding': 'gzip' } });
+    expect(response.headers()['content-encoding'], url).toBe('gzip');
+  }
+});
+
 test('[Hosting] die 404-Seite selbst ist erreichbar', async ({ request }) => {
   const response = await request.get(notFoundPage);
   expect(response.status()).toBe(200);
