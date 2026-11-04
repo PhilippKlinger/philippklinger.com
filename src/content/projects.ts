@@ -5,6 +5,13 @@ export interface ProjectLink {
   url: string;
 }
 
+/** Decorative screenshot next to the row on hover and focus (template). */
+export interface ProjectPreview {
+  src: string;
+  width: number;
+  height: number;
+}
+
 export interface Project {
   slug: string;
   title: string;
@@ -15,8 +22,12 @@ export interface Project {
   links: ProjectLink[];
   /** Short line of the evidence chain, only for projects that have one. */
   proof?: string;
-  /** Card only: links straight to the repository instead of a project page. */
-  cardOnly?: boolean;
+  /**
+   * The project page /projekte/<slug>/ exists (stage 3). Without one the row
+   * links straight to the first link, so no row ever points to a 404.
+   */
+  hasPage?: boolean;
+  preview?: ProjectPreview;
 }
 
 export const projects: Project[] = [
@@ -28,6 +39,7 @@ export const projects: Project[] = [
       'App für kurze tägliche Check-ins, entwickelt aus eigener Erfahrung mit Neurodivergenz.',
     stack: ['Angular', 'TypeScript', 'Firebase'],
     links: [{ label: 'Store', url: 'https://platzhalter.invalid/neuro-check-in/store' }],
+    preview: { src: 'images/projects/neuro-check-in.webp', width: 640, height: 336 },
   },
   {
     slug: 'videoflix',
@@ -56,6 +68,6 @@ export const projects: Project[] = [
       'REST-API für einen Online-Shop, containerisiert und mit automatischen Prüfungen abgesichert.',
     stack: ['Django REST', 'PostgreSQL', 'Docker'],
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/truck-signs-api' }],
-    cardOnly: true,
+    preview: { src: 'images/projects/truck-signs-api.webp', width: 640, height: 306 },
   },
 ];

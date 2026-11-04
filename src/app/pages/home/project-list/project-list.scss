@@ -7,6 +7,7 @@
   border-top: var(--border-width) solid var(--color-accent);
 
   li {
+    position: relative;
     border-bottom: var(--border-width) solid var(--color-accent);
   }
 }
@@ -53,6 +54,11 @@
   font-size: var(--text-sm);
 }
 
+// Decorative preview; shown next to the row from tablet on (template).
+.preview {
+  display: none;
+}
+
 // Accent on a dark surface: only for large or highlighted text (see tokens).
 .proof {
   font-family: var(--font-code);
@@ -61,6 +67,24 @@
 }
 
 @include bp.from(tablet) {
+  // Leaves room on the right for the preview, like the template.
+  .projects {
+    max-width: 65%;
+  }
+
+  .project:hover .preview,
+  .project:focus-visible .preview {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: calc(100% + var(--space-lg));
+    width: calc(54% - var(--space-lg));
+    height: auto;
+    border-radius: var(--radius-card);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
   .project {
     grid-template-columns: 1fr auto;
     column-gap: var(--space-xl);
