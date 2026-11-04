@@ -72,6 +72,11 @@ createServer((req, res) => {
   }
   const file = normalize(join(root, pathname));
 
+  // The host maps /icons/ to Apache's own icon folder, so our files there are never served.
+  if (pathname.startsWith('/icons/')) {
+    return send(req, res, 404, join(root, '404', 'index.html'));
+  }
+
   // Never serve anything outside the build folder.
   if (file !== root && !file.startsWith(root + sep)) {
     return send(req, res, 404, join(root, '404', 'index.html'));

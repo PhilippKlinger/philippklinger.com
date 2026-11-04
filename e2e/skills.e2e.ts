@@ -24,13 +24,13 @@ test('[B13] alle Icons kommen aus einer Sprite-Datei und existieren dort', async
     .locator('use')
     .evaluateAll((uses) => uses.map((use) => use.getAttribute('href') ?? ''));
   expect(hrefs.length).toBe(focusAreas.flatMap((area) => area.tools).length);
-  const sprite = await page.request.get('/icons/tools.svg');
+  const sprite = await page.request.get('/images/tools.svg');
   expect(sprite.status()).toBe(200);
   expect(sprite.headers()['content-type']).toContain('image/svg+xml');
   const body = await sprite.text();
   for (const href of hrefs) {
     const [file, id] = href.split('#');
-    expect(file).toBe('/icons/tools.svg');
+    expect(file).toBe('/images/tools.svg');
     expect(body, `Symbol ${id} fehlt`).toContain(`id="${id}"`);
   }
   // No path data on the page itself: it would count against every page view.
