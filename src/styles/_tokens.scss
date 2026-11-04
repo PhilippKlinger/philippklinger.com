@@ -45,6 +45,8 @@
   // Header overlays the page; content below starts after this height.
   --header-height: 6rem;
   --content-width: 78rem;
+  // Long texts (legal pages) as in the template's "Legal Notice".
+  --reading-width: 60rem;
 
   @include bp.from(tablet) {
     --text-lg: 1.25rem;
