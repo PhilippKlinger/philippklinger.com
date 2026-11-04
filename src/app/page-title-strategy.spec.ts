@@ -42,8 +42,8 @@ describe('PageTitleStrategy', () => {
     await TestBed.inject(Router).navigateByUrl('/a#x');
     const meta = TestBed.inject(Meta);
     const canonical = TestBed.inject(DOCUMENT).querySelector('link[rel="canonical"]');
-    expect(canonical?.getAttribute('href')).toBe('https://philippklinger.com/a/');
-    expect(meta.getTag('property="og:url"')?.content).toBe('https://philippklinger.com/a/');
+    expect(canonical?.getAttribute('href')).toBe('https://philipp-klinger.com/a/');
+    expect(meta.getTag('property="og:url"')?.content).toBe('https://philipp-klinger.com/a/');
     expect(meta.getTag('property="og:title"')?.content).toBe('Seite A');
     expect(meta.getTag('property="og:description"')?.content).toBe('Beschreibung A');
   });
