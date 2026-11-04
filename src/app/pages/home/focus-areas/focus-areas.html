@@ -9,7 +9,13 @@
         <p class="description">{{ area.description }}</p>
         <ul class="tools">
           @for (tool of area.tools; track tool) {
-            <li>{{ tool }}</li>
+            <li>
+              <!-- Decorative: the visible name is the accessible text. -->
+              <svg aria-hidden="true">
+                <use [attr.href]="'/icons/tools.svg#' + toolIcons[tool]" />
+              </svg>
+              {{ tool }}
+            </li>
           }
         </ul>
       </li>
