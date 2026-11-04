@@ -22,6 +22,16 @@
   gap: var(--space-xs);
 }
 
+.built {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+
+  a {
+    color: inherit;
+  }
+}
+
 .copyright {
   font-family: var(--font-code);
   color: var(--color-accent);

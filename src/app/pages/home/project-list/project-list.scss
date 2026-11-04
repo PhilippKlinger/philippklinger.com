@@ -101,3 +101,9 @@
     align-self: center;
   }
 }
+
+// Link to the documentation below the list (PK-27).
+.more {
+  margin-top: var(--space-lg);
+  font-family: var(--font-code);
+}

@@ -6,7 +6,7 @@ describe('projects', () => {
       'neuro-check-in',
       'videoflix',
       'conduit',
-      'truck-signs-api',
+      'developer-workspace-kit',
     ]);
   });
 
@@ -14,6 +14,12 @@ describe('projects', () => {
     expect(project.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(project.label).toBeTruthy();
     expect(project.summary).toBeTruthy();
+  });
+
+  it('keeps health topics out of the project texts (DECISIONS 2026-11-04)', () => {
+    for (const project of projects) {
+      expect(project.summary).not.toMatch(/neurodiv/i);
+    }
   });
 
   it.each(projects)('"$title" has at least one https link', (project) => {

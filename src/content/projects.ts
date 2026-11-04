@@ -35,8 +35,9 @@ export const projects: Project[] = [
     slug: 'neuro-check-in',
     title: 'Neuro Check-in',
     label: 'Eigenes Produkt',
+    // Wording of the final CV, without health topics (DECISIONS 2026-11-04).
     summary:
-      'App für kurze tägliche Check-ins, entwickelt aus eigener Erfahrung mit Neurodivergenz.',
+      'Eigene Android-App zur Selbstreflexion im Google Play Store: Offline-Datenspeicherung mit SQLite, PDF-Export sowie automatisierte Unit- und E2E-Tests.',
     stack: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'Sentry'],
     // The row links to the website; the store link follows on the project page.
     links: [
@@ -53,8 +54,8 @@ export const projects: Project[] = [
     title: 'Videoflix',
     label: 'Weiterbildung',
     summary:
-      'Videoplattform mit Django-Backend, HLS-Streaming und Auslieferung per CI/CD auf einen eigenen Server.',
-    stack: ['Django', 'PostgreSQL', 'Redis', 'Docker', 'GitHub Actions'],
+      'Videoplattform mit Angular, Django REST Framework und PostgreSQL: asynchrone Videoverarbeitung mit Redis/RQ, HLS-Streaming, JWT-Auth und rollenbasierte Zugriffe; CI mit automatisierten Tests und Security-Checks, Deployment auf einen eigenen Server.',
+    stack: ['Angular', 'Django', 'PostgreSQL', 'Redis', 'Docker', 'GitHub Actions'],
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/videoflix-backend' }],
     proof: 'CI → Image → Deploy → Betrieb',
   },
@@ -63,18 +64,18 @@ export const projects: Project[] = [
     title: 'Conduit',
     label: 'Weiterbildung',
     summary:
-      'Fullstack-Anwendung, containerisiert und mit einer Pipeline von Build bis Deployment.',
+      'Fullstack-Anwendung, mit Docker Compose containerisiert; GitHub Actions für Image-Builds, GHCR-Publishing und automatisiertes Staging-Deployment mit Healthchecks.',
     stack: ['Angular', 'Django', 'Docker', 'GitHub Actions'],
     links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/conduit-container' }],
   },
   {
-    slug: 'truck-signs-api',
-    title: 'Truck Signs API',
-    label: 'Weiterbildung',
+    slug: 'developer-workspace-kit',
+    title: 'Developer Workspace Kit',
+    label: 'Eigenes Projekt',
     summary:
-      'REST-API für einen Online-Shop, containerisiert und mit automatischen Prüfungen abgesichert.',
-    stack: ['Django REST', 'PostgreSQL', 'Docker'],
-    links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/truck-signs-api' }],
-    preview: { src: 'images/projects/truck-signs-api.webp', width: 640, height: 306 },
+      'Node.js-basiertes Plugin für Claude Code zur geführten, automatisierten Einrichtung neuer und bestehender Fullstack- und DevSecOps-Workspaces, mit konfigurierbaren Projektregeln, Skills, Hooks und CI/CD-Vorlagen für Agentic Coding.',
+    stack: ['Node.js', 'Claude Code', 'GitHub Actions'],
+    // TODO(before production): replace with the public kit repository (PK-25).
+    links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger' }],
   },
 ];

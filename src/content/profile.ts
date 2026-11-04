@@ -3,7 +3,8 @@
 export const profile = {
   name: 'Philipp Klinger',
   role: 'Software Engineer · Fullstack & DevSecOps',
-  location: 'Deutschland',
+  // Region instead of the village (Grill 2026-11-04).
+  location: 'Raum Osnabrück',
   email: 'hello@philipp-klinger.com',
   github: 'https://github.com/PhilippKlinger',
   linkedin: 'https://www.linkedin.com/in/philipp-klinger',
@@ -24,18 +25,19 @@ export const availability = [
 
 export const navigation = [
   { label: 'Über mich', fragment: 'ueber-mich' },
-  { label: 'Schwerpunkte', fragment: 'schwerpunkte' },
+  { label: 'Skills', fragment: 'skills' },
   { label: 'Projekte', fragment: 'projekte' },
   { label: 'Kontakt', fragment: 'kontakt' },
 ];
 
-// DRAFT: about section, wording to be approved.
+// DRAFT: about section, wording to be approved. Facts follow the final CV.
 export const about = {
   intro:
-    'Ich entwickle Webanwendungen von der Oberfläche bis zum Server und sorge dafür, dass sie sicher und nachvollziehbar ausgeliefert werden. Nach gut fünf Jahren als Service-Ingenieur für komplexe Prüfsysteme bringe ich Fehleranalyse unter Druck mit.',
+    'Ich entwickle Webanwendungen vom Frontend bis zum Backend und sorge dafür, dass sie sicher und nachvollziehbar deployt werden. Aus über vier Jahren im Field Service für komplexe Fahrzeugprüfsysteme bringe ich systematische Fehleranalyse unter Druck mit.',
   points: [
     'Offen für Remote, hybrid oder vor Ort, ab sofort verfügbar.',
-    'Ich arbeite mit KI-Werkzeugen, prüfe ihre Ergebnisse aber mit Tests, Reviews und CI.',
-    'Aus dem Service kenne ich systematische Fehlersuche an Systemen, die laufen müssen.',
+    // The approved AI sentence lives here instead of the hero (Grill 2026-11-04).
+    profile.aiNote,
+    'Aus dem Field Service kenne ich Troubleshooting an Systemen, die laufen müssen.',
   ],
 };

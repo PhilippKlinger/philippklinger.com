@@ -5,6 +5,11 @@
     </a>
     <p>{{ profile.role }}</p>
     <p>{{ profile.location }}</p>
+    <!-- Short note on how the site is built (Grill 2026-11-04, option C). -->
+    <p class="built">
+      Built with Angular · CI/CD ·
+      <a [href]="repositoryUrl" i18n>Source on GitHub</a>
+    </p>
   </div>
 
   <p class="copyright">© {{ profile.name }} {{ year }}</p>
@@ -13,6 +18,7 @@
     <li><a [href]="profile.github">GitHub</a></li>
     <li><a [href]="profile.linkedin">LinkedIn</a></li>
     <li><a [href]="'mailto:' + profile.email" i18n>E-Mail</a></li>
+    <li><a [href]="docsUrl">Docs</a></li>
     <!-- Plain links with trailing slash: the canonical URL on Apache, no 301. -->
     <li><a href="/impressum/" i18n>Impressum</a></li>
     <li><a href="/datenschutz/" i18n>Datenschutz</a></li>
