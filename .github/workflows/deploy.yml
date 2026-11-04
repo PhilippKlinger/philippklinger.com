@@ -1,0 +1,97 @@
+# Deploys the static build via FTPS to All-Inkl (spec 3.5).
+# main is protected by required checks, so every push here passed CI before.
+# Upload with lftp from the Ubuntu archive instead of a third-party action:
+# no foreign code ever sees the FTP credentials.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two uploads into the same folder at once.
+concurrency:
+  group: deploy-preview
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    name: Deploy preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: preview
+      url: https://preview.philipp-klinger.com
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Check build output before upload
+        working-directory: dist/philippklinger/browser
+        run: |
+          set -Eeuo pipefail
+          test -f .htaccess || { echo "::error::.htaccess missing in the build"; exit 1; }
+          test -f 404/index.html || { echo "::error::404 page missing in the build"; exit 1; }
+          if grep -rlF 'platzhalter.invalid' .; then
+            echo "::error::Placeholder links must never go live."
+            exit 1
+          fi
+
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      # The FTP user only sees the preview folder, so "." is its root.
+      # --delete removes files of older builds; .well-known holds the
+      # Let's Encrypt challenges of the host and is left alone.
+      - name: Upload via FTPS
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+          lftp -c "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate true;
+            set net:max-retries 2;
+            open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
+            mirror --reverse --delete --verbose --parallel=4 \
+              --exclude-glob index.csr.html \
+              --exclude '^\.well-known/' \
+              dist/philippklinger/browser/ .
+          "
+
+      # Readiness: the host answers with the rules of the new .htaccess.
+      - name: Smoke test preview
+        env:
+          SITE: https://preview.philipp-klinger.com
+        run: |
+          set -Eeuo pipefail
+          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
+          check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
+          check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
+          check "HSTS missing" "$home" '^strict-transport-security:'
+          check "preview is indexable" "$home" '^x-robots-tag: noindex'
+          check "no gzip" "$(curl -sSI -H 'Accept-Encoding: gzip' "$SITE/")" '^content-encoding: gzip'
+          check "/imprint not redirected" "$(curl -sSI "$SITE/imprint")" '^location: .*/impressum/'
+          check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
+          echo "Preview answers as expected."

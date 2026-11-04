@@ -51,6 +51,11 @@ jobs:
       - name: Build static site
         run: npm run build
 
+      # The deploy uploads this folder as is; without .htaccess the host would
+      # serve the site without headers, redirects and 404 page.
+      - name: Check Apache rules in build output
+        run: test -f dist/philippklinger/browser/.htaccess
+
       # Angular budgets measure raw sizes; the spec limits the compressed start bundle.
       - name: Check start bundle size (max 150 kB gzip)
         working-directory: dist/philippklinger/browser

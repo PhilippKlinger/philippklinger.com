@@ -163,3 +163,14 @@ test('[Hosting] die 404-Seite selbst ist erreichbar', async ({ request }) => {
   const response = await request.get(notFoundPage);
   expect(response.status()).toBe(200);
 });
+
+// The test server sends the CSP from public/.htaccess, so a violation shows up
+// as a console error in the check "keine Konsolenfehler" on every page.
+test('[Sicherheit · Spec 3.3] Content-Security-Policy aus der .htaccess ist gesetzt', async ({
+  request,
+}) => {
+  const csp = (await request.get('/')).headers()['content-security-policy'] ?? '';
+  expect(csp, 'CSP fehlt').toContain("default-src 'self'");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp, 'Skripte nur vom eigenen Server').not.toMatch(/script-src[^;]*'unsafe-inline'/);
+});
