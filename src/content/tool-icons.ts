@@ -1,4 +1,5 @@
-// Tool icons of the skills section (B13, spec 3.2): symbol ids in public/icons/tools.svg.
+// Tool icons of the skills section (B13, spec 3.2): symbol ids in public/images/tools.svg.
+// Not under /icons/: the host maps that path to Apache's own icon folder.
 // One cached sprite instead of inline paths, which would land in the HTML and the JS bundle.
 // Logos: Simple Icons 16.36.0, CC0 1.0 (https://simpleicons.org), paths copied unchanged from
 // https://cdn.jsdelivr.net/npm/simple-icons@16.36.0/icons/<slug>.svg. Tools without a Simple Icon
