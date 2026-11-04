@@ -4,8 +4,9 @@
 // - "/impressum/" serves "impressum/index.html"
 // - unknown paths get status 404 with the prerendered "404/index.html"
 // - text responses are gzip-compressed when the client accepts it (mod_deflate)
+// - every response carries the Content-Security-Policy from public/.htaccess
 // No dependencies on purpose: node:http is enough for a test server.
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
@@ -36,8 +37,21 @@ if (!existsSync(join(root, 'index.html'))) {
 
 const compressible = new Set(['.html', '.js', '.css', '.json', '.txt', '.svg']);
 
+// Same policy as on the host: read it from the .htaccess instead of copying it.
+function readCsp() {
+  const htaccess = readFileSync('public/.htaccess', 'utf8');
+  const match = htaccess.match(/Header always set Content-Security-Policy "([^"]+)"/);
+  if (!match) throw new Error('No Content-Security-Policy found in public/.htaccess');
+  return match[1];
+}
+
+const csp = readCsp();
+
 function send(req, res, status, file) {
-  const headers = { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' };
+  const headers = {
+    'Content-Type': types[extname(file)] ?? 'application/octet-stream',
+    'Content-Security-Policy': csp,
+  };
   const compress = compressible.has(extname(file));
   const gzip = compress && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '');
   if (compress) headers['Vary'] = 'Accept-Encoding';
