@@ -60,15 +60,6 @@ jobs:
           echo "Start bundle: ${size} bytes gzip"
           test "${size}" -le 153600
 
-      # Missing links point to https://platzhalter.invalid/... and must never go live.
-      - name: Check for placeholder links
-        run: |
-          set -Eeuo pipefail
-          if grep -rlF 'platzhalter.invalid' dist/philippklinger/browser; then
-            echo "::error::Placeholder links found in the build output (files listed above)."
-            exit 1
-          fi
-
       - name: Audit dependencies (high and critical)
         run: npm audit --audit-level=high
 
@@ -80,6 +71,16 @@ jobs:
         with:
           name: sbom
           path: sbom.cdx.json
+
+      # Last on purpose: a branch with intended placeholders still gets audit and SBOM.
+      # Missing links point to https://platzhalter.invalid/... and must never go live.
+      - name: Check for placeholder links
+        run: |
+          set -Eeuo pipefail
+          if grep -rlF 'platzhalter.invalid' dist/philippklinger/browser; then
+            echo "::error::Placeholder links found in the build output (files listed above)."
+            exit 1
+          fi
 
   # Separate from "quality" on purpose: a red placeholder check must not hide
   # the browser findings, so this job builds the site itself.
