@@ -30,6 +30,11 @@
   font-weight: var(--weight-bold);
   font-size: var(--text-lg);
   line-height: 1;
+
+  // One word per line like the template logo.
+  span {
+    display: block;
+  }
 }
 
 // Three lines drawn with one element and its two pseudo elements.
