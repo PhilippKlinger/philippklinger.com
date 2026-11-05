@@ -36,7 +36,7 @@ flowchart LR
   Main --> Dist["dist/ (statisches HTML je Route)"]
 ```
 
-Die Workflows liegen in [`.github/workflows/`](.github/workflows/). Das automatische Deployment auf den Webspace folgt.
+Die Workflows liegen in [`.github/workflows/`](.github/workflows/). `deploy.yml` lädt jeden Merge per FTPS auf die Vorschau; dieselben Dateien gehen nach Freigabe auf die Hauptdomain.
 
 ## Lokal starten
 
