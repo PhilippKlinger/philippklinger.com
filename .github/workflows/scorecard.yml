@@ -1,0 +1,43 @@
+# Rates the repository against the OpenSSF Scorecard checks and feeds the README badge.
+# publish_results makes the API enforce rules on this file: no write permissions or
+# env/defaults at the top level, no job env, container or environment, Ubuntu-hosted
+# runner, and only allow-listed actions in the job. Do not add other steps here.
+name: Scorecard
+
+on:
+  branch_protection_rule:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # id-token proves the origin of the published result, security-events uploads the SARIF.
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload results to code scanning
+        uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
+        with:
+          sarif_file: results.sarif
