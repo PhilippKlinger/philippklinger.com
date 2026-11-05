@@ -185,6 +185,20 @@ test('[Hosting] die 404-Seite selbst ist erreichbar', async ({ request }) => {
   expect(response.status()).toBe(200);
 });
 
+// The folder exists through the project pages, and "Options -Indexes" answers 403 without a rule.
+for (const path of ['/projekte', '/projekte/']) {
+  test(`[Hosting] ${path} leitet zum Projektbereich der Startseite um`, async ({ request }) => {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(301);
+    expect(response.headers()['location']).toBe('/#projekte');
+  });
+}
+
+test('[Hosting] eine echte Projektseite bleibt erreichbar', async ({ request }) => {
+  const response = await request.get('/projekte/videoflix/', { maxRedirects: 0 });
+  expect(response.status()).toBe(200);
+});
+
 // The test server sends the CSP from public/.htaccess, so a violation shows up
 // as a console error in the check "keine Konsolenfehler" on every page.
 test('[Sicherheit · Spec 3.3] Content-Security-Policy aus der .htaccess ist gesetzt', async ({
