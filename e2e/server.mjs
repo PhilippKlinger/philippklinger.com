@@ -5,6 +5,7 @@
 // - unknown paths get status 404 with the prerendered "404/index.html"
 // - text responses are gzip-compressed when the client accepts it (mod_deflate)
 // - every response carries the Content-Security-Policy from public/.htaccess
+// - the redirects with a local target in public/.htaccess apply (mod_rewrite)
 // No dependencies on purpose: node:http is enough for a test server.
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -48,6 +49,18 @@ function readCsp() {
 
 const csp = readCsp();
 
+// Same redirects as on the host. Without the NE flag mod_rewrite escapes "#".
+function readRedirects() {
+  const htaccess = readFileSync('public/.htaccess', 'utf8');
+  const rules = htaccess.matchAll(/^RewriteRule \^(\S+)\$ (\/\S*) \[R=301([^\]]*)\]/gm);
+  return [...rules].map(([, pattern, target, flags]) => ({
+    pattern: new RegExp(`^/${pattern}$`),
+    location: flags.split(',').includes('NE') ? target : target.replaceAll('#', '%23'),
+  }));
+}
+
+const redirects = readRedirects();
+
 function send(req, res, status, file) {
   const headers = {
     'Content-Type': types[extname(file)] ?? 'application/octet-stream',
@@ -71,6 +84,12 @@ createServer((req, res) => {
     pathname = '/';
   }
   const file = normalize(join(root, pathname));
+
+  const redirect = redirects.find(({ pattern }) => pattern.test(pathname));
+  if (redirect) {
+    res.writeHead(301, { Location: redirect.location });
+    return res.end();
+  }
 
   // The host maps /icons/ to Apache's own icon folder, so our files there are never served.
   if (pathname.startsWith('/icons/')) {

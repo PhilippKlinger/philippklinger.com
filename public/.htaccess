@@ -1,6 +1,7 @@
 # Apache rules for the static build on All-Inkl (spec 3.3).
 # The same file serves preview.philipp-klinger.com and philipp-klinger.com.
 # e2e/server.mjs reads the Content-Security-Policy below, keep it on one line.
+# It also reads the redirects with a local target, keep their format.
 
 Options -Indexes
 DirectoryIndex index.html
@@ -19,6 +20,8 @@ RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 # URLs of the legacy site.
 RewriteRule ^imprint/?$ /impressum/ [R=301,L]
 RewriteRule ^navigation/?$ / [R=301,L]
+# The folder only exists through the project pages; NE keeps the "#" unescaped.
+RewriteRule ^projekte/?$ /#projekte [R=301,NE,L]
 
 # The CSR shell of the build is not part of the site.
 RewriteRule ^index\.csr\.html$ - [R=404,L]
