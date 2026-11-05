@@ -16,6 +16,24 @@ interface ProfilePage {
   mainEntity: { '@type': string; name: string; sameAs: string[] };
 }
 
+test.describe('llms.txt', () => {
+  test('[SEO · Spec Stufe 3] /llms.txt ist UTF-8-Text und nennt jedes Projekt aus den Daten', async ({
+    request,
+  }) => {
+    const response = await request.get('/llms.txt');
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('text/plain');
+    expect(response.headers()['content-type']).toContain('charset=utf-8');
+    const body = await response.text();
+    expect(body).toContain(profile.claim);
+    // Decoded correctly only if the umlaut survives ("Raum Osnabrück").
+    expect(body).toContain(profile.location);
+    for (const project of projects) {
+      expect(body).toContain(project.title);
+    }
+  });
+});
+
 test.describe('robots.txt und Sitemap', () => {
   test('[SEO · Spec 3.2] robots.txt erlaubt alles und nennt die Sitemap', async ({ request }) => {
     const response = await request.get('/robots.txt');
