@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/PhilippKlinger/philippklinger.com/badge)](https://scorecard.dev/viewer/?uri=github.com/PhilippKlinger/philippklinger.com)
 
 Portfolio-Website von Philipp Klinger (DevSecOps & Fullstack). Die Seite stellt Projekte mit Nachweisen vor und ist selbst ein Beleg: Jede Änderung läuft über Pull Request, automatische Prüfungen und einen nachvollziehbaren Build.
 
@@ -37,6 +38,8 @@ flowchart LR
 ```
 
 Die Workflows liegen in [`.github/workflows/`](.github/workflows/). `deploy.yml` lädt jeden Merge per FTPS auf die Vorschau; dieselben Dateien gehen nach Freigabe auf die Hauptdomain.
+
+Jeder Build wird signiert; eine ausgelieferte Datei lässt sich so prüfen: `gh attestation verify <datei> -R PhilippKlinger/philippklinger.com`.
 
 ## Lokal starten
 
