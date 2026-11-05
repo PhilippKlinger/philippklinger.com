@@ -5,6 +5,8 @@
 Options -Indexes
 DirectoryIndex index.html
 ErrorDocument 404 /404/index.html
+# The host sends plain text without a charset; llms.txt contains umlauts.
+AddCharset utf-8 .txt
 
 RewriteEngine On
 
