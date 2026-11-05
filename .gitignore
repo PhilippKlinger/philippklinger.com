@@ -60,3 +60,6 @@ private/
 /playwright-report/
 /e2e-report/
 /.lighthouseci/
+
+# Output of scripts/collect-status.mjs, uploaded by the status workflow only
+/status.json

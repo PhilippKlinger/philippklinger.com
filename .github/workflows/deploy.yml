@@ -52,6 +52,14 @@ jobs:
       - name: Build static site
         run: npm run build
 
+      # What is live, for the status collector. Part of the artifact, so production
+      # reports the commit of exactly the build it received.
+      - name: Write version file
+        run: |
+          set -Eeuo pipefail
+          jq -nc --arg sha "$GITHUB_SHA" --arg builtAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{sha: $sha, builtAt: $builtAt}' > dist/philippklinger/browser/version.json
+
       - name: Check build output before upload
         working-directory: dist/philippklinger/browser
         run: |
@@ -88,7 +96,8 @@ jobs:
 
       # The FTP user only sees the preview folder, so "." is its root.
       # --delete removes files of older builds; .well-known holds the
-      # Let's Encrypt challenges of the host and is left alone.
+      # Let's Encrypt challenges of the host and is left alone, like status.json,
+      # which is not part of the build but comes from the status workflow.
       - name: Upload via FTPS
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
@@ -105,6 +114,7 @@ jobs:
             mirror --reverse --delete --verbose --parallel=4 \
               --exclude-glob index.csr.html \
               --exclude '^\.well-known/' \
+              --exclude '^status\.json$' \
               dist/philippklinger/browser/ .
           "
 
@@ -168,6 +178,7 @@ jobs:
             mirror --reverse --delete --verbose --parallel=4 \
               --exclude-glob index.csr.html \
               --exclude '^\.well-known/' \
+              --exclude '^status\.json$' \
               site/ .
           "
 
