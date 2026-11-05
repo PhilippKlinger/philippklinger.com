@@ -59,18 +59,17 @@
   color: var(--color-text-muted);
 
   li {
-    position: relative;
-    padding-left: var(--space-md);
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
   }
 
-  // Accent marker instead of the template's icons.
-  li::before {
-    content: '›';
-    position: absolute;
-    left: 0;
-    font-family: var(--font-code);
-    font-weight: var(--weight-bold);
-    color: var(--color-accent);
+  // Fixed size so the external sprite cannot shift the text when it loads.
+  svg {
+    flex: none;
+    width: 1.5em;
+    height: 1.5em;
+    fill: var(--color-accent);
   }
 }
 

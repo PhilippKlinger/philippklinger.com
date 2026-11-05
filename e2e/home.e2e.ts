@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { about } from '../src/content/profile';
 
 // Start page against the template "Version 2" (docs/design in the private
 // workspace), spec 3.4 (sections, tokens, motion) and spec 5 (content).
@@ -192,6 +193,17 @@ test.describe('Abschnitte', () => {
     await expect(about.locator('.card li')).toHaveCount(3);
     await expect(about.locator('.card')).toContainText('KI nutze ich als Werkzeug');
     await expect(page.locator('.hero')).not.toContainText('KI nutze ich');
+  });
+
+  test('[B14] Über mich: jeder Punkt zeigt ein dekoratives Icon und seinen Text', async ({
+    page,
+  }) => {
+    const points = page.locator('#ueber-mich .points li');
+    await expect(points).toHaveCount(3);
+    await expect(points).toHaveText(about.points.map((point) => point.text));
+    for (const point of await points.all()) {
+      await expect(point.locator('svg[aria-hidden="true"]')).toBeVisible();
+    }
   });
 
   test('[Spec 3.4/5] Skills: 3 Karten mit je 4–6 Werkzeugen', async ({ page }) => {
