@@ -1,0 +1,89 @@
+# Collects public signals for the evidence chain on the runner and uploads a single status.json
+# to the site's own domain, so the browser never has to call a third party.
+# A source that cannot be reached is a normal result inside the file and keeps the run green.
+# Red means something else: the document failed its validation or the upload failed.
+# Preview only for now: production has a required reviewer, which every hourly run would wait for.
+name: Status
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  attestations: read
+
+jobs:
+  status:
+    name: Collect and upload status
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Not the deploy group on purpose: a pending job in a group replaces the pending one
+    # before it, so an hourly run could cancel a waiting deploy. The two cannot collide,
+    # because the deploy excludes status.json from its mirror.
+    concurrency:
+      group: status-preview
+      cancel-in-progress: false
+    environment:
+      name: preview
+      url: https://preview.philipp-klinger.com/status.json
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # No npm ci: the collector only needs Node itself.
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Collect signals
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/collect-status.mjs status.json
+
+      # Independent of the collector's own validation: never replace a good file with a broken one.
+      - name: Check status.json before upload
+        run: |
+          set -Eeuo pipefail
+          size=$(wc -c < status.json)
+          test "${size}" -le 262144 || { echo "::error::status.json is too large"; exit 1; }
+          jq -e '.schemaVersion == 1 and (.generatedAt | type == "string")
+            and (.projects.videoflix.code.reachable | type == "boolean")
+            and (.projects.portfolio.code.reachable | type == "boolean")' status.json > /dev/null \
+            || { echo "::error::status.json has an unexpected structure"; exit 1; }
+
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      # Same TLS settings as the deploy. A single put: no mirror, nothing is ever deleted.
+      - name: Upload status.json via FTPS
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+          lftp -c "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate true;
+            set net:max-retries 2;
+            open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
+            put status.json -o status.json
+          "
+
+      # The upload only counts if the site really serves this run's file.
+      - name: Check uploaded file
+        env:
+          SITE: https://preview.philipp-klinger.com
+        run: |
+          set -Eeuo pipefail
+          expected=$(jq -r .generatedAt status.json)
+          served=$(curl -fsS --retry 3 --retry-delay 5 "$SITE/status.json" | jq -r .generatedAt)
+          test "$served" = "$expected" || { echo "::error::site does not serve the new status.json"; exit 1; }
+          echo "Site serves status.json of $served."
