@@ -1,0 +1,131 @@
+@use 'breakpoints' as bp;
+@use 'patterns';
+
+.project {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+// Touch targets of at least 44 px (web-quality rule).
+.back,
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.back {
+  gap: var(--space-xs);
+  justify-self: start;
+  font-family: var(--font-code);
+}
+
+.overview {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+// Heading size, not display size: long titles must fit 390 px.
+h1 {
+  font-size: var(--text-heading);
+}
+
+.label {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  padding: 0.125rem var(--space-xs);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+.summary {
+  margin-top: var(--space-md);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.proof {
+  margin-top: var(--space-md);
+  font-family: var(--font-code);
+  color: var(--color-accent);
+}
+
+// Stripes behind the image as in the list's preview, here at rest and without motion.
+.media {
+  --stripes-offset: var(--space-xs);
+
+  position: relative;
+  isolation: isolate;
+  align-self: start;
+
+  &::before {
+    @include patterns.stripes(135deg, 1rem);
+
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: var(--radius-card);
+    translate: var(--stripes-offset) var(--stripes-offset);
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-card);
+  }
+}
+
+.details {
+  display: grid;
+  gap: var(--space-lg);
+
+  h2 {
+    font-size: var(--text-lg);
+  }
+}
+
+.stack,
+.links {
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+
+  li {
+    padding: 0.125rem var(--space-sm);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-strong);
+    font-size: var(--text-sm);
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-lg);
+  font-family: var(--font-code);
+}
+
+@include bp.from(tablet) {
+  .overview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .media {
+    --stripes-offset: var(--space-sm);
+  }
+
+  .details {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+    padding-inline: var(--space-lg);
+  }
+}

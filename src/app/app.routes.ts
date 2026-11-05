@@ -3,6 +3,13 @@ import { Home } from './pages/home/home';
 import { Imprint } from './pages/imprint/imprint';
 import { NotFound } from './pages/not-found/not-found';
 import { Privacy } from './pages/privacy/privacy';
+import { ProjectPage } from './pages/project-page/project-page';
+import {
+  hasProjectPage,
+  projectDescription,
+  projectResolver,
+  projectTitle,
+} from './pages/project-page/project-route';
 
 const notFoundTitle = 'Seite nicht gefunden – Philipp Klinger';
 const notFoundData = {
@@ -12,7 +19,6 @@ const notFoundData = {
   canonical: false,
 };
 
-// Project pages (/projekte/:slug) follow in stage 3 together with their content.
 // "404" is prerendered as the Apache ErrorDocument; "**" covers client navigation.
 export const routes: Routes = [
   {
@@ -23,6 +29,13 @@ export const routes: Routes = [
       description:
         'Philipp Klinger, Software Engineer für Fullstack und DevSecOps: Projekte mit automatisierten Tests, CI/CD, Security-Checks und Operations.',
     },
+  },
+  {
+    path: 'projekte/:slug',
+    component: ProjectPage,
+    canMatch: [hasProjectPage],
+    title: projectTitle,
+    resolve: { project: projectResolver, description: projectDescription },
   },
   {
     path: 'impressum',
