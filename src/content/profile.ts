@@ -34,10 +34,14 @@ export const navigation = [
 export const about = {
   intro:
     'Ich entwickle Webanwendungen vom Frontend bis zum Backend und sorge dafür, dass sie sicher und nachvollziehbar deployt werden. Aus über vier Jahren im Field Service für komplexe Fahrzeugprüfsysteme bringe ich systematische Fehleranalyse unter Druck mit.',
+  // icon: symbol id in public/images/tools.svg.
   points: [
-    'Offen für Remote, hybrid oder vor Ort, ab sofort verfügbar.',
+    { icon: 'location', text: 'Offen für Remote, hybrid oder vor Ort, ab sofort verfügbar.' },
     // The approved AI sentence lives here instead of the hero (Grill 2026-11-04).
-    profile.aiNote,
-    'Aus dem Field Service kenne ich Troubleshooting an Systemen, die laufen müssen.',
+    { icon: 'cognition', text: profile.aiNote },
+    {
+      icon: 'wrench',
+      text: 'Aus dem Field Service kenne ich Troubleshooting an Systemen, die laufen müssen.',
+    },
   ],
 };

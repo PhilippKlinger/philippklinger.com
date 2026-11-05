@@ -17,8 +17,13 @@
       <h2 id="about-title" i18n>Über mich</h2>
       <p class="intro">{{ about.intro }}</p>
       <ul class="points">
-        @for (point of about.points; track point) {
-          <li>{{ point }}</li>
+        @for (point of about.points; track point.icon) {
+          <li>
+            <svg aria-hidden="true">
+              <use [attr.href]="'/images/tools.svg#' + point.icon" />
+            </svg>
+            {{ point.text }}
+          </li>
         }
       </ul>
     </div>
