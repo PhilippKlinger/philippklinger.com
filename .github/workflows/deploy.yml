@@ -105,6 +105,9 @@ jobs:
           check "preview is indexable" "$home" '^x-robots-tag: noindex'
           check "no gzip" "$(curl -sSI -H 'Accept-Encoding: gzip' "$SITE/")" '^content-encoding: gzip'
           check "/imprint not redirected" "$(curl -sSI "$SITE/imprint")" '^location: .*/impressum/'
+          check "/projekte not redirected" "$(curl -sSI "$SITE/projekte")" '^location: .*/#projekte'
+          check "/projekte/ not redirected" "$(curl -sSI "$SITE/projekte/")" '^location: .*/#projekte'
+          check "project page not 200" "$(curl -sSI "$SITE/projekte/videoflix/")" '^HTTP/[0-9.]+ 200'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
           echo "Preview answers as expected."
 
@@ -167,6 +170,9 @@ jobs:
           fi
           check "no gzip" "$(curl -sSI -H 'Accept-Encoding: gzip' "$SITE/")" '^content-encoding: gzip'
           check "/imprint not redirected" "$(curl -sSI "$SITE/imprint")" '^location: .*/impressum/'
+          check "/projekte not redirected" "$(curl -sSI "$SITE/projekte")" '^location: .*/#projekte'
+          check "/projekte/ not redirected" "$(curl -sSI "$SITE/projekte/")" '^location: .*/#projekte'
+          check "project page not 200" "$(curl -sSI "$SITE/projekte/videoflix/")" '^HTTP/[0-9.]+ 200'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
           check "www not redirected" "$(curl -sSI https://www.philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
           check "http not redirected" "$(curl -sSI http://philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
