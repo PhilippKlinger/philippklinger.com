@@ -1,5 +1,18 @@
 @use 'breakpoints' as bp;
 
+:host {
+  display: block;
+  // Static light area of the template's skills section. A translucent background
+  // needs no extra layer and cannot overflow; the cursor light still shows through.
+  background: radial-gradient(
+    40% 70% at left center,
+    color-mix(in srgb, var(--color-glow) 40%, transparent) 0%,
+    color-mix(in srgb, var(--color-glow) 35%, transparent) 30%,
+    color-mix(in srgb, var(--color-glow) 6%, transparent) 45%,
+    transparent 80%
+  );
+}
+
 .areas {
   display: grid;
   gap: var(--space-md);
