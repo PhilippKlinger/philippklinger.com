@@ -19,7 +19,26 @@ describe('projects', () => {
   it('keeps health topics out of the project texts (DECISIONS 2026-11-04)', () => {
     for (const project of projects) {
       expect(project.summary).not.toMatch(/neurodiv/i);
+      expect(project.description).not.toMatch(/neurodiv/i);
     }
+  });
+
+  it.each(projects)('"$title" has a project page', (project) => {
+    expect(project.hasPage).toBe(true);
+  });
+
+  it.each(projects)('"$title" has a meta description of 50 to 160 characters', (project) => {
+    expect(project.description.length).toBeGreaterThanOrEqual(50);
+    expect(project.description.length).toBeLessThanOrEqual(160);
+  });
+
+  it('links Videoflix live first, then both repositories', () => {
+    const videoflix = projects.find((project) => project.slug === 'videoflix');
+    expect(videoflix?.links.map((link) => link.url)).toEqual([
+      'https://videoflix.philipp-klinger.com',
+      'https://github.com/PhilippKlinger/videoflix-backend',
+      'https://github.com/PhilippKlinger/videoflix-frontend',
+    ]);
   });
 
   it.each(projects)('"$title" has at least one https link', (project) => {

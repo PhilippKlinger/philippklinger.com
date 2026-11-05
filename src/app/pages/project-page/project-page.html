@@ -1,0 +1,52 @@
+<article class="page project">
+  <a class="back" routerLink="/" fragment="projekte">
+    <span aria-hidden="true">←</span>
+    <span>{{ texts.back }}</span>
+  </a>
+
+  <div class="overview">
+    <div class="intro">
+      <h1>{{ project().title }}</h1>
+      <p class="label">{{ project().label }}</p>
+      <p class="summary">{{ project().summary }}</p>
+      @if (project().proof; as proof) {
+        <p class="proof">{{ proof }}</p>
+      }
+    </div>
+
+    @if (project().preview; as preview) {
+      <div class="media">
+        <!-- Above the fold, so no lazy loading. Empty alt: the text says it all. -->
+        <img
+          [src]="preview.src"
+          [width]="preview.width"
+          [height]="preview.height"
+          alt=""
+          fetchpriority="high"
+        />
+      </div>
+    }
+  </div>
+
+  <div class="card details">
+    <section aria-labelledby="stack-title">
+      <h2 id="stack-title">{{ texts.stack }}</h2>
+      <ul class="stack">
+        @for (tool of project().stack; track tool) {
+          <li>{{ tool }}</li>
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="links-title">
+      <h2 id="links-title">{{ texts.links }}</h2>
+      <ul class="links">
+        @for (link of project().links; track link.url) {
+          <li>
+            <a [href]="link.url">{{ link.label }}</a>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</article>
