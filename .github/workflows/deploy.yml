@@ -2,6 +2,8 @@
 # main is protected by required checks, so every push here passed CI before.
 # Upload with lftp from the Ubuntu archive instead of a third-party action:
 # no foreign code ever sees the FTP credentials.
+# The production job ships the exact files the preview job built and tested,
+# and only after a required reviewer approved the environment.
 name: Deploy
 
 on:
@@ -12,16 +14,16 @@ on:
 permissions:
   contents: read
 
-# Never run two uploads into the same folder at once.
-concurrency:
-  group: deploy-preview
-  cancel-in-progress: false
-
 jobs:
   preview:
     name: Deploy preview
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Never run two uploads into the same folder at once. Per job, so a production
+    # run waiting for approval does not hold back later preview deploys.
+    concurrency:
+      group: deploy-preview
+      cancel-in-progress: false
     environment:
       name: preview
       url: https://preview.philipp-klinger.com
@@ -53,6 +55,16 @@ jobs:
             echo "::error::Placeholder links must never go live."
             exit 1
           fi
+
+      # .htaccess is a hidden file and would be skipped by default.
+      - name: Keep build for production
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: dist/philippklinger/browser/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Install lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
@@ -95,3 +107,69 @@ jobs:
           check "/imprint not redirected" "$(curl -sSI "$SITE/imprint")" '^location: .*/impressum/'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
           echo "Preview answers as expected."
+
+  production:
+    name: Deploy production
+    needs: preview
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://philipp-klinger.com
+    steps:
+      - name: Download tested build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: site
+
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      # Same rules as the preview upload. This FTP user must only see the
+      # production folder: --delete removes everything else it can reach.
+      - name: Upload via FTPS
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+          lftp -c "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate true;
+            set net:max-retries 2;
+            open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
+            mirror --reverse --delete --verbose --parallel=4 \
+              --exclude-glob index.csr.html \
+              --exclude '^\.well-known/' \
+              site/ .
+          "
+
+      - name: Smoke test production
+        env:
+          SITE: https://philipp-klinger.com
+        run: |
+          set -Eeuo pipefail
+          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
+          check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
+          check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
+          check "HSTS missing" "$home" '^strict-transport-security:'
+          if echo "$home" | grep -qi '^x-robots-tag:'; then
+            echo "::error::production must stay indexable"
+            exit 1
+          fi
+          check "no gzip" "$(curl -sSI -H 'Accept-Encoding: gzip' "$SITE/")" '^content-encoding: gzip'
+          check "/imprint not redirected" "$(curl -sSI "$SITE/imprint")" '^location: .*/impressum/'
+          check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
+          check "www not redirected" "$(curl -sSI https://www.philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
+          check "http not redirected" "$(curl -sSI http://philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
+          check "robots.txt missing" "$(curl -sSI "$SITE/robots.txt")" '^HTTP/[0-9.]+ 200'
+          check "sitemap missing" "$(curl -sSI "$SITE/sitemap.xml")" '^HTTP/[0-9.]+ 200'
+          echo "Production answers as expected."
