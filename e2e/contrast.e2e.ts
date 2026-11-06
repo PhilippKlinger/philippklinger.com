@@ -19,8 +19,6 @@ for (const path of [...pages, notFoundPage]) {
     });
     const { violations, passes, incomplete } = await new AxeBuilder({ page })
       .withRules(['color-contrast'])
-      // Grey text with 3.1:1 on the haze. Task 6 removes this line along with that text.
-      .exclude('footer .built')
       .analyze();
     const readable = violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')));
     expect(readable, 'Text unter 4,5:1').toEqual([]);
