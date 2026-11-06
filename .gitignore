@@ -41,6 +41,7 @@ __screenshots__/
 
 # Status of the build, written by the deploy before prerendering
 /status-snapshot.json
+/build-info.json
 
 # System files
 .DS_Store
