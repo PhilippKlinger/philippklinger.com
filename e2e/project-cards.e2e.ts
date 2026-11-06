@@ -122,7 +122,7 @@ test.describe('Karten', () => {
     for (const link of await links.all()) {
       const box = (await link.boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(44);
-      expect(box.width, await link.textContent()).toBeGreaterThanOrEqual(44);
+      expect(box.width, await link.innerText()).toBeGreaterThanOrEqual(44);
     }
   });
 
