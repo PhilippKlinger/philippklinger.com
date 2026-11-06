@@ -3,6 +3,7 @@ import { deliveryPlans } from '../../../../content/delivery-plans';
 import { buildDeliveryView, deliveryTexts } from '../../../../content/software-delivery';
 import { ProjectStatus, StatusDocument } from '../../../../content/status';
 import { healthyStatus } from '../../../../content/status.fixture';
+import { DeliveryStatus } from '../../../delivery/delivery-status';
 import { STATUS_SNAPSHOT } from '../../../delivery/status-snapshot';
 import { DeliverySteps } from './delivery-steps';
 
@@ -134,13 +135,30 @@ describe('DeliverySteps', () => {
     await vi.waitFor(() => expect(statusLine(element)).toBe(deliveryTexts.refreshFailed));
   });
 
-  it('keeps a notice left by another page away from fixed content', async () => {
-    const measured = await renderSteps('videoflix');
-    await vi.waitFor(() => expect(statusLine(measured)).toBe(deliveryTexts.refreshFailed));
+  it('keeps the notice of a page that is gone away from fixed content', async () => {
+    TestBed.configureTestingModule({});
+    const measured = TestBed.createComponent(DeliverySteps);
+    measured.componentRef.setInput('slug', 'videoflix');
+    await measured.whenStable();
+    await vi.waitFor(() =>
+      expect(statusLine(measured.nativeElement)).toBe(deliveryTexts.refreshFailed),
+    );
+    measured.destroy();
+    const fixed = TestBed.createComponent(DeliverySteps);
+    fixed.componentRef.setInput('slug', 'developer-workspace-kit');
+    await fixed.whenStable();
+    expect(statusLine(fixed.nativeElement)).toBe('');
+  });
+
+  it('stops counting its project when the page is gone', async () => {
+    TestBed.configureTestingModule({});
     const fixture = TestBed.createComponent(DeliverySteps);
-    fixture.componentRef.setInput('slug', 'developer-workspace-kit');
+    fixture.componentRef.setInput('slug', 'conduit');
     await fixture.whenStable();
-    expect(statusLine(fixture.nativeElement)).toBe('');
+    const status = TestBed.inject(DeliveryStatus);
+    await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));
+    fixture.destroy();
+    expect(status.notice()).toBeNull();
   });
 
   it('shows nothing that reads Nachweiskette', async () => {

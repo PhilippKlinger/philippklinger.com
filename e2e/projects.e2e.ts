@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { projects } from '../src/content/projects';
 
-// Project pages /projekte/<slug>/ (spec 3.2, stage 3). The site-wide checks in
+// Project pages /projekte/<slug>/ (spec 7). The site-wide checks in
 // site, layout, seo and a11y cover them through the prerender manifest.
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;

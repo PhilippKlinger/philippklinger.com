@@ -296,6 +296,81 @@ test.describe('Abruf von /status.json', () => {
     await expect(steps(page)).toHaveCount(6);
   });
 
+  test.describe('später Abruf nach einem Seitenwechsel im Browser', () => {
+    const homeCard = (page: Page, title: string) =>
+      page.locator('#projekte article.card').filter({ hasText: title });
+
+    /** Keeps the answer back until the test has left the Conduit page. */
+    async function holdStatus(page: Page, change: Change) {
+      let answer = () => {};
+      const answered = new Promise<void>((resolve) => (answer = resolve));
+      let requests = 0;
+      await page.route('**/status.json', async (route) => {
+        requests += 1;
+        await answered;
+        await route.fulfill({ json: statusDocument(change) });
+      });
+      return { answer: () => answer(), requests: () => requests };
+    }
+
+    async function leaveConduitForHome(page: Page): Promise<void> {
+      await page.goto('/projekte/conduit/');
+      await expect(steps(page)).toHaveCount(4);
+      await page.locator('main a.back').click();
+      await expect(page.locator('#projekte article.card')).toHaveCount(5);
+      await expect(delivery(page)).toHaveCount(0);
+    }
+
+    const withoutConduit: Change = (document) => delete document.projects.conduit;
+
+    // The home page shows a Conduit card itself, so without conduit this notice is its own (AK6).
+    test('[AK6] die Startseite meldet nur, was ihre eigenen Karten betrifft', async ({ page }) => {
+      const held = await holdStatus(page, withoutConduit);
+      await leaveConduitForHome(page);
+      await expect(page.locator('#projekte .notice')).toBeEmpty();
+      held.answer();
+      await expect(homeCard(page, 'Conduit').locator('.signal b')).toHaveText(
+        'Stand nicht abrufbar',
+      );
+      await expect(homeCard(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+      await expect(page.getByRole('status')).toHaveText(refreshFailed);
+      expect(held.requests()).toBe(1);
+    });
+
+    test('[AK6] mit Conduit im Stand bleibt auf der Startseite kein Hinweis', async ({ page }) => {
+      const held = await holdStatus(page, () => undefined);
+      await leaveConduitForHome(page);
+      held.answer();
+      await expect(homeCard(page, 'Conduit').locator('.signal b')).toHaveText('CI grün');
+      await expect(page.getByRole('status')).toBeEmpty();
+      expect(held.requests()).toBe(1);
+    });
+
+    test('[AK6] der Hinweis der Startseite folgt nicht zurück auf Videoflix', async ({ page }) => {
+      await serveStatus(page, withoutConduit);
+      await page.goto('/projekte/videoflix/');
+      await expect(notice(page)).toBeEmpty();
+      await page.locator('main a.back').click();
+      await expect(page.locator('#projekte .notice')).toHaveText(refreshFailed);
+      await page.goBack();
+      await expect(page.locator('main h1')).toHaveText('Videoflix');
+      await expect(signal(page)).toContainText('2 von 6 belegt');
+      await expect(notice(page)).toBeEmpty();
+    });
+
+    test('[Spec 6.1] der Hinweis der Startseite folgt nicht auf festen Inhalt', async ({
+      page,
+    }) => {
+      await page.route('**/status.json', (route) => route.fulfill({ status: 500, body: 'error' }));
+      await page.goto('/projekte/developer-workspace-kit/');
+      await page.locator('main a.back').click();
+      await expect(page.locator('#projekte .notice')).toHaveText(refreshFailed);
+      await page.goBack();
+      await expect(page.locator('main h1')).toHaveText('Developer Workspace Kit');
+      await expect(notice(page)).toBeEmpty();
+    });
+  });
+
   test.describe('alter Stand ohne Conduit', () => {
     const withoutConduit: Change = (document) => delete document.projects.conduit;
 

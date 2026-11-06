@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input } from '@angular/core';
 import { deliveryPlans } from '../../../../content/delivery-plans';
 import {
   buildDeliveryView,
@@ -15,17 +15,18 @@ import { StateBadge } from '../../../delivery/state-badge/state-badge';
   styleUrl: './delivery-steps.scss',
 })
 export class DeliverySteps {
+  private readonly status = inject(DeliveryStatus);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly slug = input.required<string>();
 
   protected readonly texts = deliveryTexts;
   protected readonly view = computed<DeliveryView>(() => {
     const plan = this.plan();
-    const snapshot = plan.statusKey ? this.status.snapshot(plan.statusKey)() : null;
-    return buildDeliveryView(plan, snapshot);
+    const key = plan.statusKey;
+    return buildDeliveryView(plan, key ? this.status.snapshot(key, this.destroyRef)() : null);
   });
-  // Fixed content reads no status, so a notice left by another page would not apply to it.
-  protected readonly notice = computed(() => (this.plan().statusKey ? this.status.notice() : null));
+  protected readonly notice = this.status.notice;
 
-  private readonly status = inject(DeliveryStatus);
   private readonly plan = computed(() => deliveryPlans[this.slug()]);
 }
