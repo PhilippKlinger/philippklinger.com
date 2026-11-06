@@ -1002,6 +1002,163 @@ describe('parseStatusDocument', () => {
   });
 });
 
+describe('parseStatusDocument: entries of a station', () => {
+  function documentWith(change: Change): StatusDocument {
+    const document: StatusDocument = {
+      schemaVersion: 1,
+      generatedAt,
+      projects: { videoflix: provenStatus(), portfolio: provenStatus(), conduit: provenStatus() },
+    };
+    change(document.projects.videoflix);
+    return document;
+  }
+  const parsedWith = (change: Change) => parseStatusDocument(JSON.stringify(documentWith(change)));
+
+  const firstRepo = (status: ProjectStatus) => status.code.signals.repos[0];
+  const firstBuilt = (status: ProjectStatus) => status.supplyChain.signals.repos[0];
+
+  it.each<[string, Change]>([
+    ['components without fields', (s) => Object.assign(s.live.signals, { components: [{}, {}] })],
+    [
+      'a deployed commit as number',
+      (s) => Object.assign(s.live.signals.components[0], { deployedSha: 123 }),
+    ],
+    [
+      'a comparison as text',
+      (s) => Object.assign(s.live.signals.components[0], { matchesLatestGreen: 'yes' }),
+    ],
+    ['rulesets that are no list', (s) => Object.assign(firstRepo(s), { rulesets: {} })],
+    ['a ruleset without fields', (s) => Object.assign(firstRepo(s), { rulesets: [{}] })],
+    ['a repository without its name', (s) => Object.assign(firstRepo(s), { repo: undefined })],
+    [
+      'a pull request count as text',
+      (s) => Object.assign(firstRepo(s), { mergedPullRequests: '28' }),
+    ],
+    ['a negative count', (s) => Object.assign(firstRepo(s), { mergedPullRequests: -1 })],
+    [
+      'a link without source',
+      (s) =>
+        Object.assign(s.code, { links: [{ kind: 'repository', url: 'https://github.com/x' }] }),
+    ],
+    [
+      'a link without kind',
+      (s) => Object.assign(s.code, { links: [{ source: repo, url: 'https://github.com/x' }] }),
+    ],
+    [
+      'a workflow name as number on a link',
+      (s) => Object.assign(s.checks.links[0], { workflow: 1 }),
+    ],
+    ['empty stability signals', (s) => Object.assign(s.stability, { signals: {} })],
+    [
+      'half stability signals',
+      (s) => Object.assign(s.stability, { signals: { monitorsTotal: 3, uptime30d: null } }),
+    ],
+    ['a monitor count as text', (s) => Object.assign(s.stability.signals, { monitorsTotal: '3' })],
+    ['empty restore signals with a restore link', (s) => Object.assign(s.restore, { signals: {} })],
+    ['an unknown restore result', (s) => Object.assign(s.restore.signals, { result: 'maybe' })],
+    [
+      'a workflow with nothing but a state',
+      (s) => Object.assign(s.checks.signals, { workflows: [{ reachable: true }] }),
+    ],
+    [
+      'a workflow without a conclusion field',
+      (s) => Object.assign(s.checks.signals.workflows[0], { conclusion: undefined }),
+    ],
+    ['an attestation as text', (s) => Object.assign(firstBuilt(s), { attestation: 'signed' })],
+    ['an attestation without fields', (s) => Object.assign(firstBuilt(s), { attestation: {} })],
+    [
+      'a source commit as number',
+      (s) => Object.assign(firstBuilt(s).attestation!, { sourceSha: 1 }),
+    ],
+    ['an SBOM without fields', (s) => Object.assign(firstBuilt(s), { sbom: {} })],
+    ['a score as text', (s) => Object.assign(firstBuilt(s).scorecard, { score: '6,7' })],
+  ])('rejects %s', (_name, change) => {
+    expect(parsedWith(change)).toBeNull();
+  });
+
+  it('rejects a broken entry in the conduit block as well', () => {
+    const document = documentWith(() => undefined);
+    Object.assign(document.projects.conduit!.live.signals, { components: [{}] });
+    expect(parseStatusDocument(JSON.stringify(document))).toBeNull();
+  });
+
+  it('rejects a time that is no text', () => {
+    const text = JSON.stringify({ ...documentWith(() => undefined), generatedAt: 1762390691 });
+    expect(parseStatusDocument(text)).toBeNull();
+  });
+
+  it.each<[string, Change]>([
+    ['an image without sourceSha', (s) => delete firstBuilt(s).attestation!.sourceSha],
+    ['a run link without workflow', (s) => delete s.checks.links[0].workflow],
+    [
+      'a repository without attestation',
+      (s) => Object.assign(firstBuilt(s), { attestation: null }),
+    ],
+    ['everything the collector can leave open', (s) => Object.assign(s, emptyStatus())],
+  ])('accepts %s', (_name, change) => {
+    expect(parsedWith(change)).not.toBeNull();
+  });
+
+  it('accepts a file without conduit', () => {
+    const document = documentWith(() => undefined);
+    delete document.projects.conduit;
+    expect(parseStatusDocument(JSON.stringify(document))).not.toBeNull();
+  });
+
+  it('does not build a list per service, so a huge count cannot throw', () => {
+    const parsed = parsedWith((s) =>
+      Object.assign(s.stability.signals, { monitorsTotal: 2 ** 40, monitorsUp: 2 ** 40 }),
+    );
+    expect(stepView(step(['stability']), parsed!.projects.videoflix).state).toBe('verified');
+  });
+
+  // Whatever replaces a field: the parser refuses it, or the view can live with it.
+  it('never lets a wrong field through to a view that throws', () => {
+    const plan: DeliveryPlan = {
+      runningLabel: 'Läuft',
+      repoLabels,
+      steps: [
+        step(['code']),
+        step(['checks']),
+        step(['supplyChain']),
+        step(['image']),
+        step(['live', 'deployRun']),
+        step(['stability']),
+        step(['restore']),
+      ],
+    };
+    const original = documentWith(withDeployRun);
+    for (const path of fieldPaths(original.projects.videoflix)) {
+      for (const wrong of [null, 123, 1.5, -1, 'x', true, {}, [], [null], [{}]]) {
+        const parsed = parseStatusDocument(JSON.stringify(replaced(original, path, wrong)));
+        if (!parsed) continue;
+        const snapshot = pickProjectSnapshot(parsed, 'videoflix');
+        expect(() => buildDeliveryView(plan, snapshot), path.join('.')).not.toThrow();
+      }
+    }
+  });
+});
+
+function fieldPaths(value: unknown, path: string[] = []): string[][] {
+  if (typeof value !== 'object' || value === null) return [path];
+  const children = Object.entries(value).flatMap(([key, child]) =>
+    fieldPaths(child, [...path, key]),
+  );
+  return path.length > 0 ? [path, ...children] : children;
+}
+
+function replaced(document: StatusDocument, path: string[], value: unknown): StatusDocument {
+  const copy = JSON.parse(JSON.stringify(document)) as StatusDocument;
+  const parent = path
+    .slice(0, -1)
+    .reduce<Record<string, unknown>>(
+      (node, key) => node[key] as Record<string, unknown>,
+      copy.projects.videoflix as unknown as Record<string, unknown>,
+    );
+  parent[path[path.length - 1]] = value;
+  return copy;
+}
+
 describe('pickProjectSnapshot', () => {
   it('keeps only the project of the page', () => {
     const videoflix = healthyStatus();

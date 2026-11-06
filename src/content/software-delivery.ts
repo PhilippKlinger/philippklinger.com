@@ -190,7 +190,8 @@ function supplyChainProofs(repo: RepoSupplyChainSignal): Proof[] {
 function stabilityProofs({ reachable, signals }: ProjectStatus['stability']): Proof[] {
   const { monitorsTotal: total, monitorsUp: up } = signals;
   if (!reachable || !total || up === null) return [null];
-  return Array.from({ length: total }, (_, index) => index < up);
+  // One entry is enough, the state only asks whether any service is down.
+  return [up >= total];
 }
 
 function restoreProof({ testedAt, result }: ProjectStatus['restore']['signals']): Proof {
@@ -516,45 +517,108 @@ export function buildDeliveryView(plan: DeliveryPlan, snapshot: Snapshot): Deliv
   return { signal: signalOf(plan, steps, snapshot), steps, counter: counterOf(plan, steps) };
 }
 
+type Check = (value: unknown) => boolean;
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isObjectList(value: unknown): value is Record<string, unknown>[] {
-  return Array.isArray(value) && value.every(isObject);
-}
+const isText: Check = (value) => typeof value === 'string';
+const isFlag: Check = (value) => typeof value === 'boolean';
+const isNumber: Check = (value) => typeof value === 'number';
+const isCount: Check = (value) => Number.isSafeInteger(value) && (value as number) >= 0;
+const isRestoreResult: Check = (value) => value === 'passed' || value === 'failed';
+const orNull =
+  (check: Check): Check =>
+  (value) =>
+    value === null || check(value);
+const optional =
+  (check: Check): Check =>
+  (value) =>
+    value === undefined || check(value);
+const listOf =
+  (check: Check): Check =>
+  (value) =>
+    Array.isArray(value) && value.every(check);
+const shaped =
+  (fields: Record<string, Check>): Check =>
+  (value) =>
+    isObject(value) && Object.entries(fields).every(([key, check]) => check(value[key]));
 
-// The entries each station walks through, so a wrong shape cannot throw on the page.
-const ENTRY_LISTS: Partial<Record<StationKey, string>> = {
-  code: 'repos',
-  checks: 'workflows',
-  supplyChain: 'repos',
-  live: 'components',
+const isRuleset = shaped({
+  enforcement: isText,
+  target: isText,
+  appliesToDefaultBranch: isFlag,
+  ruleTypes: listOf(isText),
+});
+const isCodeRepo = shaped({
+  repo: isText,
+  reachable: isFlag,
+  isPublic: orNull(isFlag),
+  defaultBranch: orNull(isText),
+  mergedPullRequests: orNull(isCount),
+  rulesets: orNull(listOf(isRuleset)),
+});
+const isWorkflow = shaped({
+  repo: isText,
+  workflow: isText,
+  file: isText,
+  kind: isText,
+  reachable: isFlag,
+  conclusion: orNull(isText),
+  headSha: orNull(isText),
+  completedAt: orNull(isText),
+});
+// sourceSha came with Conduit, so older files do not have it.
+const isAttestation = shaped({
+  reachable: isFlag,
+  subjectDigest: orNull(isText),
+  provenanceCount: orNull(isCount),
+  sourceSha: optional(orNull(isText)),
+});
+const isBuiltRepo = shaped({
+  repo: isText,
+  reachable: isFlag,
+  attestation: orNull(isAttestation),
+  sbom: shaped({ reachable: isFlag, spdxVersion: orNull(isText), packageCount: orNull(isCount) }),
+  scorecard: shaped({ reachable: isFlag, score: orNull(isNumber), date: orNull(isText) }),
+});
+const isLiveComponent = shaped({
+  component: isText,
+  repo: isText,
+  reachable: isFlag,
+  deployedSha: orNull(isText),
+  builtAt: orNull(isText),
+  latestGreenSha: orNull(isText),
+  matchesLatestGreen: orNull(isFlag),
+});
+// workflow came with the deploy run, so links of older files do not have it.
+const isLink = shaped({
+  kind: isText,
+  source: isText,
+  url: isText,
+  workflow: optional(isText),
+});
+
+// Every field the view reads has its type checked here, so a wrong shape cannot throw on the page.
+const isSignalsOf: Record<StationKey, Check> = {
+  code: shaped({ repos: listOf(isCodeRepo) }),
+  checks: shaped({ workflows: listOf(isWorkflow) }),
+  supplyChain: shaped({ repos: listOf(isBuiltRepo) }),
+  live: shaped({ components: listOf(isLiveComponent) }),
+  stability: shaped({
+    monitorsTotal: orNull(isCount),
+    monitorsUp: orNull(isCount),
+    uptime24h: orNull(isNumber),
+    uptime30d: orNull(isNumber),
+    lastHeartbeatAt: orNull(isText),
+    oldestVisibleHeartbeatAt: orNull(isText),
+  }),
+  restore: shaped({ testedAt: orNull(isText), result: orNull(isRestoreResult) }),
 };
 
-function hasValidEntries(signals: Record<string, unknown>, key: StationKey): boolean {
-  const list = ENTRY_LISTS[key];
-  if (!list) return true;
-  const entries = signals[list];
-  if (!isObjectList(entries)) return false;
-  return (
-    key !== 'supplyChain' ||
-    entries.every((repo) => isObject(repo['sbom']) && isObject(repo['scorecard']))
-  );
-}
-
-function hasValidLinks(links: unknown): boolean {
-  return isObjectList(links) && links.every((link) => typeof link['url'] === 'string');
-}
-
 function isValidStation(station: unknown, key: StationKey): boolean {
-  return (
-    isObject(station) &&
-    typeof station['reachable'] === 'boolean' &&
-    isObject(station['signals']) &&
-    hasValidEntries(station['signals'], key) &&
-    hasValidLinks(station['links'])
-  );
+  return shaped({ reachable: isFlag, signals: isSignalsOf[key], links: listOf(isLink) })(station);
 }
 
 function hasAllStations(project: unknown): boolean {
@@ -579,7 +643,8 @@ function parseJson(text: string): unknown {
 export function parseStatusDocument(text: string): StatusDocument | null {
   const document = parseJson(text);
   if (!isObject(document) || document['schemaVersion'] !== STATUS_SCHEMA_VERSION) return null;
-  if (Number.isNaN(Date.parse(String(document['generatedAt'])))) return null;
+  const time = document['generatedAt'];
+  if (typeof time !== 'string' || Number.isNaN(Date.parse(time))) return null;
   const projects = document['projects'];
   return isObject(projects) && hasValidProjects(projects)
     ? (document as unknown as StatusDocument)
