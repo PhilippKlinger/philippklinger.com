@@ -111,8 +111,10 @@ jobs:
       - name: Build static site
         run: npm run build
 
+      # No --with-deps: the runner image ships the libraries; apt only added fonts the
+      # tests do not use, and a slow mirror took 10 minutes of the job limit.
       - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       # Site-wide checks, axe (WCAG 2.2 AA) and screenshots in 4 viewports.
       - name: Run Playwright
