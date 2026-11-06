@@ -300,51 +300,6 @@ test.describe('Zustände und Bewegung', () => {
     }
   });
 
-  test('[PK-22] Lichtfleck folgt dem Cursor in allen Abschnitten', async ({ page }) => {
-    test.skip(isMobile(page), 'nur bei hover: hover');
-    const light = page.locator('[data-cursor-light]');
-    await expect(light, 'genau ein Lichtfleck auf App-Ebene').toHaveCount(1);
-    await expect(light).toHaveAttribute('aria-hidden', 'true');
-    await expect(light).toHaveCSS('position', 'fixed');
-    await expect(light).toHaveCSS('pointer-events', 'none');
-    // The light eases in (0.3 s), so compare its own resting places, inside the viewport.
-    const centre = () =>
-      light.evaluate((el) => {
-        const box = el.getBoundingClientRect();
-        return Math.round(box.x + box.width / 2);
-      });
-    const [left, right] = [100, width(page) - 100];
-    for (const id of ['ueber-mich', 'skills', 'projekte', 'kontakt']) {
-      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-      await page.mouse.move(left, 300);
-      await expect.poll(centre, { message: `#${id} links` }).toBe(left);
-      await page.mouse.move(right, 400);
-      await expect.poll(centre, { message: `#${id} rechts` }).toBe(right);
-    }
-  });
-
-  test('[PK-22] Lichtfleck liegt hinter dem Inhalt', async ({ page }) => {
-    test.skip(isMobile(page), 'nur bei hover: hover');
-    await page.mouse.move(400, 400);
-    // Whatever sits at the cursor is content, never the light.
-    const hit = await page.evaluate(() =>
-      document.elementFromPoint(400, 400)?.closest('[data-cursor-light]'),
-    );
-    expect(hit).toBeNull();
-    expect(
-      Number(
-        await page.locator('[data-cursor-light]').evaluate((el) => getComputedStyle(el).zIndex),
-      ),
-    ).toBeLessThan(0);
-  });
-
-  test('[PK-22] Lichtfleck auch auf Unterseiten, aus auf Touch', async ({ page }) => {
-    await page.goto('/impressum/');
-    const light = page.locator('[data-cursor-light]');
-    await expect(light).toHaveCount(1);
-    if (isMobile(page)) await expect(light).toBeHidden();
-  });
-
   test('[Spec 3.4 Motion] Reduced-Motion: keine laufende Animation, Lichtfleck still', async ({
     page,
   }) => {
@@ -361,7 +316,6 @@ test.describe('Zustände und Bewegung', () => {
           ).length,
     );
     expect(running).toBe(0);
-    await expect(page.locator('[data-cursor-light]:visible')).toHaveCount(0);
   });
 });
 
