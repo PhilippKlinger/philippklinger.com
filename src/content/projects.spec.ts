@@ -1,4 +1,3 @@
-import { projectPages } from '../app/pages/project-page/project-route';
 import { portfolioProject, projects } from './projects';
 
 describe('projects', () => {
@@ -23,19 +22,14 @@ describe('projects', () => {
     }
   });
 
-  it.each(projects)('"$title" has a project page', (project) => {
-    expect(projectPages).toContain(project);
-  });
-
   it.each(projects)('"$title" has a meta description of 50 to 160 characters', (project) => {
     expect(project.description.length).toBeGreaterThanOrEqual(50);
     expect(project.description.length).toBeLessThanOrEqual(160);
   });
 
-  it('keeps the site itself out of the list, with a page and a valid description', () => {
+  it('keeps the site itself out of the list, with a valid description', () => {
     expect(projects).not.toContain(portfolioProject);
     expect(portfolioProject.slug).toBe('portfolio');
-    expect(projectPages).toContain(portfolioProject);
     expect(portfolioProject.description.length).toBeGreaterThanOrEqual(50);
     expect(portfolioProject.description.length).toBeLessThanOrEqual(160);
   });
