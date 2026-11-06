@@ -1,0 +1,99 @@
+// Frame of a card on the start page: the project cards and the card of the reports share it.
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
+  padding: var(--space-md);
+  border-color: var(--color-line);
+  background: var(--color-card);
+  overflow-wrap: break-word;
+
+  @media (hover: hover) {
+    cursor: pointer;
+  }
+
+  @include bp.from(card) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    padding: var(--space-lg);
+  }
+}
+
+.card-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+
+  p {
+    color: var(--color-text-muted);
+  }
+}
+
+h3 {
+  font-size: var(--text-xl);
+  color: var(--color-text);
+}
+
+.signal {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-snug);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+
+  b {
+    font-weight: var(--weight-medium);
+    color: var(--color-accent);
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: var(--space-3xs) var(--space-compact);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-snug) var(--space-loose);
+  margin-top: auto;
+  padding-top: var(--space-xs);
+}
+
+.cta {
+  display: inline-grid;
+  place-items: center;
+  min-height: var(--size-touch);
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+
+  &:hover {
+    border-color: var(--color-text);
+    background: var(--color-text);
+  }
+}

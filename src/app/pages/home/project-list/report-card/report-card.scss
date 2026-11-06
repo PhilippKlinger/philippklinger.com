@@ -1,6 +1,6 @@
-// Same frame as a project card: these files are scoped to this component when loaded here.
-@use '../project-card/project-card';
-@use '../delivery-flow/delivery-flow';
+// Same frame as a project card, without its parts this card does not use.
+@use '../card-frame';
+@use '../flow-panel';
 
 .reports {
   display: grid;
@@ -12,8 +12,8 @@
 
 .report {
   display: grid;
-  gap: 0.125rem;
-  padding: 0.625rem calc(var(--space-sm) * 0.75);
+  gap: var(--space-3xs);
+  padding: var(--space-compact) var(--space-snug);
   border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-small);
   background: var(--color-step);
@@ -37,8 +37,8 @@
   a {
     display: inline-grid;
     align-items: center;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+    min-width: var(--size-touch);
+    min-height: var(--size-touch);
     color: var(--color-text);
 
     &:hover {
