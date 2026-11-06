@@ -4,6 +4,8 @@
 // Media queries cannot read custom properties, so they live here as Sass.
 $breakpoints: (
   tablet: 768px,
+  // Delivery cards split into text and panel (60rem).
+  card: 960px,
   desktop: 1440px,
 );
 

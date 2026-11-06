@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { docsUrl } from '../../../../content/site';
 import { ProjectKey, StatusDocument } from '../../../../content/status';
 import { healthyStatus } from '../../../../content/status.fixture';
-import { EvidenceChain, STATUS_SNAPSHOT, statusSnapshotKey } from './evidence-chain';
+import { STATUS_SNAPSHOT } from '../../../delivery/status-snapshot';
+import { EvidenceChain, statusSnapshotKey } from './evidence-chain';
 
 function statusDocument(): StatusDocument {
   const videoflix = healthyStatus();

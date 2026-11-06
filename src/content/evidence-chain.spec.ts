@@ -1,11 +1,6 @@
-import {
-  buildEvidenceChain,
-  isStale,
-  parseStatusDocument,
-  pickProjectSnapshot,
-  ProjectSnapshot,
-} from './evidence-chain';
-import { ProjectStatus, StationKey, StatusDocument } from './status';
+import { buildEvidenceChain } from './evidence-chain';
+import { ProjectSnapshot } from './software-delivery';
+import { ProjectStatus, StationKey } from './status';
 import { healthyStatus } from './status.fixture';
 
 function snapshot(change: (status: ProjectStatus) => void = () => undefined): ProjectSnapshot {
@@ -327,59 +322,6 @@ describe('buildEvidenceChain', () => {
   });
 });
 
-describe('parseStatusDocument', () => {
-  function validDocument(): StatusDocument {
-    return {
-      schemaVersion: 1,
-      generatedAt: '2026-11-06T00:58:11.069Z',
-      projects: { videoflix: healthyStatus(), portfolio: healthyStatus() },
-    };
-  }
-
-  it('accepts a complete document', () => {
-    const document = validDocument();
-    expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
-  });
-
-  it.each([
-    ['a truncated upload', '{"schemaVersion":1,"generatedAt":"2026'],
-    ['the HTML of the 404 page', '<!doctype html><html></html>'],
-    ['null', 'null'],
-    ['an empty body', ''],
-  ])('rejects %s', (_name, text) => {
-    expect(parseStatusDocument(text)).toBeNull();
-  });
-
-  it('rejects another schema version', () => {
-    expect(
-      parseStatusDocument(JSON.stringify({ ...validDocument(), schemaVersion: 2 })),
-    ).toBeNull();
-  });
-
-  it('rejects an invalid time', () => {
-    expect(
-      parseStatusDocument(JSON.stringify({ ...validDocument(), generatedAt: 'x' })),
-    ).toBeNull();
-  });
-
-  it('rejects a missing project', () => {
-    const { videoflix } = validDocument().projects;
-    const text = JSON.stringify({ ...validDocument(), projects: { videoflix } });
-    expect(parseStatusDocument(text)).toBeNull();
-  });
-
-  it.each<[string, (status: ProjectStatus) => void]>([
-    ['is missing', (status) => delete (status as Partial<ProjectStatus>).restore],
-    ['has no links', (status) => Object.assign(status.live, { links: null })],
-    ['has no signals', (status) => Object.assign(status.code, { signals: null })],
-    ['has no state', (status) => Object.assign(status.code, { reachable: 'yes' })],
-  ])('rejects a document in which a station %s', (_name, change) => {
-    const document = validDocument();
-    change(document.projects.portfolio);
-    expect(parseStatusDocument(JSON.stringify(document))).toBeNull();
-  });
-});
-
 describe('links of a station', () => {
   it('names the GHCR package', () => {
     const view = buildEvidenceChain(
@@ -395,45 +337,5 @@ describe('links of a station', () => {
       'videoflix',
     );
     expect(stationOf(view, 'supplyChain').links[0].label).toBe('Image in GHCR (conduit-container)');
-  });
-});
-
-describe('pickProjectSnapshot', () => {
-  it('keeps only the project of the page', () => {
-    const videoflix = healthyStatus();
-    const document: StatusDocument = {
-      schemaVersion: 1,
-      generatedAt: '2026-11-06T00:58:11.069Z',
-      projects: { videoflix, portfolio: healthyStatus() },
-    };
-    expect(pickProjectSnapshot(document, 'videoflix')).toEqual({
-      generatedAt: '2026-11-06T00:58:11.069Z',
-      status: videoflix,
-    });
-  });
-
-  it('returns null for a project the document does not contain yet', () => {
-    const document: StatusDocument = {
-      schemaVersion: 1,
-      generatedAt: '2026-11-06T00:58:11.069Z',
-      projects: { videoflix: healthyStatus(), portfolio: healthyStatus() },
-    };
-    expect(pickProjectSnapshot(document, 'conduit')).toBeNull();
-  });
-
-  it('stays empty without a document', () => {
-    expect(pickProjectSnapshot(null, 'videoflix')).toBeNull();
-  });
-});
-
-describe('isStale', () => {
-  const generatedAt = '2026-11-05T12:00:00Z';
-
-  it('accepts data up to one day old', () => {
-    expect(isStale(generatedAt, new Date('2026-11-06T12:00:00Z'))).toBe(false);
-  });
-
-  it('flags older data', () => {
-    expect(isStale(generatedAt, new Date('2026-11-06T12:00:01Z'))).toBe(true);
   });
 });

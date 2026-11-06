@@ -1,0 +1,31 @@
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-xs) * 0.75);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  color: var(--color-text-muted);
+
+  svg {
+    flex: none;
+    width: var(--space-sm);
+    height: var(--space-sm);
+  }
+}
+
+.state-verified {
+  color: var(--color-accent);
+}
+
+.state-partial {
+  color: var(--color-partial);
+}
+
+.state-deviation {
+  color: var(--color-error);
+}
+
+.check {
+  stroke: var(--color-bg);
+}

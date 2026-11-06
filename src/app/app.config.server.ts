@@ -2,8 +2,8 @@ import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
 import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
-import { STATUS_SNAPSHOT } from './pages/project-page/evidence-chain/evidence-chain';
-import { readStatusSnapshot } from './pages/project-page/evidence-chain/read-status-snapshot';
+import { readStatusSnapshot } from './delivery/read-status-snapshot';
+import { STATUS_SNAPSHOT } from './delivery/status-snapshot';
 
 const serverConfig: ApplicationConfig = {
   providers: [

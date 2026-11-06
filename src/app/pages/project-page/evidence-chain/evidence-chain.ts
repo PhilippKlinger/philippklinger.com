@@ -3,28 +3,22 @@ import {
   Component,
   computed,
   inject,
-  InjectionToken,
   input,
   makeStateKey,
   OnInit,
   signal,
   TransferState,
 } from '@angular/core';
+import { buildEvidenceChain, evidenceTexts } from '../../../../content/evidence-chain';
+import { docsUrl } from '../../../../content/site';
 import {
-  buildEvidenceChain,
-  evidenceTexts,
   isStale,
   parseStatusDocument,
   pickProjectSnapshot,
   ProjectSnapshot,
-} from '../../../../content/evidence-chain';
-import { docsUrl } from '../../../../content/site';
+} from '../../../../content/software-delivery';
 import { ProjectKey, StatusDocument } from '../../../../content/status';
-
-/** status.json of the build. Only the prerender provides it (app.config.server.ts). */
-export const STATUS_SNAPSHOT = new InjectionToken<StatusDocument | null>('status of the build', {
-  factory: () => null,
-});
+import { STATUS_SNAPSHOT } from '../../../delivery/status-snapshot';
 
 export const statusSnapshotKey = makeStateKey<ProjectSnapshot | null>('status-snapshot');
 
