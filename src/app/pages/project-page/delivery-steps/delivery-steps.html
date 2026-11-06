@@ -1,0 +1,48 @@
+<section class="delivery" aria-labelledby="delivery-title">
+  <h2 id="delivery-title">{{ texts.title }}</h2>
+  <p class="lead">{{ texts.intro }}</p>
+
+  <p class="signal">
+    <strong>{{ view().counter }}</strong>
+    @if (view().signal.when; as when) {
+      <span>{{ when }}</span>
+    }
+  </p>
+  <!-- Always in the DOM: a live region announces only changes inside an existing element. -->
+  <p class="notice" role="status">{{ notice() }}</p>
+
+  <ol class="steps">
+    @for (step of view().steps; track step.name) {
+      <li>
+        <article class="step" [class.step-open]="step.state === 'notSetUp'">
+          <div class="step-main">
+            <div class="step-head">
+              <h3>{{ step.name }}</h3>
+              <app-state-badge [state]="step.state" />
+            </div>
+            <p class="step-sentence">{{ step.sentence }}</p>
+          </div>
+          @if (step.event || step.links.length > 0) {
+            <div class="step-proof">
+              @if (step.event; as event) {
+                <p class="step-event">{{ event }}</p>
+              }
+              @if (step.links.length > 0) {
+                <ul class="step-links">
+                  @for (link of step.links; track link.url) {
+                    <li>
+                      <a [href]="link.url">{{ link.label }}</a>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </article>
+        @if (step.arrowToNext; as arrow) {
+          <p class="step-arrow">{{ arrow }}</p>
+        }
+      </li>
+    }
+  </ol>
+</section>
