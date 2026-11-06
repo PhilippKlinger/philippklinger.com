@@ -49,6 +49,14 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      # Prerendered pages then carry a real state, also without JavaScript. Failing is not fatal:
+      # the pages then read "not available" until the browser has loaded /status.json.
+      - name: Collect status for the prerender
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/collect-status.mjs status-snapshot.json
+
       - name: Build static site
         run: npm run build
 
@@ -135,6 +143,7 @@ jobs:
           check "/projekte not redirected" "$(curl -sSI "$SITE/projekte")" '^location: .*/#projekte'
           check "/projekte/ not redirected" "$(curl -sSI "$SITE/projekte/")" '^location: .*/#projekte'
           check "project page not 200" "$(curl -sSI "$SITE/projekte/videoflix/")" '^HTTP/[0-9.]+ 200'
+          check "site page not 200" "$(curl -sSI "$SITE/projekte/portfolio/")" '^HTTP/[0-9.]+ 200'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
           echo "Preview answers as expected."
 
@@ -201,6 +210,7 @@ jobs:
           check "/projekte not redirected" "$(curl -sSI "$SITE/projekte")" '^location: .*/#projekte'
           check "/projekte/ not redirected" "$(curl -sSI "$SITE/projekte/")" '^location: .*/#projekte'
           check "project page not 200" "$(curl -sSI "$SITE/projekte/videoflix/")" '^HTTP/[0-9.]+ 200'
+          check "site page not 200" "$(curl -sSI "$SITE/projekte/portfolio/")" '^HTTP/[0-9.]+ 200'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
           check "www not redirected" "$(curl -sSI https://www.philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
           check "http not redirected" "$(curl -sSI http://philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
