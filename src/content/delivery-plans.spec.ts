@@ -1,6 +1,15 @@
 import { deliveryPlans } from './delivery-plans';
 import { portfolioProject, projects } from './projects';
-import { DeliveryStepPlan, FixedStep, MeasuredStep, StepSource } from './software-delivery';
+import {
+  buildDeliveryView,
+  DeliveryStepPlan,
+  DeliveryStepView,
+  FixedStep,
+  MeasuredStep,
+  StepSource,
+} from './software-delivery';
+import { ProjectStatus, WorkflowSignal } from './status';
+import { healthyStatus } from './status.fixture';
 
 const isMeasured = (step: DeliveryStepPlan): step is MeasuredStep => 'sources' in step;
 const measuredSteps = Object.values(deliveryPlans).flatMap((plan) => plan.steps.filter(isMeasured));
@@ -10,6 +19,38 @@ const fixedSteps = Object.values(deliveryPlans)
 
 // Sources whose single entry per step cannot be proven only in part (spec 6.3).
 const WHOLE_SOURCES: StepSource[] = ['image', 'stability', 'restore'];
+
+const RUN_WITHOUT_LIVE =
+  'Der letzte Deploy-Lauf war erfolgreich, der laufende Stand ist nicht abrufbar.';
+const PART_OF_SERVICES = 'Ein Teil der Dienste läuft nachweislich auf dem geprüften Stand.';
+
+const deployRun = (change: Partial<WorkflowSignal> = {}): WorkflowSignal => ({
+  repo: 'PhilippKlinger/videoflix-deploy',
+  workflow: 'Deploy',
+  file: 'deploy.yml',
+  kind: 'deploy',
+  reachable: true,
+  conclusion: 'success',
+  headSha: '82dcf438f80efbfa0c7ab601feb1609b18d0ecad',
+  completedAt: '2026-11-06T13:32:00Z',
+  ...change,
+});
+
+/** A green deploy run and no live proof: what the status of Videoflix says today. */
+function runWithoutLive(): ProjectStatus {
+  const status = healthyStatus();
+  status.checks.signals.workflows.push(deployRun());
+  status.live.signals.components = [];
+  return status;
+}
+
+function deploymentOf(slug: string, status: ProjectStatus): DeliveryStepView {
+  const { steps } = buildDeliveryView(deliveryPlans[slug], {
+    generatedAt: '2026-11-06T14:00:00Z',
+    status,
+  });
+  return steps.find((item) => item.name.endsWith('Deployment')) as DeliveryStepView;
+}
 
 describe('deliveryPlans', () => {
   it('has a plan for every project and for the site', () => {
@@ -157,6 +198,52 @@ describe('deliveryPlans', () => {
         'Der letzte Deploy-Lauf war nicht erfolgreich.',
       );
     }
+  });
+
+  describe('deployment with a green deploy run', () => {
+    it('videoflix names the run when live proves nothing', () => {
+      const view = deploymentOf('videoflix', runWithoutLive());
+      expect(view.state).toBe('partial');
+      expect(view.sentence).toBe(RUN_WITHOUT_LIVE);
+    });
+
+    it('videoflix names the run while its images are unsigned, as they are today', () => {
+      const status = runWithoutLive();
+      const { attestation } = status.supplyChain.signals.repos[0];
+      Object.assign(attestation!, { reachable: false, provenanceCount: null });
+      expect(deploymentOf('videoflix', status).sentence).toBe(RUN_WITHOUT_LIVE);
+    });
+
+    it('conduit names the run in the same way', () => {
+      expect(deploymentOf('conduit', runWithoutLive()).sentence).toBe(RUN_WITHOUT_LIVE);
+    });
+
+    it('names the run when live has components, but none of them is proven', () => {
+      const status = runWithoutLive();
+      const [part] = healthyStatus().live.signals.components;
+      status.live.signals.components = [{ ...part, matchesLatestGreen: null }];
+      expect(deploymentOf('videoflix', status).sentence).toBe(RUN_WITHOUT_LIVE);
+    });
+
+    it('never claims a part of the services when a second run is unknown', () => {
+      const status = runWithoutLive();
+      status.checks.signals.workflows.push(deployRun({ reachable: false, conclusion: null }));
+      const view = deploymentOf('videoflix', status);
+      expect(view.state).toBe('partial');
+      expect(view.sentence).toBe(RUN_WITHOUT_LIVE);
+    });
+
+    it('keeps the part of the services when live really proves one', () => {
+      const status = runWithoutLive();
+      const [part] = healthyStatus().live.signals.components;
+      status.live.signals.components = [
+        { ...part, component: 'backend', matchesLatestGreen: true },
+        { ...part, component: 'frontend', matchesLatestGreen: null },
+      ];
+      const view = deploymentOf('videoflix', status);
+      expect(view.state).toBe('partial');
+      expect(view.sentence).toBe(PART_OF_SERVICES);
+    });
   });
 
   it('shows the running label of the spec', () => {

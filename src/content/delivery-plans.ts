@@ -37,6 +37,8 @@ const deploymentSentences: Sentences = {
   partial: 'Ein Teil der Dienste läuft nachweislich auf dem geprüften Stand.',
   deviation: 'Die laufende Version weicht vom zuletzt geprüften Commit ab.',
   deployRunFailed: 'Der letzte Deploy-Lauf war nicht erfolgreich.',
+  // DRAFT
+  deployRunOnly: 'Der letzte Deploy-Lauf war erfolgreich, der laufende Stand ist nicht abrufbar.',
   notSetUp: 'Hier steht künftig, dass live genau der geprüfte Stand läuft.',
 };
 const monitoringSentences: Sentences = {

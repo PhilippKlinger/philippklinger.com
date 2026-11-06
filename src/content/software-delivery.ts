@@ -35,7 +35,13 @@ export interface MeasuredStep {
   setUp: boolean;
   sentences: Partial<
     Record<
-      'verified' | 'partial' | 'deviation' | 'notSetUp' | 'unsigned' | 'deployRunFailed',
+      | 'verified'
+      | 'partial'
+      | 'deviation'
+      | 'notSetUp'
+      | 'unsigned'
+      | 'deployRunFailed'
+      | 'deployRunOnly',
       string
     >
   >;
@@ -448,13 +454,23 @@ function isUnsigned(status: ProjectStatus): boolean {
   return repos.length > 0 && repos.every(isMissing);
 }
 
+/** A green deploy run says nothing about what runs, only live can prove a part of the services. */
+function isRunWithoutLive(step: MeasuredStep, status: ProjectStatus): boolean {
+  return step.sources.includes('deployRun') && !proofsOf.live(status).includes(true);
+}
+
+function partialSentence(step: MeasuredStep, status: ProjectStatus): string | undefined {
+  const unsigned = isUnsigned(status) ? step.sentences.unsigned : undefined;
+  return unsigned ?? (isRunWithoutLive(step, status) ? step.sentences.deployRunOnly : undefined);
+}
+
 function specificSentence(
   state: StepState,
   step: MeasuredStep,
   status: Status,
 ): string | undefined {
   if (status === null) return undefined;
-  if (state === 'partial' && isUnsigned(status)) return step.sentences.unsigned;
+  if (state === 'partial') return partialSentence(step, status);
   const isRedRun = disprovingSources(step, status)[0] === 'deployRun';
   return state === 'deviation' && isRedRun ? step.sentences.deployRunFailed : undefined;
 }
