@@ -20,6 +20,9 @@ export default defineConfig({
     baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // A software GPU would run the haze shader on every page and slow the suite down
+    // about sevenfold. Only e2e/haze-webgl.e2e.ts brings a GPU setup of its own.
+    launchOptions: { args: ['--disable-3d-apis'] },
   },
   projects: [
     {
