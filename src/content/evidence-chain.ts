@@ -1,22 +1,9 @@
 // Pure logic and texts of the evidence chain (DECISIONS 2026-11-03): turns the public status.json
 // into what the page shows. A station counts as verified only if its data proves it.
-import {
-  LinkKind,
-  ProjectKey,
-  ProjectStatus,
-  STATUS_SCHEMA_VERSION,
-  StationKey,
-  StatusDocument,
-  StatusLink,
-} from './status';
+import type { ProjectSnapshot } from './software-delivery';
+import { LinkKind, ProjectKey, ProjectStatus, StationKey, StatusLink } from './status';
 
 export type StationState = 'verified' | 'deviation' | 'unavailable' | 'notPlanned';
-
-/** One project out of status.json, so a page never carries the data of the other project. */
-export interface ProjectSnapshot {
-  generatedAt: string;
-  status: ProjectStatus;
-}
 
 export interface EvidenceLink {
   label: string;
@@ -42,8 +29,6 @@ export interface EvidenceChainView {
 }
 
 const STATIONS: StationKey[] = ['code', 'checks', 'supplyChain', 'live', 'stability', 'restore'];
-const PROJECTS: ProjectKey[] = ['videoflix', 'portfolio'];
-const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const NOT_AVAILABLE = 'nicht abrufbar';
 
 // DRAFT: all texts of the evidence chain, wording to be approved.
@@ -331,53 +316,4 @@ export function buildEvidenceChain(
     historySince: oldest ? formatDate(oldest) : null,
     stations,
   };
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isValidStation(station: unknown): boolean {
-  return (
-    isObject(station) &&
-    typeof station['reachable'] === 'boolean' &&
-    isObject(station['signals']) &&
-    Array.isArray(station['links'])
-  );
-}
-
-function hasAllStations(project: unknown): boolean {
-  return isObject(project) && STATIONS.every((key) => isValidStation(project[key]));
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-/** The upload is not atomic and the host answers 404 with HTML, so nothing is taken on trust. */
-export function parseStatusDocument(text: string): StatusDocument | null {
-  const document = parseJson(text);
-  if (!isObject(document) || document['schemaVersion'] !== STATUS_SCHEMA_VERSION) return null;
-  if (Number.isNaN(Date.parse(String(document['generatedAt'])))) return null;
-  const projects = document['projects'];
-  if (!isObject(projects)) return null;
-  return PROJECTS.every((key) => hasAllStations(projects[key]))
-    ? (document as unknown as StatusDocument)
-    : null;
-}
-
-export function pickProjectSnapshot(
-  document: StatusDocument | null,
-  project: ProjectKey,
-): ProjectSnapshot | null {
-  const status = document?.projects[project];
-  return document && status ? { generatedAt: document.generatedAt, status } : null;
-}
-
-export function isStale(generatedAt: string, now: Date): boolean {
-  return now.getTime() - Date.parse(generatedAt) > STALE_AFTER_MS;
 }

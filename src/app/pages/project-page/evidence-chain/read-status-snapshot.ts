@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { parseStatusDocument } from '../../../../content/evidence-chain';
+import { parseStatusDocument } from '../../../../content/software-delivery';
 import { StatusDocument } from '../../../../content/status';
 
 // Written by the deploy before the build; gitignored. Prerender only, never in the browser bundle.
