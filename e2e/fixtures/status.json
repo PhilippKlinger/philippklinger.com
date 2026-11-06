@@ -490,6 +490,133 @@
         },
         "links": []
       }
+    },
+    "conduit": {
+      "code": {
+        "reachable": true,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/conduit-container",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 3,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": [
+                    "deletion",
+                    "non_fast_forward",
+                    "pull_request",
+                    "required_status_checks"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/conduit-container",
+            "url": "https://github.com/PhilippKlinger/conduit-container"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/conduit-container",
+            "url": "https://github.com/PhilippKlinger/conduit-container/pulls?q=is%3Apr+is%3Amerged"
+          }
+        ]
+      },
+      "checks": {
+        "reachable": true,
+        "signals": {
+          "workflows": [
+            {
+              "repo": "PhilippKlinger/conduit-container",
+              "workflow": "CI",
+              "file": "ci.yml",
+              "kind": "tests",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "fda73f26ff7880681f05ad4aa1409bf6b4eeeeb2",
+              "completedAt": "2026-10-31T11:32:51Z"
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/conduit-container",
+            "url": "https://github.com/PhilippKlinger/conduit-container/actions/runs/41197146239",
+            "workflow": "CI"
+          }
+        ]
+      },
+      "supplyChain": {
+        "reachable": false,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/conduit-container",
+              "reachable": false,
+              "attestation": {
+                "reachable": false,
+                "subjectDigest": "sha256:8715e27f08bdac0e8f8d67299f2e60c0a4daf4d162b18c19fcde42fabfc23fb1",
+                "provenanceCount": null,
+                "sourceSha": "fda73f26ff7880681f05ad4aa1409bf6b4eeeeb2"
+              },
+              "sbom": {
+                "reachable": false,
+                "spdxVersion": null,
+                "packageCount": null
+              },
+              "scorecard": {
+                "reachable": false,
+                "score": null,
+                "date": null
+              }
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "image",
+            "source": "PhilippKlinger/conduit-container",
+            "url": "https://github.com/users/PhilippKlinger/packages/container/package/conduit-backend"
+          }
+        ]
+      },
+      "live": {
+        "reachable": false,
+        "signals": {
+          "components": []
+        },
+        "links": []
+      },
+      "stability": {
+        "reachable": false,
+        "signals": {
+          "monitorsTotal": null,
+          "monitorsUp": null,
+          "uptime24h": null,
+          "uptime30d": null,
+          "lastHeartbeatAt": null,
+          "oldestVisibleHeartbeatAt": null
+        },
+        "links": []
+      },
+      "restore": {
+        "reachable": false,
+        "signals": {
+          "testedAt": null,
+          "result": null
+        },
+        "links": []
+      }
     }
   }
 }

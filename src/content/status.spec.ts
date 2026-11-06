@@ -4,6 +4,7 @@ import {
   STATUS_SCHEMA_VERSION,
   validateStatus,
   type FetchLike,
+  type ProjectSource,
   type ProjectStatus,
   type StationKey,
   type StatusDocument,
@@ -169,6 +170,39 @@ function collect(fetch: FetchLike, sources: StatusSources = statusSources, timeo
   });
 }
 
+const conduitSource: ProjectSource = {
+  repos: [
+    {
+      name: 'PhilippKlinger/conduit-container',
+      ciWorkflow: 'ci.yml',
+      workflows: [{ name: 'CI', file: 'ci.yml', kind: 'tests' }],
+      attestation: { kind: 'image', image: 'philippklinger/conduit-backend' },
+    },
+  ],
+  versionEndpoints: [],
+  uptime: null,
+  restoreTest: null,
+};
+const noSource: ProjectSource = {
+  repos: [],
+  versionEndpoints: [],
+  uptime: null,
+  restoreTest: null,
+};
+
+// The other projects stay silent, so a call can only come from the project under test.
+function onlyProject(conduit: ProjectSource): StatusSources {
+  return {
+    linkHosts: statusSources.linkHosts,
+    projects: { videoflix: noSource, portfolio: noSource, conduit },
+  };
+}
+
+async function collectConduit(fetch: FetchLike, source = conduitSource): Promise<ProjectStatus> {
+  const { projects } = await collect(fetch, onlyProject(source));
+  return projects.conduit!;
+}
+
 // Never answers on its own: rejects like the native fetch once the signal fires.
 const hang: Handler = (_url, init) =>
   new Promise((_resolve, reject) => {
@@ -211,7 +245,7 @@ describe('collectStatus', () => {
 
     expect(status.schemaVersion).toBe(STATUS_SCHEMA_VERSION);
     expect(status.generatedAt).toBe('2026-11-05T12:00:00.000Z');
-    expect(Object.keys(status.projects).sort()).toEqual(['portfolio', 'videoflix']);
+    expect(Object.keys(status.projects).sort()).toEqual(['conduit', 'portfolio', 'videoflix']);
 
     const { videoflix, portfolio } = status.projects;
     for (const station of STATIONS) {
@@ -245,11 +279,16 @@ describe('collectStatus', () => {
     expect(videoflix.supplyChain.signals.repos[0]).toEqual({
       repo: 'PhilippKlinger/videoflix-backend',
       reachable: true,
-      attestation: { reachable: true, subjectDigest: DIGEST, provenanceCount: 1 },
+      attestation: {
+        reachable: true,
+        subjectDigest: DIGEST,
+        provenanceCount: 1,
+        sourceSha: GREEN_SHA,
+      },
       sbom: { reachable: true, spdxVersion: 'SPDX-2.3', packageCount: 1 },
       scorecard: { reachable: true, score: 7.4, date: '2026-11-01' },
     });
-    expect(videoflix.supplyChain.signals.repos[2].attestation).toBeNull();
+    expect(videoflix.supplyChain.signals.repos).toHaveLength(2);
     expect(videoflix.live.signals.components[0]).toEqual({
       component: 'backend',
       repo: 'PhilippKlinger/videoflix-backend',
@@ -277,6 +316,7 @@ describe('collectStatus', () => {
       kind: 'workflow-run',
       source: 'PhilippKlinger/videoflix-backend',
       url: 'https://github.com/PhilippKlinger/videoflix-backend/actions/runs/123',
+      workflow: 'CI',
     });
 
     expect(portfolio.live.reachable).toBe(true);
@@ -615,6 +655,7 @@ describe('collectStatus', () => {
         reachable: false,
         subjectDigest: null,
         provenanceCount: null,
+        sourceSha: GREEN_SHA,
       });
       expect(calls.some((c) => c.url.includes('videoflix-backend/attestations'))).toBe(false);
     });
@@ -626,6 +667,7 @@ describe('collectStatus', () => {
         reachable: true,
         subjectDigest: DIGEST,
         provenanceCount: 0,
+        sourceSha: GREEN_SHA,
       });
     });
 
@@ -637,6 +679,132 @@ describe('collectStatus', () => {
       expect(repos[0].attestation?.reachable).toBe(false);
       expect(repos[0].attestation?.provenanceCount).toBeNull();
     });
+  });
+});
+
+describe('collectStatus for Conduit and the deploy run', () => {
+  const attestationNotFound: [RegExp, Handler] = [
+    /\/attestations\/sha256:/,
+    () => json({ message: 'Not Found' }, { status: 404 }),
+  ];
+  const noImage: [RegExp, Handler] = [/ghcr\.io\/v2\//, () => new Response('', { status: 404 })];
+  const ghcrLink = {
+    kind: 'image',
+    source: 'PhilippKlinger/conduit-container',
+    url: 'https://github.com/users/PhilippKlinger/packages/container/package/conduit-backend',
+  };
+
+  it('collects every project of the sources, not a fixed list', async () => {
+    const sources = onlyProject(conduitSource);
+    const withLater = { ...sources, projects: { ...sources.projects, later: noSource } };
+    const { projects } = await collect(fakeFetch().fetch, withLater);
+    expect(Object.keys(projects).sort()).toEqual(['conduit', 'later', 'portfolio', 'videoflix']);
+  });
+
+  it('treats a project without uptime source as not reachable, without a request', async () => {
+    const { fetch, calls } = fakeFetch();
+    const { stability } = await collectConduit(fetch);
+    expect(stability).toEqual({
+      reachable: false,
+      signals: {
+        monitorsTotal: null,
+        monitorsUp: null,
+        uptime24h: null,
+        uptime30d: null,
+        lastHeartbeatAt: null,
+        oldestVisibleHeartbeatAt: null,
+      },
+      links: [],
+    });
+    expect(calls.some((call) => call.url.includes('status-page'))).toBe(false);
+  });
+
+  it('leaves repositories without attestation source out of the supply chain', async () => {
+    const withoutAttestation = { name: 'PhilippKlinger/compose-only', workflows: [] };
+    const source = { ...conduitSource, repos: [...conduitSource.repos, withoutAttestation] };
+    const { supplyChain, code } = await collectConduit(fakeFetch().fetch, source);
+    expect(supplyChain.signals.repos.map(({ repo }) => repo)).toEqual([
+      'PhilippKlinger/conduit-container',
+    ]);
+    expect(supplyChain.reachable).toBe(true);
+    expect(code.signals.repos).toHaveLength(2);
+  });
+
+  it('keeps the digest of an image whose attestation is missing', async () => {
+    const { fetch } = fakeFetch([attestationNotFound]);
+    const { supplyChain } = await collectConduit(fetch);
+    expect(supplyChain.signals.repos[0].attestation).toMatchObject({
+      reachable: false,
+      subjectDigest: DIGEST,
+      provenanceCount: null,
+    });
+  });
+
+  it('links the GHCR package once the digest is known', async () => {
+    const { supplyChain } = await collectConduit(fakeFetch([attestationNotFound]).fetch);
+    expect(supplyChain.links).toContainEqual(ghcrLink);
+    expect(supplyChain.links.map(({ kind }) => kind)).not.toContain('attestations');
+  });
+
+  it('does not link the GHCR package without a digest', async () => {
+    const { supplyChain } = await collectConduit(fakeFetch([noImage]).fetch);
+    expect(supplyChain.links.map(({ kind }) => kind)).not.toContain('image');
+  });
+
+  it('does not link a GHCR package for an attested file', async () => {
+    const { projects } = await collect(fakeFetch().fetch);
+    expect(projects.portfolio.supplyChain.links.map(({ kind }) => kind)).not.toContain('image');
+  });
+
+  it('accepts conduit in the closed vocabulary of the document', async () => {
+    const sources = onlyProject(conduitSource);
+    const status = await collect(fakeFetch().fetch, sources);
+    expect(status.projects.conduit?.supplyChain.signals.repos).toHaveLength(1);
+    expect(validateStatus(status, sources)).toEqual([]);
+  });
+
+  it('marks deploy workflows with their own kind', async () => {
+    const { checks } = (await collect(fakeFetch().fetch)).projects.videoflix;
+    const deploy = checks.signals.workflows.find((w) => w.repo.endsWith('/videoflix-deploy'));
+    expect(deploy).toMatchObject({ workflow: 'Deploy', file: 'deploy.yml', kind: 'deploy' });
+  });
+
+  describe('records the commit an image was built from', () => {
+    // The latest run is red on another commit: only the green one built the image.
+    const redLatestRun: [RegExp, Handler] = [
+      /status=completed/,
+      () =>
+        json({
+          workflow_runs: [
+            run('PhilippKlinger/conduit-container', { conclusion: 'failure', head_sha: OLD_SHA }),
+          ],
+        }),
+    ];
+
+    it('takes the green commit, not the head of the latest run', async () => {
+      const { supplyChain } = await collectConduit(fakeFetch([redLatestRun]).fetch);
+      expect(supplyChain.signals.repos[0].attestation?.sourceSha).toBe(GREEN_SHA);
+    });
+
+    it('keeps it when the attestation is missing', async () => {
+      const { supplyChain } = await collectConduit(fakeFetch([attestationNotFound]).fetch);
+      expect(supplyChain.signals.repos[0].attestation?.sourceSha).toBe(GREEN_SHA);
+    });
+
+    it('stays away from an attested file', async () => {
+      const { projects } = await collect(fakeFetch().fetch);
+      const { attestation } = projects.portfolio.supplyChain.signals.repos[0];
+      expect(attestation?.reachable).toBe(true);
+      expect(attestation).not.toHaveProperty('sourceSha');
+    });
+  });
+
+  it('names the workflow on a workflow run link', async () => {
+    const { checks } = (await collect(fakeFetch().fetch)).projects.videoflix;
+    const runsOf = (repo: string) =>
+      checks.links.filter((link) => link.source === repo).map((link) => link.workflow);
+    expect(runsOf('PhilippKlinger/videoflix-backend')).toEqual(['CI', 'CodeQL', 'Security Checks']);
+    expect(runsOf('PhilippKlinger/videoflix-deploy')).toEqual(['Deploy']);
   });
 });
 

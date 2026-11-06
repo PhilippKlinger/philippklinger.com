@@ -54,7 +54,8 @@ jobs:
           test "${size}" -le 262144 || { echo "::error::status.json is too large"; exit 1; }
           jq -e '.schemaVersion == 1 and (.generatedAt | type == "string")
             and (.projects.videoflix.code.reachable | type == "boolean")
-            and (.projects.portfolio.code.reachable | type == "boolean")' status.json > /dev/null \
+            and (.projects.portfolio.code.reachable | type == "boolean")
+            and (.projects.conduit.code.reachable | type == "boolean")' status.json > /dev/null \
             || { echo "::error::status.json has an unexpected structure"; exit 1; }
 
       - name: Install lftp

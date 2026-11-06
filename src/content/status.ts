@@ -5,7 +5,8 @@
 export const STATUS_SCHEMA_VERSION = 1;
 
 export type StationKey = 'code' | 'checks' | 'supplyChain' | 'live' | 'stability' | 'restore';
-export type ProjectKey = 'videoflix' | 'portfolio';
+export type RequiredProjectKey = 'videoflix' | 'portfolio';
+export type ProjectKey = RequiredProjectKey | 'conduit';
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
 export type LinkKind =
@@ -18,13 +19,16 @@ export type LinkKind =
   | 'version-endpoint'
   | 'status-page'
   | 'restore-test'
-  | 'runbook';
+  | 'runbook'
+  | 'image';
 
 /** A public page; `source` names the repository or component it belongs to. */
 export interface StatusLink {
   kind: LinkKind;
   source: string;
   url: string;
+  /** Only on workflow runs: separates CI and deploy runs of one repository. */
+  workflow?: string;
 }
 
 /** `reachable` is true only if every source of the station delivered usable data. */
@@ -50,7 +54,7 @@ export interface RepoCodeSignal {
   rulesets: RulesetSignal[] | null;
 }
 
-export type WorkflowKind = 'tests' | 'scan';
+export type WorkflowKind = 'tests' | 'scan' | 'deploy';
 
 export interface WorkflowSignal {
   repo: string;
@@ -67,6 +71,8 @@ export interface AttestationSignal {
   reachable: boolean;
   subjectDigest: string | null;
   provenanceCount: number | null;
+  /** Commit the image was built from. headSha does not tell, the latest run may be red. */
+  sourceSha?: string | null;
 }
 
 export interface SbomSignal {
@@ -84,7 +90,7 @@ export interface ScorecardSignal {
 export interface RepoSupplyChainSignal {
   repo: string;
   reachable: boolean;
-  /** null: nothing is built in this repository, so nothing can be attested. */
+  /** null: only in older files, the collector now skips repositories without a build. */
   attestation: AttestationSignal | null;
   sbom: SbomSignal;
   scorecard: ScorecardSignal;
@@ -128,7 +134,8 @@ export interface ProjectStatus {
 export interface StatusDocument {
   schemaVersion: number;
   generatedAt: string;
-  projects: Record<ProjectKey, ProjectStatus>;
+  /** conduit is optional: a file written before it existed must stay readable. */
+  projects: Record<RequiredProjectKey, ProjectStatus> & { conduit?: ProjectStatus };
 }
 
 export interface WorkflowSource {
@@ -154,7 +161,7 @@ export interface RepoSource {
 export interface ProjectSource {
   repos: RepoSource[];
   versionEndpoints: { component: string; repo: string; url: string }[];
-  uptime: { baseUrl: string; slug: string };
+  uptime: { baseUrl: string; slug: string } | null;
   restoreTest: { repo: string; path: string } | null;
 }
 
@@ -447,6 +454,7 @@ async function collectWorkflow(
       kind: 'workflow-run',
       source: repo,
       url: `${GITHUB}/${repo}/actions/runs/${latest.id}`,
+      workflow: workflow.name,
     },
     signal: {
       repo,
@@ -493,30 +501,51 @@ async function liveFileDigest(ctx: Context, url: string): Promise<string | null>
   });
 }
 
+async function attestationDigest(
+  ctx: Context,
+  source: AttestationSource,
+  greenSha: string | null,
+): Promise<string | null> {
+  if (source.kind === 'file') return liveFileDigest(ctx, source.url);
+  return greenSha === null ? null : imageDigest(ctx, source.image, greenSha);
+}
+
+function fetchProvenanceCount(ctx: Context, repo: string, digest: string): Promise<number | null> {
+  return getGitHub(
+    ctx,
+    `/repos/${repo}/attestations/${digest}?predicate_type=provenance&per_page=30`,
+    (json) =>
+      isObject(json) && Array.isArray(json['attestations']) ? json['attestations'].length : null,
+  );
+}
+
 async function collectAttestation(
   ctx: Context,
   repo: string,
   source: AttestationSource,
   greenSha: string | null,
 ): Promise<AttestationSignal> {
-  const missing = { reachable: false, subjectDigest: null, provenanceCount: null };
-  let digest: string | null = null;
-  if (source.kind === 'file') {
-    digest = await liveFileDigest(ctx, source.url);
-  } else if (greenSha !== null) {
-    digest = await imageDigest(ctx, source.image, greenSha);
-  }
+  const origin = source.kind === 'image' ? { sourceSha: greenSha } : {};
+  const digest = await attestationDigest(ctx, source, greenSha);
+  // The digest alone proves the image exists, so it stays when the attestation is missing.
+  const missing = { reachable: false, subjectDigest: digest, provenanceCount: null, ...origin };
   if (digest === null) return missing;
 
-  const provenanceCount = await getGitHub(
-    ctx,
-    `/repos/${repo}/attestations/${digest}?predicate_type=provenance&per_page=30`,
-    (json) =>
-      isObject(json) && Array.isArray(json['attestations']) ? json['attestations'].length : null,
-  );
+  const provenanceCount = await fetchProvenanceCount(ctx, repo, digest);
   return provenanceCount === null
     ? missing
-    : { reachable: true, subjectDigest: digest, provenanceCount };
+    : { reachable: true, subjectDigest: digest, provenanceCount, ...origin };
+}
+
+function imageLink(source: RepoSource, attestation: AttestationSignal | null): StatusLink | null {
+  if (source.attestation?.kind !== 'image' || !attestation?.subjectDigest) return null;
+  const owner = source.name.split('/')[0];
+  const name = source.attestation.image.split('/').at(-1);
+  return {
+    kind: 'image',
+    source: source.name,
+    url: `${GITHUB}/users/${owner}/packages/container/package/${name}`,
+  };
 }
 
 function parseSbom(json: unknown): SbomSignal | null {
@@ -551,6 +580,8 @@ async function collectSupplyChainRepo(
   if (attestation?.reachable) {
     links.push({ kind: 'attestations', source: repo, url: `${GITHUB}/${repo}/attestations` });
   }
+  const image = imageLink(source, attestation);
+  if (image) links.push(image);
   if (sbom) {
     links.push({ kind: 'sbom', source: repo, url: `${GITHUB}/${repo}/network/dependencies` });
   }
@@ -651,31 +682,36 @@ function parseStability(json: unknown, monitorIds: number[]): StabilitySignals |
   };
 }
 
+const NO_STABILITY_SIGNALS: StabilitySignals = {
+  monitorsTotal: null,
+  monitorsUp: null,
+  uptime24h: null,
+  uptime30d: null,
+  lastHeartbeatAt: null,
+  oldestVisibleHeartbeatAt: null,
+};
+
+async function fetchStability(
+  ctx: Context,
+  { baseUrl, slug }: NonNullable<ProjectSource['uptime']>,
+): Promise<StabilitySignals | null> {
+  const monitorIds = await getJson(ctx, `${baseUrl}/api/status-page/${slug}`, parseMonitorIds);
+  return (
+    monitorIds &&
+    getJson(ctx, `${baseUrl}/api/status-page/heartbeat/${slug}`, (json) =>
+      parseStability(json, monitorIds),
+    )
+  );
+}
+
 async function collectStability(
   ctx: Context,
-  { baseUrl, slug }: ProjectSource['uptime'],
+  source: ProjectSource['uptime'],
 ): Promise<ProjectStatus['stability']> {
-  const missing: StabilitySignals = {
-    monitorsTotal: null,
-    monitorsUp: null,
-    uptime24h: null,
-    uptime30d: null,
-    lastHeartbeatAt: null,
-    oldestVisibleHeartbeatAt: null,
-  };
-  const monitorIds = await getJson(ctx, `${baseUrl}/api/status-page/${slug}`, parseMonitorIds);
-  const signals =
-    monitorIds &&
-    (await getJson(ctx, `${baseUrl}/api/status-page/heartbeat/${slug}`, (json) =>
-      parseStability(json, monitorIds),
-    ));
-  return signals
-    ? {
-        reachable: true,
-        signals,
-        links: [{ kind: 'status-page', source: slug, url: `${baseUrl}/status/${slug}` }],
-      }
-    : { reachable: false, signals: missing, links: [] };
+  const signals = source && (await fetchStability(ctx, source));
+  if (!source || !signals) return { reachable: false, signals: NO_STABILITY_SIGNALS, links: [] };
+  const url = `${source.baseUrl}/status/${source.slug}`;
+  return { reachable: true, signals, links: [{ kind: 'status-page', source: source.slug, url }] };
 }
 
 async function collectRestore(
@@ -750,7 +786,11 @@ async function collectProject(ctx: Context, source: ProjectSource): Promise<Proj
 
   const [code, supplyChain, live, stability, restore] = await Promise.all([
     Promise.all(source.repos.map((repo) => collectCodeRepo(ctx, repo.name))),
-    Promise.all(source.repos.map((repo) => collectSupplyChainRepo(ctx, repo, greenSha(repo.name)))),
+    Promise.all(
+      source.repos
+        .filter((repo) => repo.attestation)
+        .map((repo) => collectSupplyChainRepo(ctx, repo, greenSha(repo.name))),
+    ),
     Promise.all(
       source.versionEndpoints.map((endpoint) =>
         collectLiveComponent(ctx, endpoint, greenSha(endpoint.repo)),
@@ -798,25 +838,27 @@ export async function collectStatus(options: CollectOptions): Promise<StatusDocu
     timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     problem: options.onProblem ?? (() => undefined),
   };
-  const [videoflix, portfolio] = await Promise.all([
-    collectProject(ctx, options.sources.projects.videoflix),
-    collectProject(ctx, options.sources.projects.portfolio),
-  ]);
+  const entries = await Promise.all(
+    Object.entries(options.sources.projects).map(
+      async ([key, source]) => [key, await collectProject(ctx, source)] as const,
+    ),
+  );
   return {
     schemaVersion: STATUS_SCHEMA_VERSION,
     generatedAt: options.now().toISOString(),
-    projects: { videoflix, portfolio },
+    // Cast: the keys come from the sources, whose type already requires every project.
+    projects: Object.fromEntries(entries) as StatusDocument['projects'],
   };
 }
 
 // The closed vocabulary of the document: every other field name fails the validation.
 const SCHEMA_KEYS = new Set(
-  `schemaVersion generatedAt projects videoflix portfolio
+  `schemaVersion generatedAt projects videoflix portfolio conduit
    code checks supplyChain live stability restore reachable signals links kind source url
    repos repo isPublic defaultBranch mergedPullRequests rulesets
    enforcement target appliesToDefaultBranch ruleTypes
    workflows workflow file conclusion headSha completedAt
-   attestation subjectDigest provenanceCount sbom spdxVersion packageCount scorecard score date
+   attestation subjectDigest provenanceCount sourceSha sbom spdxVersion packageCount scorecard score date
    components component deployedSha builtAt latestGreenSha matchesLatestGreen
    monitorsTotal monitorsUp uptime24h uptime30d lastHeartbeatAt oldestVisibleHeartbeatAt
    testedAt result`.split(/\s+/),
@@ -834,7 +876,7 @@ const FORBIDDEN_TEXT: [RegExp, string][] = [
 function allowedLinkHosts(sources: StatusSources): Set<string> {
   const urls = Object.values(sources.projects).flatMap((project) => [
     ...project.versionEndpoints.map((endpoint) => endpoint.url),
-    project.uptime.baseUrl,
+    ...(project.uptime ? [project.uptime.baseUrl] : []),
   ]);
   return new Set([...sources.linkHosts, ...urls.map((url) => new URL(url).hostname)]);
 }

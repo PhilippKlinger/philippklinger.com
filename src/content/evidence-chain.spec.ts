@@ -380,6 +380,24 @@ describe('parseStatusDocument', () => {
   });
 });
 
+describe('links of a station', () => {
+  it('names the GHCR package', () => {
+    const view = buildEvidenceChain(
+      snapshot((status) => {
+        status.supplyChain.links = [
+          {
+            kind: 'image',
+            source: 'PhilippKlinger/conduit-container',
+            url: 'https://github.com/users/PhilippKlinger/packages/container/package/conduit-backend',
+          },
+        ];
+      }),
+      'videoflix',
+    );
+    expect(stationOf(view, 'supplyChain').links[0].label).toBe('Image in GHCR (conduit-container)');
+  });
+});
+
 describe('pickProjectSnapshot', () => {
   it('keeps only the project of the page', () => {
     const videoflix = healthyStatus();
@@ -392,6 +410,15 @@ describe('pickProjectSnapshot', () => {
       generatedAt: '2026-11-06T00:58:11.069Z',
       status: videoflix,
     });
+  });
+
+  it('returns null for a project the document does not contain yet', () => {
+    const document: StatusDocument = {
+      schemaVersion: 1,
+      generatedAt: '2026-11-06T00:58:11.069Z',
+      projects: { videoflix: healthyStatus(), portfolio: healthyStatus() },
+    };
+    expect(pickProjectSnapshot(document, 'conduit')).toBeNull();
   });
 
   it('stays empty without a document', () => {

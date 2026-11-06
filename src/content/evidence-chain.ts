@@ -129,6 +129,7 @@ const linkLabels: Record<LinkKind, string> = {
   'status-page': 'Statusseite',
   'restore-test': 'Wiederherstellungstest',
   runbook: 'Runbook',
+  image: 'Image in GHCR',
 };
 
 // Fixed time zone, so the prerendered page and the browser render the same text.
@@ -373,7 +374,8 @@ export function pickProjectSnapshot(
   document: StatusDocument | null,
   project: ProjectKey,
 ): ProjectSnapshot | null {
-  return document && { generatedAt: document.generatedAt, status: document.projects[project] };
+  const status = document?.projects[project];
+  return document && status ? { generatedAt: document.generatedAt, status } : null;
 }
 
 export function isStale(generatedAt: string, now: Date): boolean {
