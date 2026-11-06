@@ -466,6 +466,26 @@ test.describe('Status im Browser', () => {
     });
   }
 
+  test('[WCAG 4.1.3] Statuszeile steht vor dem Abruf im Accessibility-Baum, danach mit Text', async ({
+    page,
+  }) => {
+    let release = () => {};
+    const released = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/status.json', async (route) => {
+      await released;
+      await route.fulfill({ status: 500, body: 'error' });
+    });
+    const requested = page.waitForRequest('**/status.json');
+    await page.goto('/');
+    await requested;
+    // getByRole only finds what is in the accessibility tree, so display: none would fail here.
+    const region = page.locator('#projekte').getByRole('status');
+    await expect(region).toHaveCount(1);
+    await expect(region).toBeEmpty();
+    release();
+    await expect(region).toHaveText(failedNotice);
+  });
+
   test('[AK6] veralteter Stand wird benannt', async ({ page }) => {
     await serveStatus(
       page,
