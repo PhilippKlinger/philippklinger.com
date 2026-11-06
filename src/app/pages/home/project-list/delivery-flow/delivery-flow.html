@@ -1,0 +1,17 @@
+<div class="flow">
+  <p class="flow-title">{{ title }}</p>
+  <ol class="flow-steps">
+    @for (step of view().steps; track step.name) {
+      <li>
+        <div class="flow-step" [class]="'is-' + step.state">
+          <strong>{{ step.name }}</strong>
+          <app-state-badge [state]="step.state" />
+        </div>
+        @if (step.arrowToNext; as label) {
+          <div class="flow-arrow">{{ label }}</div>
+        }
+      </li>
+    }
+  </ol>
+  <p class="flow-foot">{{ view().counter }}</p>
+</div>
