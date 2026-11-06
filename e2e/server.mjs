@@ -6,6 +6,7 @@
 // - text responses are gzip-compressed when the client accepts it (mod_deflate)
 // - every response carries the Content-Security-Policy from public/.htaccess
 // - the redirects with a local target in public/.htaccess apply (mod_rewrite)
+// - /status.json exists, here as a fixture; on the host it comes from status.yml
 // No dependencies on purpose: node:http is enough for a test server.
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -89,6 +90,10 @@ createServer((req, res) => {
   if (redirect) {
     res.writeHead(301, { Location: redirect.location });
     return res.end();
+  }
+
+  if (pathname === '/status.json') {
+    return send(req, res, 200, resolve('e2e/fixtures/status.json'));
   }
 
   // The host maps /icons/ to Apache's own icon folder, so our files there are never served.

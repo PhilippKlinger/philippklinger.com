@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-06T00:58:11.069Z",
+  "projects": {
+    "videoflix": {
+      "code": {
+        "reachable": true,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/videoflix-backend",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 37,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": [
+                    "deletion",
+                    "non_fast_forward",
+                    "pull_request",
+                    "required_status_checks"
+                  ]
+                }
+              ]
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 31,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": [
+                    "deletion",
+                    "non_fast_forward",
+                    "pull_request",
+                    "required_status_checks"
+                  ]
+                }
+              ]
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-deploy",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 7,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": ["deletion", "non_fast_forward", "pull_request"]
+                }
+              ]
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/pulls?q=is%3Apr+is%3Amerged"
+          },
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/pulls?q=is%3Apr+is%3Amerged"
+          },
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/videoflix-deploy",
+            "url": "https://github.com/PhilippKlinger/videoflix-deploy"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/videoflix-deploy",
+            "url": "https://github.com/PhilippKlinger/videoflix-deploy/pulls?q=is%3Apr+is%3Amerged"
+          }
+        ]
+      },
+      "checks": {
+        "reachable": true,
+        "signals": {
+          "workflows": [
+            {
+              "repo": "PhilippKlinger/videoflix-backend",
+              "workflow": "CI",
+              "file": "ci.yml",
+              "kind": "tests",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "fe1dd3ec7e31abc970305f4ce68d1cee278d351b",
+              "completedAt": "2026-11-05T19:13:01Z"
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-backend",
+              "workflow": "CodeQL",
+              "file": "codeql.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "fe1dd3ec7e31abc970305f4ce68d1cee278d351b",
+              "completedAt": "2026-11-05T19:09:38Z"
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-backend",
+              "workflow": "Security Checks",
+              "file": "security.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "fe1dd3ec7e31abc970305f4ce68d1cee278d351b",
+              "completedAt": "2026-11-05T19:08:55Z"
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "workflow": "CI",
+              "file": "ci.yml",
+              "kind": "tests",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "de13f933a375867f7a6c1a9df675679caf6550dc",
+              "completedAt": "2026-11-05T19:32:49Z"
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "workflow": "CodeQL",
+              "file": "codeql.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "de13f933a375867f7a6c1a9df675679caf6550dc",
+              "completedAt": "2026-11-05T19:30:20Z"
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "workflow": "Security Checks",
+              "file": "security.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "de13f933a375867f7a6c1a9df675679caf6550dc",
+              "completedAt": "2026-11-05T19:29:26Z"
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015428"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015572"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015439"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332623"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332740"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332676"
+          }
+        ]
+      },
+      "supplyChain": {
+        "reachable": false,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/videoflix-backend",
+              "reachable": false,
+              "attestation": {
+                "reachable": false,
+                "subjectDigest": null,
+                "provenanceCount": null
+              },
+              "sbom": {
+                "reachable": true,
+                "spdxVersion": "SPDX-2.3",
+                "packageCount": 80
+              },
+              "scorecard": {
+                "reachable": true,
+                "score": 6.9,
+                "date": "2026-11-05T19:08:39Z"
+              }
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "reachable": false,
+              "attestation": {
+                "reachable": false,
+                "subjectDigest": null,
+                "provenanceCount": null
+              },
+              "sbom": {
+                "reachable": true,
+                "spdxVersion": "SPDX-2.3",
+                "packageCount": 550
+              },
+              "scorecard": {
+                "reachable": true,
+                "score": 7.1,
+                "date": "2026-11-05T19:29:24Z"
+              }
+            },
+            {
+              "repo": "PhilippKlinger/videoflix-deploy",
+              "reachable": false,
+              "attestation": null,
+              "sbom": {
+                "reachable": false,
+                "spdxVersion": null,
+                "packageCount": null
+              },
+              "scorecard": {
+                "reachable": false,
+                "score": null,
+                "date": null
+              }
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "sbom",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/network/dependencies"
+          },
+          {
+            "kind": "scorecard",
+            "source": "PhilippKlinger/videoflix-backend",
+            "url": "https://scorecard.dev/viewer/?uri=github.com/PhilippKlinger/videoflix-backend"
+          },
+          {
+            "kind": "sbom",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/network/dependencies"
+          },
+          {
+            "kind": "scorecard",
+            "source": "PhilippKlinger/videoflix-frontend",
+            "url": "https://scorecard.dev/viewer/?uri=github.com/PhilippKlinger/videoflix-frontend"
+          }
+        ]
+      },
+      "live": {
+        "reachable": false,
+        "signals": {
+          "components": [
+            {
+              "component": "backend",
+              "repo": "PhilippKlinger/videoflix-backend",
+              "reachable": false,
+              "deployedSha": null,
+              "builtAt": null,
+              "latestGreenSha": "fe1dd3ec7e31abc970305f4ce68d1cee278d351b",
+              "matchesLatestGreen": null
+            },
+            {
+              "component": "frontend",
+              "repo": "PhilippKlinger/videoflix-frontend",
+              "reachable": false,
+              "deployedSha": null,
+              "builtAt": null,
+              "latestGreenSha": "de13f933a375867f7a6c1a9df675679caf6550dc",
+              "matchesLatestGreen": null
+            }
+          ]
+        },
+        "links": []
+      },
+      "stability": {
+        "reachable": false,
+        "signals": {
+          "monitorsTotal": null,
+          "monitorsUp": null,
+          "uptime24h": null,
+          "uptime30d": null,
+          "lastHeartbeatAt": null,
+          "oldestVisibleHeartbeatAt": null
+        },
+        "links": []
+      },
+      "restore": {
+        "reachable": false,
+        "signals": {
+          "testedAt": null,
+          "result": null
+        },
+        "links": []
+      }
+    },
+    "portfolio": {
+      "code": {
+        "reachable": true,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/philippklinger.com",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 28,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": [
+                    "deletion",
+                    "non_fast_forward",
+                    "pull_request",
+                    "required_status_checks"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/pulls?q=is%3Apr+is%3Amerged"
+          }
+        ]
+      },
+      "checks": {
+        "reachable": true,
+        "signals": {
+          "workflows": [
+            {
+              "repo": "PhilippKlinger/philippklinger.com",
+              "workflow": "CI",
+              "file": "ci.yml",
+              "kind": "tests",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "82dcf438f80efbfa0c7ab601feb1609b18d0ecad",
+              "completedAt": "2026-11-05T19:33:18Z"
+            },
+            {
+              "repo": "PhilippKlinger/philippklinger.com",
+              "workflow": "CodeQL",
+              "file": "codeql.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "82dcf438f80efbfa0c7ab601feb1609b18d0ecad",
+              "completedAt": "2026-11-05T19:29:49Z"
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188762"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188903"
+          }
+        ]
+      },
+      "supplyChain": {
+        "reachable": true,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/philippklinger.com",
+              "reachable": true,
+              "attestation": {
+                "reachable": true,
+                "subjectDigest": "sha256:4bc7c5b5989b90190b55864dbe5f04686adf80bd61f57b21c35e19b64f8b30ab",
+                "provenanceCount": 1
+              },
+              "sbom": {
+                "reachable": true,
+                "spdxVersion": "SPDX-2.3",
+                "packageCount": 520
+              },
+              "scorecard": {
+                "reachable": true,
+                "score": 6.7,
+                "date": "2026-11-05T19:28:28Z"
+              }
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "attestations",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/attestations"
+          },
+          {
+            "kind": "sbom",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/network/dependencies"
+          },
+          {
+            "kind": "scorecard",
+            "source": "PhilippKlinger/philippklinger.com",
+            "url": "https://scorecard.dev/viewer/?uri=github.com/PhilippKlinger/philippklinger.com"
+          }
+        ]
+      },
+      "live": {
+        "reachable": true,
+        "signals": {
+          "components": [
+            {
+              "component": "site",
+              "repo": "PhilippKlinger/philippklinger.com",
+              "reachable": true,
+              "deployedSha": "82dcf438f80efbfa0c7ab601feb1609b18d0ecad",
+              "builtAt": "2026-11-05T19:28:36Z",
+              "latestGreenSha": "82dcf438f80efbfa0c7ab601feb1609b18d0ecad",
+              "matchesLatestGreen": true
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "version-endpoint",
+            "source": "site",
+            "url": "https://preview.philipp-klinger.com/version.json"
+          }
+        ]
+      },
+      "stability": {
+        "reachable": false,
+        "signals": {
+          "monitorsTotal": null,
+          "monitorsUp": null,
+          "uptime24h": null,
+          "uptime30d": null,
+          "lastHeartbeatAt": null,
+          "oldestVisibleHeartbeatAt": null
+        },
+        "links": []
+      },
+      "restore": {
+        "reachable": false,
+        "signals": {
+          "testedAt": null,
+          "result": null
+        },
+        "links": []
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+<section class="card chain" aria-labelledby="evidence-title">
+  <h2 id="evidence-title">{{ texts.title }}</h2>
+  <p class="lead">{{ texts.intro }}</p>
+
+  <p class="summary">
+    <strong
+      >{{ chain().verifiedCount }} {{ texts.of }} {{ chain().total }} {{ texts.verifiedOf }}</strong
+    >
+    @if (chain().historySince; as since) {
+      <span> · {{ texts.historySince }} {{ since }}</span>
+    }
+    <span> · {{ texts.generatedAt }} {{ chain().generatedAt ?? texts.unknownTime }}</span>
+  </p>
+  <!-- Always in the DOM: a live region announces only changes inside an existing element. -->
+  <p class="notice" role="status">{{ notice() }}</p>
+
+  <ol class="stations">
+    @for (station of chain().stations; track station.key) {
+      <li [class]="'station ' + station.state">
+        <details>
+          <summary>
+            <span class="station-title">{{ station.title }}</span>
+            <span class="state">
+              <span aria-hidden="true">{{ texts.stateSymbols[station.state] }}</span>
+              {{ texts.stateLabels[station.state] }}
+            </span>
+            <span class="sentence">{{ station.sentence }}</span>
+          </summary>
+          @if (station.facts.length > 0) {
+            <ul class="facts">
+              @for (fact of station.facts; track fact) {
+                <li>{{ fact }}</li>
+              }
+            </ul>
+          }
+          @if (station.links.length > 0) {
+            <ul class="artifacts" [attr.aria-label]="texts.artifacts">
+              @for (link of station.links; track link.url) {
+                <li>
+                  <a [href]="link.url">{{ link.label }}</a>
+                </li>
+              }
+            </ul>
+          }
+        </details>
+      </li>
+    }
+  </ol>
+
+  <a class="docs" [href]="docsUrl">{{ texts.docs }}</a>
+</section>

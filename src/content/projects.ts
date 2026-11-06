@@ -1,5 +1,7 @@
 // DRAFT: project texts and links until Philipp delivers the final versions.
 // Missing links point to platzhalter.invalid; the CI blocks them from going live.
+import type { ProjectKey } from './status';
+
 export interface ProjectLink {
   label: string;
   url: string;
@@ -30,6 +32,8 @@ export interface Project {
    */
   hasPage?: boolean;
   preview?: ProjectPreview;
+  /** Project in status.json whose evidence chain the page shows. */
+  evidence?: ProjectKey;
 }
 
 // DRAFT: labels of the project page, wording to be approved.
@@ -79,6 +83,7 @@ export const projects: Project[] = [
       { label: 'GitHub Frontend', url: 'https://github.com/PhilippKlinger/videoflix-frontend' },
     ],
     proof: 'CI → Image → Deploy → Betrieb',
+    evidence: 'videoflix',
     preview: { src: 'images/projects/videoflix.webp', width: 640, height: 336 },
   },
   {
@@ -112,3 +117,22 @@ export const projects: Project[] = [
     preview: { src: 'images/projects/developer-workspace-kit.webp', width: 640, height: 336 },
   },
 ];
+
+/**
+ * The site itself, with its own evidence chain (Grill 2026-11-04, option A). Not a row of the
+ * list: that stays the four projects of the CV. The footer links here.
+ */
+// DRAFT: texts of this page, wording to be approved.
+export const portfolioProject: Project = {
+  slug: 'portfolio',
+  title: 'Diese Website',
+  label: 'Eigenes Projekt',
+  summary:
+    'Vorgerenderte Angular-Seite, ausgeliefert als statische Dateien: Jede Änderung läuft per Pull Request durch Tests und Sicherheitsscans, jeder Merge geht automatisch auf die Vorschau, die Hauptdomain nur nach Freigabe. Die ausgelieferten Dateien sind signiert.',
+  description:
+    'Wie philipp-klinger.com gebaut ist: Angular mit Prerendering, CI/CD mit Tests und Security-Scans, signierte Dateien und eine öffentliche Nachweiskette.',
+  stack: ['Angular', 'TypeScript', 'SCSS', 'Playwright', 'GitHub Actions'],
+  hasPage: true,
+  links: [{ label: 'GitHub', url: 'https://github.com/PhilippKlinger/philippklinger.com' }],
+  evidence: 'portfolio',
+};

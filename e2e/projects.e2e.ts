@@ -34,7 +34,7 @@ for (const project of projects) {
     });
 
     test('[Regel web-quality] Links und Rückweg sind Touch-Ziele ab 44 px', async ({ page }) => {
-      for (const link of await page.locator('main a').all()) {
+      for (const link of await page.locator('main a:visible').all()) {
         const box = (await link.boundingBox())!;
         expect(box.height, await link.innerText()).toBeGreaterThanOrEqual(44);
       }

@@ -1,7 +1,7 @@
 import { ComponentRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Project, projects } from '../../../content/projects';
+import { portfolioProject, Project, projects } from '../../../content/projects';
 import { ProjectPage } from './project-page';
 
 const bySlug = (slug: string) => projects.find((project) => project.slug === slug)!;
@@ -58,6 +58,14 @@ describe('ProjectPage', () => {
       videoflix.proof,
     );
     expect((await renderPage(bySlug('conduit'))).querySelector('.proof')).toBeNull();
+  });
+
+  it.each([
+    ['Videoflix', bySlug('videoflix'), 1],
+    ['the site itself', portfolioProject, 1],
+    ['Conduit', bySlug('conduit'), 0],
+  ])('shows an evidence chain only where there is one: %s', async (_name, project, count) => {
+    expect((await renderPage(project)).querySelectorAll('app-evidence-chain')).toHaveLength(count);
   });
 
   it('leads back to the project list', async () => {
