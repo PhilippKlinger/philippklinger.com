@@ -29,13 +29,26 @@ describe('formatLlmsTxt', () => {
     expect(output).toContain(`- ${area.title}: ${area.description}`);
   });
 
-  it.each(projects)('contains title, label, summary, stack and links of "$title"', (project) => {
-    expect(output).toContain(`### ${project.title} (${project.label})`);
+  it.each(projects)('contains title, summary, stack and links of "$title"', (project) => {
+    expect(output).toContain(`### ${project.title}\n`);
     expect(output).toContain(project.summary);
     expect(output).toContain(project.stack.join(', '));
     for (const link of project.links) {
       expect(output).toContain(`- [${link.label}](${link.url})`);
     }
+  });
+
+  it('lists project titles without a label', () => {
+    expect(output).not.toMatch(/^### .*\(.*\)$/m);
+  });
+
+  it('handles a project without links', () => {
+    const [project] = projects;
+    const withoutLinks = formatLlmsTxt({ ...data, projects: [{ ...project, links: [] }] });
+    expect(withoutLinks).toContain(
+      `### ${project.title}\n\n${project.summary}\n\nStack: ${project.stack.join(', ')}\n\n\n## Links`,
+    );
+    expect(withoutLinks).not.toContain('undefined');
   });
 
   it('contains the links and contact data', () => {

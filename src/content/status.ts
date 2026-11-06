@@ -190,7 +190,7 @@ interface Context {
   problem: (source: string, reason: string) => void;
 }
 
-interface RunEvidence {
+interface LatestRun {
   id: number;
   conclusion: string;
   headSha: string;
@@ -407,7 +407,7 @@ async function collectCodeRepo(
   };
 }
 
-function parseLatestRun(json: unknown, repo: string, status: string): RunEvidence | null {
+function parseLatestRun(json: unknown, repo: string, status: string): LatestRun | null {
   if (!isObject(json) || !Array.isArray(json['workflow_runs'])) return null;
   // The branch filter of the API also matches pull requests from a fork's "main".
   const latest = json['workflow_runs'].find((run: unknown) => {
@@ -431,7 +431,7 @@ function fetchLatestRun(
   repo: string,
   file: string,
   status: 'completed' | 'success',
-): Promise<RunEvidence | null> {
+): Promise<LatestRun | null> {
   return getGitHub(
     ctx,
     `/repos/${repo}/actions/workflows/${file}/runs?branch=${DEFAULT_BRANCH}&status=${status}&per_page=10`,
@@ -727,7 +727,7 @@ async function collectRestore(
   if (source === null) return missing;
 
   const { repo, path } = source;
-  const evidence = await getGitHub(
+  const restoreTest = await getGitHub(
     ctx,
     `/repos/${repo}/contents/${path}`,
     (json) => {
@@ -743,16 +743,16 @@ async function collectRestore(
     },
     'application/vnd.github.raw+json',
   );
-  if (evidence === null) return missing;
+  if (restoreTest === null) return missing;
 
   const blob = (file: string) => `${GITHUB}/${repo}/blob/${DEFAULT_BRANCH}/${file}`;
   const links: StatusLink[] = [{ kind: 'restore-test', source: repo, url: blob(path) }];
-  if (evidence.runbook !== null) {
-    links.push({ kind: 'runbook', source: repo, url: blob(evidence.runbook) });
+  if (restoreTest.runbook !== null) {
+    links.push({ kind: 'runbook', source: repo, url: blob(restoreTest.runbook) });
   }
   return {
     reachable: true,
-    signals: { testedAt: evidence.testedAt, result: evidence.result },
+    signals: { testedAt: restoreTest.testedAt, result: restoreTest.result },
     links,
   };
 }

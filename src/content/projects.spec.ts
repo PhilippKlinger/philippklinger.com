@@ -1,3 +1,4 @@
+import { projectPages } from '../app/pages/project-page/project-route';
 import { portfolioProject, projects } from './projects';
 
 describe('projects', () => {
@@ -10,9 +11,8 @@ describe('projects', () => {
     ]);
   });
 
-  it.each(projects)('"$title" has a URL-safe slug, a label and a summary', (project) => {
+  it.each(projects)('"$title" has a URL-safe slug and a summary', (project) => {
     expect(project.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-    expect(project.label).toBeTruthy();
     expect(project.summary).toBeTruthy();
   });
 
@@ -24,7 +24,7 @@ describe('projects', () => {
   });
 
   it.each(projects)('"$title" has a project page', (project) => {
-    expect(project.hasPage).toBe(true);
+    expect(projectPages).toContain(project);
   });
 
   it.each(projects)('"$title" has a meta description of 50 to 160 characters', (project) => {
@@ -35,9 +35,20 @@ describe('projects', () => {
   it('keeps the site itself out of the list, with a page and a valid description', () => {
     expect(projects).not.toContain(portfolioProject);
     expect(portfolioProject.slug).toBe('portfolio');
-    expect(portfolioProject.hasPage).toBe(true);
+    expect(projectPages).toContain(portfolioProject);
     expect(portfolioProject.description.length).toBeGreaterThanOrEqual(50);
     expect(portfolioProject.description.length).toBeLessThanOrEqual(160);
+  });
+
+  it('has no origin labels', () => {
+    for (const project of [...projects, portfolioProject]) {
+      expect(project).not.toHaveProperty('label');
+    }
+  });
+
+  it('keeps the description of the site free of the old term', () => {
+    expect(portfolioProject.description).not.toMatch(/nachweiskette/i);
+    expect(portfolioProject.description).toContain('Software Delivery');
   });
 
   it('links Videoflix live first, then the code', () => {

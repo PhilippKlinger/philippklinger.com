@@ -1,7 +1,7 @@
 // Public address of the site, base of canonical and Open Graph URLs.
 export const siteUrl = 'https://philipp-klinger.com';
 
-// Source of this site; the footer links to it (Grill 2026-11-04, option C).
+// Source of this site; the footer links to the runs of its software delivery.
 export const repositoryUrl = 'https://github.com/PhilippKlinger/philippklinger.com';
 
 // Technical documentation and further projects (Docusaurus, PK-27).
