@@ -192,7 +192,6 @@ test.describe('Software Delivery', () => {
     ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
   });
 
-
   test('[Spec 6.1] der Stand kommt von der eigenen Domain', async ({ page, baseURL }) => {
     const response = page.waitForResponse('**/status.json');
     await page.goto('/projekte/videoflix/');
