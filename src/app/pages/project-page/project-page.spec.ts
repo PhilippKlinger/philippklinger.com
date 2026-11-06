@@ -85,7 +85,7 @@ describe('ProjectPage', () => {
     expect(page.querySelector('.label')).toBeNull();
     expect(page.querySelector('.proof')).toBeNull();
     expect(page.querySelector('.stack')).toBeNull();
-    expect(page.textContent).not.toContain(project.label);
+    expect(page.textContent).not.toMatch(/Weiterbildung|Eigenes (Produkt|Projekt)/);
   });
 
   it('shows "Wie es gebaut ist" only with content', async () => {

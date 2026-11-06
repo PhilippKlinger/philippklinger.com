@@ -161,7 +161,7 @@ describe('DeliverySteps', () => {
     expect(status.notice()).toBeNull();
   });
 
-  it('shows nothing that reads Nachweiskette', async () => {
+  it('shows nothing that reads the old term', async () => {
     for (const slug of Object.keys(deliveryPlans)) {
       TestBed.resetTestingModule();
       const element = await renderSteps(slug, documentWith(linkedStatus()));

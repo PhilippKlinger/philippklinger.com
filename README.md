@@ -4,7 +4,7 @@
 [![CodeQL](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/PhilippKlinger/philippklinger.com/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/PhilippKlinger/philippklinger.com/badge)](https://scorecard.dev/viewer/?uri=github.com/PhilippKlinger/philippklinger.com)
 
-Portfolio-Website von Philipp Klinger (DevSecOps & Fullstack). Die Seite stellt Projekte mit Nachweisen vor und ist selbst ein Beleg: Jede Änderung läuft über Pull Request, automatische Prüfungen und einen nachvollziehbaren Build.
+Portfolio-Website von Philipp Klinger (DevSecOps & Fullstack). Die Seite zeigt zu jedem Projekt die Software Delivery und ist selbst ein Beleg: Jede Änderung läuft über Pull Request, automatische Prüfungen und einen nachvollziehbaren Build.
 
 ## Herkunft
 

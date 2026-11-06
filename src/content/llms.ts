@@ -15,7 +15,7 @@ export interface LlmsTxtData {
     claim: string;
   };
   focusAreas: FocusArea[];
-  projects: Pick<Project, 'title' | 'label' | 'summary' | 'stack' | 'links'>[];
+  projects: Pick<Project, 'title' | 'summary' | 'stack' | 'links'>[];
   contact: { availability: string };
   siteUrl: string;
   repositoryUrl: string;
@@ -39,7 +39,7 @@ export function formatLlmsTxt(data: LlmsTxtData): string {
     '## Projekte',
     ...projects.flatMap((project) => [
       '',
-      `### ${project.title} (${project.label})`,
+      `### ${project.title}`,
       '',
       project.summary,
       '',

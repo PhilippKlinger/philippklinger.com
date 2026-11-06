@@ -300,7 +300,7 @@ test.describe('Zustände und Bewegung', () => {
     }
   });
 
-  test('[Spec 3.4 Motion] Reduced-Motion: keine laufende Animation, Lichtfleck still', async ({
+  test('[Spec 3.4 Motion] Reduced-Motion: keine laufende Animation, auch nicht bei Mausbewegung', async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

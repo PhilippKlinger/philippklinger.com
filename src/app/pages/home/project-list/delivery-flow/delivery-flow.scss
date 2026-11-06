@@ -1,20 +1,8 @@
+@use '../flow-panel';
+
 :host {
   display: block;
   align-self: start;
-}
-
-.flow {
-  align-self: start;
-  padding: var(--space-sm);
-  border-radius: var(--radius-step);
-  background: var(--color-panel);
-}
-
-.flow-title {
-  margin-bottom: calc(var(--space-sm) * 0.75);
-  font-family: var(--font-code);
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
 }
 
 .flow-steps {
@@ -28,8 +16,8 @@
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 0.25rem calc(var(--space-sm) * 0.75);
-  padding: var(--space-xs) calc(var(--space-sm) * 0.75);
+  gap: var(--space-2xs) var(--space-snug);
+  padding: var(--space-xs) var(--space-snug);
   border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-small);
   background: var(--color-step);
@@ -40,8 +28,8 @@
 }
 
 .is-private {
-  border-color: color-mix(in srgb, var(--color-text-muted) 30%, transparent);
-  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  border-color: var(--color-line-faint);
+  background: var(--color-surface-faint);
 }
 
 .is-notSetUp,
@@ -63,9 +51,9 @@
 .flow-arrow {
   display: flex;
   align-items: center;
-  gap: calc(var(--space-xs) * 1.25);
-  min-height: 1.625rem;
-  padding-left: 1.25rem;
+  gap: var(--space-compact);
+  min-height: var(--size-flow-arrow);
+  padding-left: var(--space-loose);
   font-family: var(--font-code);
   font-size: var(--text-sm);
   color: var(--color-text-muted);
@@ -78,7 +66,7 @@
 }
 
 .flow-foot {
-  margin-top: calc(var(--space-sm) * 0.75);
+  margin-top: var(--space-snug);
   font-family: var(--font-code);
   font-size: var(--text-sm);
   color: var(--color-text-muted);

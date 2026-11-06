@@ -531,7 +531,7 @@ describe('collectStatus', () => {
     });
   });
 
-  describe('real state is shown, positive only with evidence', () => {
+  describe('real state is shown, positive only with proof', () => {
     it('reports a live SHA behind the latest green commit as no match', async () => {
       const { fetch } = fakeFetch([[/version/, () => json({ sha: OLD_SHA })]]);
       const { live } = (await collect(fetch)).projects.videoflix;

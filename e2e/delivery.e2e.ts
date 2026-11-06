@@ -182,6 +182,16 @@ test.describe('Software Delivery', () => {
     ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
   });
 
+  test('[AK8] [AK17] von der Karte in höchstens 2 Klicks beim Lauf', async ({ page }) => {
+    await serveStatus(page);
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Projektdetails ansehen: Videoflix' }).click();
+    await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
+    await expect(
+      step(page, 'Tests & Security-Checks').locator('.step-links a').first(),
+    ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
+  });
+
   test('[Spec 6.1] der Stand kommt von der eigenen Domain', async ({ page, baseURL }) => {
     const response = page.waitForResponse('**/status.json');
     await page.goto('/projekte/videoflix/');

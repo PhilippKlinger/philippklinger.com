@@ -1,4 +1,4 @@
-// Test data shared by the specs of the evidence chain; never imported by the app.
+// Test data shared by the specs of the software delivery; never imported by the app.
 import { ProjectStatus } from './status';
 
 const sha = '82dcf438f80efbfa0c7ab601feb1609b18d0ecad';

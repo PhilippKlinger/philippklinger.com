@@ -1,4 +1,4 @@
-# Collects public signals for the evidence chain on the runner and uploads a single status.json
+# Collects public signals for the software delivery on the runner and uploads a single status.json
 # to the site's own domain, so the browser never has to call a third party.
 # A source that cannot be reached is a normal result inside the file and keeps the run green.
 # Red means something else: the document failed its validation or the upload failed.
