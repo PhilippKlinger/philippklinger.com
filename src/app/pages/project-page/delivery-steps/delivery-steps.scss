@@ -1,0 +1,135 @@
+@use 'breakpoints' as bp;
+
+h2 {
+  font-size: var(--text-heading);
+  line-height: var(--leading-tight);
+}
+
+.lead {
+  max-width: 44rem;
+  margin-top: var(--space-sm);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.signal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin-top: var(--space-sm);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+
+  strong {
+    font-weight: var(--weight-medium);
+    color: var(--color-accent);
+  }
+}
+
+.notice {
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+
+  // Stays in the accessibility tree: a live region must exist before its text arrives.
+  &:empty {
+    margin-top: 0;
+  }
+}
+
+.steps {
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-step);
+  background: var(--color-card);
+}
+
+// Dashed and without a surface: this step does not exist yet.
+.step-open {
+  border: var(--border-width) dashed var(--color-line-muted);
+  background: none;
+}
+
+.step-main,
+.step-proof {
+  display: grid;
+  align-content: start;
+  gap: var(--space-xs);
+}
+
+.step-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.25rem var(--space-sm);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.step-sentence {
+  color: var(--color-text-muted);
+}
+
+.step-event {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.step-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-sm);
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-sm);
+  list-style: none;
+
+  // Touch targets of at least 44 px (web-quality rule).
+  a {
+    display: inline-grid;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+}
+
+.step-arrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 2.25rem;
+  padding-left: var(--space-md);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+
+  // The label says it all, so the arrow has empty alternative text for screen readers.
+  &::before {
+    content: '↓';
+    content: '↓' / '';
+    font-size: var(--text-lg);
+    color: var(--color-accent);
+  }
+}
+
+@include bp.from(card) {
+  .step {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 2.5rem;
+  }
+}

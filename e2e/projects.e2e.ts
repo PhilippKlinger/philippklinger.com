@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { projects } from '../src/content/projects';
 
-// Project pages /projekte/<slug>/ (spec 3.2, stage 3). The site-wide checks in
+// Project pages /projekte/<slug>/ (spec 7). The site-wide checks in
 // site, layout, seo and a11y cover them through the prerender manifest.
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
@@ -12,26 +12,31 @@ for (const project of projects) {
       await page.goto(`/projekte/${project.slug}/`);
     });
 
-    test('[Spec 3.2] zeigt Titel, Etikett, Summary, Stack und alle Links', async ({ page }) => {
+    test('[Spec 7] zeigt Titel, Summary und alle Links', async ({ page }) => {
       const main = page.locator('main');
       await expect(main.locator('h1')).toHaveText(project.title);
-      await expect(main).toContainText(project.label);
       await expect(main).toContainText(project.summary);
-      await expect(main.locator('.stack li')).toHaveText(project.stack);
       const links = main.locator('.links a');
-      await expect(links).toHaveText(project.links.map((link) => link.label));
+      await expect(links).toHaveCount(project.links.length);
       for (const [index, link] of project.links.entries()) {
+        await expect(links.nth(index)).toHaveText(link.label);
         await expect(links.nth(index)).toHaveAttribute('href', link.url);
       }
     });
 
-    test('[Spec 3.2] Vorschaubild ist geladen', async ({ page }) => {
-      const image = page.locator('main img');
-      await expect(image).toBeVisible();
-      await expect
-        .poll(() => image.evaluate((el: HTMLImageElement) => el.naturalWidth))
-        .toBe(project.preview?.width);
-    });
+    const preview = project.preview;
+    if (preview) {
+      test('[Spec 7] Vorschaubild ist geladen und hat die angegebenen Maße', async ({ page }) => {
+        const image = page.locator('main img');
+        await expect(image).toBeVisible();
+        await expect
+          .poll(() => image.evaluate((el: HTMLImageElement) => el.naturalWidth))
+          .toBe(preview.width);
+        expect(await image.evaluate((el: HTMLImageElement) => el.naturalHeight)).toBe(
+          preview.height,
+        );
+      });
+    }
 
     test('[Regel web-quality] Links und Rückweg sind Touch-Ziele ab 44 px', async ({ page }) => {
       for (const link of await page.locator('main a:visible').all()) {
@@ -61,13 +66,6 @@ for (const project of projects) {
     });
   });
 }
-
-test('[Spec 3.2] Nachweis-Kurzzeile nur auf Projekten, die einen haben', async ({ page }) => {
-  for (const project of projects) {
-    await page.goto(`/projekte/${project.slug}/`);
-    await expect(page.locator('main .proof')).toHaveCount(project.proof ? 1 : 0);
-  }
-});
 
 test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   const response = await page.goto('/projekte/gibts-nicht/');
