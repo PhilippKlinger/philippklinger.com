@@ -1,6 +1,15 @@
-import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { ease } from '../haze/haze-motion';
 import type { Point } from '../haze/haze-shader';
+import type { CursorDot } from './cursor-dot';
 import { cursorText } from './cursor-text';
 
 const EASING = 0.22;
@@ -15,6 +24,7 @@ const RING_ALLOWED =
   host: { 'aria-hidden': 'true', '[class.is-on]': 'visible()' },
 })
 export class CursorCta {
+  readonly dot = input.required<CursorDot>();
   protected readonly text = signal('');
   protected readonly visible = signal(false);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -35,7 +45,8 @@ export class CursorCta {
 
   private listen(allowed: MediaQueryList): void {
     const options = { passive: true, signal: this.lifetime.signal };
-    addEventListener('pointermove', (event) => this.aimAt(event), options);
+    this.dot().start(this.lifetime.signal);
+    addEventListener('pointermove', (event) => this.move(event), options);
     addEventListener('pointerover', (event) => this.update(event, allowed), options);
     this.hideWhenOutOfReach(allowed);
   }
@@ -43,14 +54,24 @@ export class CursorCta {
   // No pointerover reports any of these, the ring would stay and its loop keep running.
   private hideWhenOutOfReach(allowed: MediaQueryList): void {
     const { signal } = this.lifetime;
-    document.documentElement.addEventListener('pointerleave', () => this.hide(), { signal });
+    document.documentElement.addEventListener('pointerleave', () => this.leave(), { signal });
     // The back/forward cache restores the page as it was left.
-    addEventListener('pagehide', () => this.hide(), { signal });
+    addEventListener('pagehide', () => this.leave(), { signal });
     allowed.addEventListener('change', () => this.hideUnless(allowed.matches), { signal });
+  }
+
+  private leave(): void {
+    this.hide();
+    this.dot().hide();
   }
 
   private hideUnless(stillAllowed: boolean): void {
     if (!stillAllowed) this.hide();
+  }
+
+  private move(event: PointerEvent): void {
+    this.aimAt(event);
+    this.dot().follow(event);
   }
 
   private aimAt({ clientX, clientY }: PointerEvent): void {
@@ -64,6 +85,7 @@ export class CursorCta {
     const text = over ? cursorText(event.target) : null;
     if (text) this.show(text, event);
     else this.hide();
+    this.dot().follow(event);
   }
 
   private show(text: string, event: PointerEvent): void {
@@ -92,7 +114,7 @@ export class CursorCta {
   };
 
   private stop(): void {
-    cancelAnimationFrame(this.frameId);
+    this.leave();
     this.lifetime.abort();
   }
 }

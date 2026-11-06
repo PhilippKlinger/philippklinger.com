@@ -1,0 +1,45 @@
+// Sizes of the dot only (spec 8.2), the page has no other element to share them with.
+$dot-size: 10px;
+$circle-size: 20px;
+$circle-line: 2px;
+
+// On top of the page like the ring, clicks go through. No transition on its position: it
+// stands in for the pointer and must not lag behind.
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  width: $dot-size;
+  height: $dot-size;
+  margin: calc($dot-size / -2) 0 0 calc($dot-size / -2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  opacity: 0;
+  transition:
+    opacity 0.1s,
+    width 0.12s,
+    height 0.12s,
+    margin 0.12s,
+    background 0.12s;
+  pointer-events: none;
+
+  @media (hover: none),
+    (pointer: coarse),
+    (prefers-reduced-motion: reduce),
+    (forced-colors: active) {
+    display: none;
+  }
+}
+
+:host(.is-on) {
+  opacity: 1;
+}
+
+:host(.is-circle) {
+  width: $circle-size;
+  height: $circle-size;
+  margin: calc($circle-size / -2) 0 0 calc($circle-size / -2);
+  border: $circle-line solid var(--color-accent);
+  background: transparent;
+}

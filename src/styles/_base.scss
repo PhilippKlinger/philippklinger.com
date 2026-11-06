@@ -113,3 +113,15 @@ img {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+// Set by the pointer dot while it runs (cursor-dot.ts). Has to win over the cursor of every link,
+// button and component, also later ones, so this is the one place for !important.
+.has-custom-cursor,
+.has-custom-cursor * {
+  cursor: none !important;
+}
+
+.has-custom-cursor input,
+.has-custom-cursor textarea {
+  cursor: auto !important;
+}
