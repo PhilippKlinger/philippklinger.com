@@ -1,8 +1,8 @@
 import { ActivatedRouteSnapshot, CanMatchFn, ResolveFn } from '@angular/router';
-import { Project, projects } from '../../../content/projects';
+import { portfolioProject, Project, projects } from '../../../content/projects';
 
 /** Projects with a page of their own; the prerender params come from this list too. */
-export const projectPages = projects.filter((project) => project.hasPage);
+export const projectPages = [...projects.filter((project) => project.hasPage), portfolioProject];
 
 function findProjectPage(slug: string | null | undefined): Project | undefined {
   return projectPages.find((project) => project.slug === slug);

@@ -1,10 +1,11 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Project, projectPageTexts } from '../../../content/projects';
+import { EvidenceChain } from './evidence-chain/evidence-chain';
 
 @Component({
   selector: 'app-project-page',
-  imports: [RouterLink],
+  imports: [EvidenceChain, RouterLink],
   templateUrl: './project-page.html',
   styleUrl: './project-page.scss',
 })

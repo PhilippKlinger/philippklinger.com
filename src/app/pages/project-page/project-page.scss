@@ -115,7 +115,8 @@ h1 {
 }
 
 @include bp.from(tablet) {
-  .overview {
+  // Without an image the text keeps the full width instead of leaving a gap.
+  .overview:has(.media) {
     grid-template-columns: 1fr 1fr;
   }
 

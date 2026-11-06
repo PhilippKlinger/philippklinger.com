@@ -49,4 +49,8 @@
       </ul>
     </section>
   </div>
+
+  @if (project().evidence; as evidence) {
+    <app-evidence-chain [project]="evidence" />
+  }
 </article>

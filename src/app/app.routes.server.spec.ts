@@ -12,6 +12,6 @@ describe('serverRoutes', () => {
 
   it('takes the slugs from the content data', async () => {
     const params = route && 'getPrerenderParams' in route && (await route.getPrerenderParams?.());
-    expect(params).toEqual(projects.map(({ slug }) => ({ slug })));
+    expect(params).toEqual([...projects.map(({ slug }) => ({ slug })), { slug: 'portfolio' }]);
   });
 });
