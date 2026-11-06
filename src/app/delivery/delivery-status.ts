@@ -15,6 +15,7 @@ import {
   pickNewerSnapshot,
   pickProjectSnapshot,
   ProjectSnapshot,
+  shownTime,
   statusNotice,
 } from '../../content/software-delivery';
 import { ProjectKey, StatusDocument } from '../../content/status';
@@ -75,11 +76,7 @@ export class DeliveryStatus {
     for (const [project, current] of this.snapshots) {
       current.set(pickNewerSnapshot(current(), pickProjectSnapshot(this.fetched, project)));
     }
-    this.noticeText.set(statusNotice(this.fetched !== null, this.oldestShown(), new Date()));
-  }
-
-  private oldestShown(): string | null {
-    const times = [...this.snapshots.values()].flatMap((current) => current()?.generatedAt ?? []);
-    return times.sort((a, b) => Date.parse(a) - Date.parse(b))[0] ?? null;
+    const shown = [...this.snapshots.values()].map((current) => current());
+    this.noticeText.set(statusNotice(this.fetched !== null, shownTime(shown), new Date()));
   }
 }

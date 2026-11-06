@@ -131,6 +131,34 @@ describe('deliveryPlans', () => {
     }
   });
 
+  it('claims neither tests nor a scan for Conduit, its CI has none', () => {
+    expect(JSON.stringify(deliveryPlans['conduit'])).not.toMatch(/getestet|Schwachstellen/);
+    const ci = deliveryPlans['conduit'].steps.find((item) => item.name === 'CI') as MeasuredStep;
+    expect(ci.sentences.verified).toBe('Jede Änderung wird automatisch gebaut und validiert.');
+    expect(ci.sentences.partial).toBeTruthy();
+    expect(ci.sentences.deviation).toBeTruthy();
+  });
+
+  it.each(['videoflix', 'portfolio'])('"%s" is neutral on a partial signed build', (slug) => {
+    const build = deliveryPlans[slug].steps.find(
+      (item) => item.name === 'Signed Build',
+    ) as MeasuredStep;
+    expect(build.sentences.partial).toBe('Ein Teil der Nachweise liegt vor.');
+    expect(build.sentences.unsigned).toBe(
+      'Die Bestandteile sind aufgelistet, die Signatur fehlt noch.',
+    );
+  });
+
+  it('has an own sentence for a red deploy run wherever one is read', () => {
+    const readers = measuredSteps.filter((item) => item.sources.includes('deployRun'));
+    expect(readers).toHaveLength(2);
+    for (const reader of readers) {
+      expect(reader.sentences.deployRunFailed).toBe(
+        'Der letzte Deploy-Lauf war nicht erfolgreich.',
+      );
+    }
+  });
+
   it('shows the running label of the spec', () => {
     expect(deliveryPlans['videoflix'].runningLabel).toBe('Läuft in Produktion');
     expect(deliveryPlans['portfolio'].runningLabel).toBe('Läuft in Produktion');

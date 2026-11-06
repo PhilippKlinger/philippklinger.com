@@ -11,6 +11,7 @@ import {
   pickNewerSnapshot,
   pickProjectSnapshot,
   ProjectSnapshot,
+  shownTime,
   statusNotice,
   StepSource,
 } from './software-delivery';
@@ -271,6 +272,143 @@ describe('buildDeliveryView', () => {
       expect(stepView(step(['code']), provenStatus(noCode)).sentence).toBe(
         'Dieser Beleg ist gerade nicht abrufbar.',
       );
+    });
+  });
+
+  describe('sentence of a partial supply chain', () => {
+    const signedBuild: MeasuredStep = {
+      ...step(['supplyChain']),
+      sentences: { verified: 'v', partial: 'neutral', deviation: 'd', unsigned: 'unsigned' },
+    };
+    const noSbom = (status: ProjectStatus, index = 0) => {
+      status.supplyChain.signals.repos[index].sbom = {
+        reachable: false,
+        spdxVersion: null,
+        packageCount: null,
+      };
+    };
+    const secondRepo = (status: ProjectStatus) => {
+      const [first] = status.supplyChain.signals.repos;
+      status.supplyChain.signals.repos.push(JSON.parse(JSON.stringify(first)));
+    };
+    const sentenceWith = (change: Change) => stepView(signedBuild, provenStatus(change));
+
+    it('names the missing signature when the attestation is missing and the SBOM is there', () => {
+      const view = sentenceWith(noAttestation);
+      expect(view.state).toBe('partial');
+      expect(view.sentence).toBe('unsigned');
+    });
+
+    it.each<[string, Change]>([
+      [
+        'neither attestation nor SBOM',
+        (status) => {
+          noAttestation(status);
+          noSbom(status);
+        },
+      ],
+      ['an attestation without SBOM', (status) => noSbom(status)],
+      [
+        'one of two images attested',
+        (status) => {
+          secondRepo(status);
+          Object.assign(status.supplyChain.signals.repos[1].attestation!, {
+            reachable: false,
+            provenanceCount: null,
+          });
+        },
+      ],
+      [
+        'no attestation and an SBOM for one of two images',
+        (status) => {
+          noAttestation(status);
+          secondRepo(status);
+          noSbom(status, 1);
+        },
+      ],
+      [
+        'everything proven but no public link',
+        (status) => {
+          status.supplyChain.links = [];
+        },
+      ],
+    ])('stays neutral with %s', (_name, change) => {
+      const view = sentenceWith(change);
+      expect(view.state).toBe('partial');
+      expect(view.sentence).toBe('neutral');
+    });
+  });
+
+  describe('deviation of a step with several sources', () => {
+    const deployment = (sources: StepSource[]): MeasuredStep => ({
+      ...step(sources),
+      sentences: { verified: 'v', partial: 'p', deviation: 'live', deployRunFailed: 'run' },
+    });
+    const redRun: Change = (status) => {
+      withDeployRun(status);
+      status.checks.signals.workflows.at(-1)!.conclusion = 'failure';
+    };
+
+    it('tells a red deploy run with its own sentence and its event', () => {
+      const view = stepView(deployment(['live', 'deployRun']), provenStatus(redRun));
+      expect(view.state).toBe('deviation');
+      expect(view.sentence).toBe('run');
+      expect(view.event).toBe('Letztes Deployment nicht erfolgreich, 06.11., 11:42');
+    });
+
+    it('keeps the sentence and the event of live when only live deviates', () => {
+      const status = provenStatus((item) => {
+        withDeployRun(item);
+        liveAhead(item);
+      });
+      const view = stepView(deployment(['deployRun', 'live']), status);
+      expect(view.state).toBe('deviation');
+      expect(view.sentence).toBe('live');
+      expect(view.event).toBe('Live: Commit 82dcf43, weicht von der letzten grünen CI ab');
+    });
+
+    it('follows the first source that deviates when both do', () => {
+      const status = provenStatus((item) => {
+        redRun(item);
+        liveAhead(item);
+      });
+      const liveFirst = stepView(deployment(['live', 'deployRun']), status);
+      expect(liveFirst.sentence).toBe('live');
+      expect(liveFirst.event).toContain('weicht von der letzten grünen CI ab');
+      const runFirst = stepView(deployment(['deployRun', 'live']), status);
+      expect(runFirst.sentence).toBe('run');
+      expect(runFirst.event).toContain('Letztes Deployment nicht erfolgreich');
+    });
+
+    it('falls back to the sentence for deviation without an own one', () => {
+      expect(stepView(step(['live', 'deployRun']), provenStatus(redRun)).sentence).toBe('d');
+    });
+  });
+
+  describe('live without components', () => {
+    const conduitLike: DeliveryPlan = {
+      statusKey: 'conduit',
+      runningLabel: 'Läuft auf Staging',
+      steps: [step(['code']), step(['checks']), step(['deployRun', 'live'], false)],
+    };
+    const noLiveWithRun = () => {
+      const status = noLive();
+      withDeployRun(status);
+      return status;
+    };
+
+    it('proves nothing, so a green deploy run alone stays partial', () => {
+      expect(stepView(step(['deployRun', 'live'], false), noLiveWithRun()).state).toBe('partial');
+    });
+
+    it('shows no running label without a real live proof', () => {
+      const { signal } = viewOf(conduitLike, noLiveWithRun());
+      expect(signal.status).toBe('CI grün');
+    });
+
+    it('shows the running label with a real live proof', () => {
+      const { signal } = viewOf(conduitLike, provenStatus(withDeployRun));
+      expect(signal.status).toBe('Läuft auf Staging');
     });
   });
 
@@ -771,6 +909,22 @@ describe('buildDeliveryView', () => {
       expect(signal).toEqual({ status: 'Teilweise belegt', when: 'Stand 06.11., 01:58' });
     });
 
+    it('shows "Stand nicht abrufbar" when no step has any proof, with empty when', () => {
+      expect(buildDeliveryView(measuredPlan, snapshotOf(emptyStatus())).signal).toEqual({
+        status: 'Stand nicht abrufbar',
+        when: '',
+      });
+    });
+
+    it('still shows a known problem when nothing else is proven', () => {
+      const status = emptyStatus();
+      status.restore.signals.result = 'failed';
+      status.live.signals.components[0].matchesLatestGreen = false;
+      expect(buildDeliveryView(measuredPlan, snapshotOf(status)).signal.status).toBe(
+        'Abweichung im Betrieb',
+      );
+    });
+
     it('shows "Stand nicht abrufbar" without a snapshot, with empty when', () => {
       expect(buildDeliveryView(measuredPlan, null).signal).toEqual({
         status: 'Stand nicht abrufbar',
@@ -1229,8 +1383,27 @@ describe('statusNotice', () => {
     expect(statusNotice(true, '2026-11-06T11:00:00Z', now)).toBeNull();
   });
 
-  it('stays null when a refresh brought no time', () => {
-    expect(statusNotice(true, null, now)).toBeNull();
+  // No time means an asked project has no snapshot after the request: it must not stay silent.
+  it('reports refreshFailed when a refresh brought no time', () => {
+    expect(statusNotice(true, null, now)).toBe(deliveryTexts.refreshFailed);
+  });
+});
+
+describe('shownTime', () => {
+  const older: ProjectSnapshot = { generatedAt: '2026-11-05T12:00:00Z', status: healthyStatus() };
+  const newer: ProjectSnapshot = { generatedAt: '2026-11-06T12:00:00Z', status: healthyStatus() };
+
+  it('takes the oldest of what the page shows', () => {
+    expect(shownTime([newer, older])).toBe(older.generatedAt);
+  });
+
+  it('is null as soon as an asked project has no snapshot', () => {
+    expect(shownTime([newer, null])).toBeNull();
+    expect(shownTime([null])).toBeNull();
+  });
+
+  it('is null when nothing was asked', () => {
+    expect(shownTime([])).toBeNull();
   });
 });
 

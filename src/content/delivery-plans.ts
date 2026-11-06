@@ -15,9 +15,16 @@ const checkSentences: Sentences = {
   partial: 'Ein Teil der Prüfungen ist nicht abrufbar.',
   deviation: 'Mindestens eine Prüfung lief zuletzt nicht erfolgreich.',
 };
+// The CI of conduit-container builds and validates, it has neither tests nor a scan.
+const buildCheckSentences: Sentences = {
+  verified: 'Jede Änderung wird automatisch gebaut und validiert.',
+  partial: 'Ein Teil der Läufe ist nicht abrufbar.',
+  deviation: 'Der letzte Lauf war nicht erfolgreich.',
+};
 const signedBuildSentences: Sentences = {
   verified: 'Das Release ist signiert, seine Bestandteile sind aufgelistet.',
-  partial: 'Die Bestandteile sind aufgelistet, die Signatur fehlt noch.',
+  partial: 'Ein Teil der Nachweise liegt vor.',
+  unsigned: 'Die Bestandteile sind aufgelistet, die Signatur fehlt noch.',
   deviation: 'Für den gebauten Stand fehlt ein Herkunftsnachweis.',
   notSetUp: 'Hier steht künftig, dass das Release signiert ist.',
 };
@@ -29,6 +36,7 @@ const deploymentSentences: Sentences = {
   verified: 'Live läuft genau der geprüfte Stand.',
   partial: 'Ein Teil der Dienste läuft nachweislich auf dem geprüften Stand.',
   deviation: 'Die laufende Version weicht vom zuletzt geprüften Commit ab.',
+  deployRunFailed: 'Der letzte Deploy-Lauf war nicht erfolgreich.',
   notSetUp: 'Hier steht künftig, dass live genau der geprüfte Stand läuft.',
 };
 const monitoringSentences: Sentences = {
@@ -137,7 +145,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         arrowToNext: 'Image',
         sources: ['checks'],
         setUp: true,
-        sentences: checkSentences,
+        sentences: buildCheckSentences,
       },
       {
         name: 'Image in GHCR',

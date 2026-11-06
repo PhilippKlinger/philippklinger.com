@@ -33,7 +33,12 @@ export interface MeasuredStep {
   /** Staging can combine deployRun and live. */
   sources: StepSource[];
   setUp: boolean;
-  sentences: Partial<Record<'verified' | 'partial' | 'deviation' | 'notSetUp', string>>;
+  sentences: Partial<
+    Record<
+      'verified' | 'partial' | 'deviation' | 'notSetUp' | 'unsigned' | 'deployRunFailed',
+      string
+    >
+  >;
 }
 
 export interface FixedStep {
@@ -113,6 +118,7 @@ export const deliveryTexts = {
   } satisfies Record<StepState, string>,
 } as const;
 
+// DRAFT: wording to be approved (PK-23).
 const UNAVAILABLE_SENTENCE = 'Dieser Beleg ist gerade nicht abrufbar.';
 
 // Fixed time zone, so the prerendered page and the browser render the same text.
@@ -199,13 +205,19 @@ function restoreProof({ testedAt, result }: ProjectStatus['restore']['signals'])
   return result === 'passed' || testedAt !== null ? true : null;
 }
 
+// No components: nothing proves what runs live, so a green deploy run alone is not enough.
+function liveProofs({ live }: ProjectStatus): Proof[] {
+  const { components } = live.signals;
+  return components.length > 0 ? components.map((part) => part.matchesLatestGreen) : [null];
+}
+
 const proofsOf: Record<StepSource, (status: ProjectStatus) => Proof[]> = {
   code: (status) => status.code.signals.repos.map(codeProof),
   checks: (status) => runsOf(status, 'check').map(runProof),
   supplyChain: (status) => builtRepos(status).flatMap(supplyChainProofs),
   image: (status) =>
     builtRepos(status).map((repo) => (repo.attestation?.subjectDigest ? true : null)),
-  live: (status) => status.live.signals.components.map((part) => part.matchesLatestGreen),
+  live: liveProofs,
   deployRun: (status) => runsOf(status, 'deploy').map(runProof),
   stability: (status) => stabilityProofs(status.stability),
   restore: (status) => [restoreProof(status.restore.signals)],
@@ -218,12 +230,14 @@ function stateOf(proofs: Proof[], setUp: boolean): StepState {
   return setUp ? 'unavailable' : 'notSetUp';
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function protectionPhrase(status: ProjectStatus): string | null {
   const proofs = proofsOf.code(status);
   if (proofs.includes(false)) return 'main nicht durchgängig geschützt';
   return proofs.includes(null) ? null : 'main geschützt';
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function codeEvent(status: ProjectStatus): string | null {
   const repos = status.code.signals.repos.filter((repo) => repo.mergedPullRequests !== null);
   if (repos.length === 0) return null;
@@ -232,6 +246,7 @@ function codeEvent(status: ProjectStatus): string | null {
   return joinParts([`${merged} gemergte Pull Requests in ${where}`, protectionPhrase(status)]);
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function checksEvent(status: ProjectStatus): string | null {
   const known = runsOf(status, 'check').filter((run) => runProof(run) !== null);
   if (known.length === 0) return null;
@@ -241,6 +256,7 @@ function checksEvent(status: ProjectStatus): string | null {
   return joinParts([result, formatTime(dayTimeFormat, latestTime(known))]);
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function deployEvent(status: ProjectStatus): string | null {
   const known = runsOf(status, 'deploy').filter((run) => runProof(run) !== null);
   if (known.length === 0) return null;
@@ -248,6 +264,7 @@ function deployEvent(status: ProjectStatus): string | null {
   return joinParts([`Letztes Deployment ${result}`, formatTime(dayTimeFormat, latestTime(known))]);
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function attestationPhrase(repos: RepoSupplyChainSignal[]): string | null {
   const attested = repos.filter((repo) => attestationProof(repo) === true).length;
   if (attested === 0) return null;
@@ -255,12 +272,14 @@ function attestationPhrase(repos: RepoSupplyChainSignal[]): string | null {
   return repos.length === 2 ? 'Attestierung für beide Images' : 'Attestierung vorhanden';
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function scorecardPhrase(repos: RepoSupplyChainSignal[]): string | null {
   const scores = repos.map((repo) => repo.scorecard.score).filter(present);
   if (scores.length === 0) return null;
   return `OpenSSF Scorecard ${scores.map((score) => oneDecimal.format(score)).join(' und ')} von 10`;
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function supplyChainEvent(status: ProjectStatus): string | null {
   const repos = builtRepos(status);
   const sbom = repos.some((repo) => repo.sbom.reachable) ? 'SBOM vorhanden' : null;
@@ -270,6 +289,7 @@ function supplyChainEvent(status: ProjectStatus): string | null {
   return joinParts(parts) || null;
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 /** sourceSha counts only next to a digest: without one no image is known at all. */
 function imageEvent(status: ProjectStatus): string | null {
   const image = builtRepos(status).find((repo) => repo.attestation?.subjectDigest);
@@ -278,6 +298,7 @@ function imageEvent(status: ProjectStatus): string | null {
   return sha ? `Image gebaut für Commit ${shortSha(sha)}` : 'Image in GHCR vorhanden';
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function liveComparison(components: LiveComponentSignal[]): string | null {
   const results = components.map((part) => part.matchesLatestGreen);
   if (results.includes(false)) return 'weicht von der letzten grünen CI ab';
@@ -286,6 +307,7 @@ function liveComparison(components: LiveComponentSignal[]): string | null {
     : null;
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function liveEvent(status: ProjectStatus): string | null {
   const { components } = status.live.signals;
   const known = components.filter((part) => part.deployedSha !== null);
@@ -296,6 +318,7 @@ function liveEvent(status: ProjectStatus): string | null {
   return `Live: ${joinParts([...shas, liveComparison(components)])}`;
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function stabilityEvent({ reachable, signals }: ProjectStatus['stability']): string | null {
   if (!reachable) return null;
   const { uptime30d, monitorsTotal, monitorsUp } = signals;
@@ -304,6 +327,7 @@ function stabilityEvent({ reachable, signals }: ProjectStatus['stability']): str
   return `${monitorsUp} von ${monitorsTotal} Diensten erreichbar`;
 }
 
+// DRAFT: event text, wording to be approved (PK-23).
 function restoreEvent({ testedAt, result }: ProjectStatus['restore']['signals']): string | null {
   const date = formatTime(dateFormat, testedAt);
   if (date === null) return null;
@@ -321,6 +345,7 @@ const eventOf: Record<StepSource, (status: ProjectStatus) => string | null> = {
   restore: (status) => restoreEvent(status.restore.signals),
 };
 
+// DRAFT: all link labels below, wording to be approved (PK-23).
 const ofKind = (links: StatusLink[], kind: LinkKind) => links.filter((link) => link.kind === kind);
 
 function toLinks(links: StatusLink[], label: (link: StatusLink) => string): DeliveryLink[] {
@@ -411,18 +436,43 @@ function settledState(state: StepState, step: MeasuredStep, hasLink: boolean): S
   return claimed === 'partial' && !step.sentences.partial ? 'unavailable' : claimed;
 }
 
-function sentenceOf(state: StepState, step: MeasuredStep): string {
+function disprovingSources(step: MeasuredStep, status: ProjectStatus): StepSource[] {
+  return step.sources.filter((source) => proofsOf[source](status).includes(false));
+}
+
+/** "Signature missing" says more than the data unless no image has one and all have an SBOM. */
+function isUnsigned(status: ProjectStatus): boolean {
+  const repos = builtRepos(status);
+  const isMissing = (repo: RepoSupplyChainSignal) =>
+    attestationProof(repo) !== true && repo.sbom.reachable;
+  return repos.length > 0 && repos.every(isMissing);
+}
+
+function specificSentence(
+  state: StepState,
+  step: MeasuredStep,
+  status: Status,
+): string | undefined {
+  if (status === null) return undefined;
+  if (state === 'partial' && isUnsigned(status)) return step.sentences.unsigned;
+  const isRedRun = disprovingSources(step, status)[0] === 'deployRun';
+  return state === 'deviation' && isRedRun ? step.sentences.deployRunFailed : undefined;
+}
+
+function sentenceOf(state: StepState, step: MeasuredStep, status: Status): string {
   if (state === 'unavailable' || state === 'private') return UNAVAILABLE_SENTENCE;
-  return step.sentences[state] ?? UNAVAILABLE_SENTENCE;
+  return specificSentence(state, step, status) ?? step.sentences[state] ?? UNAVAILABLE_SENTENCE;
 }
 
 function proofsFor(step: MeasuredStep, status: Status): Proof[] {
   return status ? step.sources.flatMap((source) => proofsOf[source](status)) : [];
 }
 
+/** The source that disproves the step goes first, so sentence and event tell the same story. */
 function eventFor(step: MeasuredStep, status: Status): string | null {
-  const events = status ? step.sources.map((source) => eventOf[source](status)) : [];
-  return events.find(present) ?? null;
+  if (status === null) return null;
+  const sources = [...disprovingSources(step, status), ...step.sources];
+  return sources.map((source) => eventOf[source](status)).find(present) ?? null;
 }
 
 function measuredView(step: MeasuredStep, status: Status, plan: DeliveryPlan): DeliveryStepView {
@@ -432,7 +482,7 @@ function measuredView(step: MeasuredStep, status: Status, plan: DeliveryPlan): D
     name: step.name,
     arrowToNext: step.arrowToNext ?? null,
     state,
-    sentence: sentenceOf(state, step),
+    sentence: sentenceOf(state, step, status),
     event: eventFor(step, status),
     links,
   };
@@ -451,6 +501,7 @@ function fixedView(step: FixedStep): DeliveryStepView {
   };
 }
 
+// DRAFT: counter text, wording to be approved (PK-23).
 function counterOf(plan: DeliveryPlan, steps: DeliveryStepView[]): string {
   if (plan.footnote) return plan.footnote;
   const verified = steps.filter((step) => step.state === 'verified').length;
@@ -471,11 +522,13 @@ function statesWith(
   );
 }
 
+// DRAFT: signal text, wording to be approved (PK-23).
 function lastRun(runs: WorkflowSignal[]): string {
   const day = formatTime(dayFormat, latestTime(runs));
   return day === null ? '' : `zuletzt ${day}`;
 }
 
+// DRAFT: signal text, wording to be approved (PK-23).
 function operatingSignal(
   plan: DeliveryPlan,
   steps: DeliveryStepView[],
@@ -487,6 +540,7 @@ function operatingSignal(
   return states.includes('deviation') ? { status: 'Abweichung im Betrieb', when: stand } : null;
 }
 
+// DRAFT: signal text, wording to be approved (PK-23).
 function checksSignal(
   plan: DeliveryPlan,
   steps: DeliveryStepView[],
@@ -499,13 +553,23 @@ function checksSignal(
   return { status: 'CI grün', when: lastRun(runs.filter((run) => run.kind === 'tests')) };
 }
 
+// DRAFT: signal text, wording to be approved (PK-23).
+const NO_SIGNAL: Signal = { status: 'Stand nicht abrufbar', when: '' };
+
+// DRAFT: signal text, wording to be approved (PK-23).
+function fallbackSignal(steps: DeliveryStepView[], stand: string): Signal {
+  const hasProof = steps.some((step) => step.state === 'verified' || step.state === 'partial');
+  return hasProof ? { status: 'Teilweise belegt', when: stand } : NO_SIGNAL;
+}
+
 function signalOf(plan: DeliveryPlan, steps: DeliveryStepView[], snapshot: Snapshot): Signal {
   if (plan.fixedSignal) return plan.fixedSignal;
-  if (!snapshot) return { status: 'Stand nicht abrufbar', when: '' };
+  if (!snapshot) return NO_SIGNAL;
   const stand = `Stand ${formatTime(dayTimeFormat, snapshot.generatedAt)}`;
   return (
     operatingSignal(plan, steps, stand) ??
-    checksSignal(plan, steps, snapshot.status) ?? { status: 'Teilweise belegt', when: stand }
+    checksSignal(plan, steps, snapshot.status) ??
+    fallbackSignal(steps, stand)
   );
 }
 
@@ -671,11 +735,18 @@ export function pickNewerSnapshot(
   return Date.parse(fresh.generatedAt) > Date.parse(current.generatedAt) ? fresh : current;
 }
 
+/** Oldest time on the page. null as soon as an asked project has no snapshot. */
+export function shownTime(snapshots: (ProjectSnapshot | null)[]): string | null {
+  const times = snapshots.map((snapshot) => snapshot?.generatedAt ?? null);
+  if (times.includes(null)) return null;
+  return times.filter(present).sort((a, b) => Date.parse(a) - Date.parse(b))[0] ?? null;
+}
+
 export function statusNotice(
   refreshed: boolean,
   generatedAt: string | null,
   now: Date,
 ): string | null {
-  if (!refreshed) return deliveryTexts.refreshFailed;
-  return generatedAt && isStale(generatedAt, now) ? deliveryTexts.stale : null;
+  if (!refreshed || generatedAt === null) return deliveryTexts.refreshFailed;
+  return isStale(generatedAt, now) ? deliveryTexts.stale : null;
 }
