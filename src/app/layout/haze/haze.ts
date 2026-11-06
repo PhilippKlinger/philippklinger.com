@@ -67,10 +67,12 @@ export class Haze {
   }
 
   private run(): void {
+    const { signal } = this.lifetime;
+    // A hidden tab has no frames; that gap says nothing about the GPU.
+    document.addEventListener('visibilitychange', () => (this.lastFrame = 0), { signal });
     this.followsPointer = matchMedia(FINE_POINTER).matches;
     if (this.followsPointer) {
-      const options = { passive: true, signal: this.lifetime.signal };
-      addEventListener('pointermove', (event) => this.aimAt(event), options);
+      addEventListener('pointermove', (event) => this.aimAt(event), { passive: true, signal });
     }
     this.state.set('running');
     this.frameId = requestAnimationFrame(this.frame);
@@ -106,6 +108,9 @@ export class Haze {
 
   private halt(state: 'off' | 'slow'): void {
     this.stop();
+    // Gives the GPU memory back. The listener is gone, so this does not read as a failure.
+    const gl = this.canvas().nativeElement.getContext('webgl');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
     this.state.set(state);
   }
 

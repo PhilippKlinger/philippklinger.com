@@ -2,6 +2,8 @@ import { renderSize } from './haze-motion';
 
 export const vertexSource = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
 
+// As in the draft, except for the upper limit of the colour: with the grain on top, the
+// accent colour still reaches 4.5:1 on the brightest pixel (draft: .12,.33,.29).
 export const fragmentSource = `precision highp float;
 uniform vec2 uRes;uniform vec2 uPointer;uniform float uTime;
 const vec3 bg=vec3(.110,.110,.110);const vec3 glow=vec3(.043,.251,.212);const vec3 strong=vec3(.149,.322,.294);const vec3 accent=vec3(.239,.812,.714);
@@ -13,7 +15,7 @@ float d=length(p-m);float pull=exp(-d*d*4.5);float t=uTime*.001;
 vec2 q=vec2(fbm(p*1.05+t*.05),fbm(p*1.05+vec2(5.2,1.3)-t*.04));p+=(p-m)*pull*-.45;
 float n=fbm(p*1.25+q*1.7+t*.03);float haze=smoothstep(.3,.72,n);
 vec3 col=mix(bg,glow,haze*mix(.5,1.,uv.x));col=mix(col,strong,smoothstep(.5,.78,n)*.65);col=mix(col,glow,pull*.55);col=mix(col,strong,pull*pull*.45);col+=accent*pull*pull*.03;
-col=min(col,vec3(.12,.33,.29));col+=(hash(gl_FragCoord.xy+floor(t*12.))-.5)*.012;gl_FragColor=vec4(col,1.);}`;
+col=min(col,vec3(.115,.315,.275));col+=(hash(gl_FragCoord.xy+floor(t*12.))-.5)*.012;gl_FragColor=vec4(col,1.);}`;
 
 export interface Point {
   x: number;
