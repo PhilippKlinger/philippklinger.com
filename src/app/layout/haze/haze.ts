@@ -40,8 +40,12 @@ export class Haze {
   private light: Point = { x: 0, y: 0 };
 
   constructor() {
-    afterNextRender(() => whenIdle(() => this.start()));
-    inject(DestroyRef).onDestroy(() => this.stop());
+    const destroyRef = inject(DestroyRef);
+    // Only in the browser: the prerender also destroys this component, in Node.
+    afterNextRender(() => {
+      destroyRef.onDestroy(() => this.stop());
+      whenIdle(() => this.start());
+    });
   }
 
   private start(): void {
