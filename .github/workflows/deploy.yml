@@ -139,7 +139,7 @@ jobs:
           SITE: https://preview.philipp-klinger.com
         run: |
           set -Eeuo pipefail
-          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
@@ -204,12 +204,12 @@ jobs:
           SITE: https://philipp-klinger.com
         run: |
           set -Eeuo pipefail
-          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
           check "HSTS missing" "$home" '^strict-transport-security:'
-          if echo "$home" | grep -qi '^x-robots-tag:'; then
+          if grep -qi '^x-robots-tag:' <<<"$home"; then
             echo "::error::production must stay indexable"
             exit 1
           fi
