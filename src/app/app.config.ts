@@ -7,7 +7,11 @@ import {
 } from '@angular/router';
 import { routes } from './app.routes';
 import { PageTitleStrategy } from './page-title-strategy';
-import { provideClientHydration } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withI18nSupport,
+  withNoIncrementalHydration,
+} from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,7 +23,9 @@ export const appConfig: ApplicationConfig = {
       // Passes the resolved project to the input of the project page.
       withComponentInputBinding(),
     ),
-    provideClientHydration(),
+    // The default incremental hydration adds event replay, whose inline scripts the CSP
+    // (script-src 'self') blocks. No template uses @defer, so nothing depends on it.
+    provideClientHydration(withI18nSupport(), withNoIncrementalHydration()),
     { provide: TitleStrategy, useClass: PageTitleStrategy },
   ],
 };
