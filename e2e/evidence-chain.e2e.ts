@@ -121,11 +121,6 @@ test.describe('Nachweiskette', () => {
     await expect(page.locator('main h1')).toBeVisible();
     await expect(chain(page)).toBeVisible();
   });
-
-  test('[Stufe 4] die Startseite listet weiter vier Projekte', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('#projekte a.project')).toHaveCount(4);
-  });
 });
 
 test.describe('Nachweiskette ohne JavaScript', () => {

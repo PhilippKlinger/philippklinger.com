@@ -13,6 +13,12 @@
   // Template uses #717171, which fails WCAG AA on the background.
   --color-text-subtle: #949494;
   --color-error: #ec7b7b;
+  --color-partial: #e6d58a;
+  --color-line: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --color-line-muted: rgb(198 198 198 / 45%);
+  --color-card: rgb(24 28 27 / 82%);
+  --color-step: rgb(31 46 43 / 80%);
+  --color-panel: rgb(0 0 0 / 28%);
 
   --font-code: 'Fira Code Variable', ui-monospace, monospace;
   --font-text: 'Karla Variable', system-ui, sans-serif;
@@ -37,6 +43,8 @@
   --space-section: 4.5rem;
 
   --radius-card: 1.875rem;
+  --radius-step: 1.25rem;
+  --radius-small: 0.875rem;
   --radius-pill: 999px;
   --border-width: 1px;
 

@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   inject,
-  InjectionToken,
   input,
   makeStateKey,
   OnInit,
@@ -19,11 +18,7 @@ import {
   ProjectSnapshot,
 } from '../../../../content/software-delivery';
 import { ProjectKey, StatusDocument } from '../../../../content/status';
-
-/** status.json of the build. Only the prerender provides it (app.config.server.ts). */
-export const STATUS_SNAPSHOT = new InjectionToken<StatusDocument | null>('status of the build', {
-  factory: () => null,
-});
+import { STATUS_SNAPSHOT } from '../../../delivery/status-snapshot';
 
 export const statusSnapshotKey = makeStateKey<ProjectSnapshot | null>('status-snapshot');
 
