@@ -1,5 +1,7 @@
 import {
   afterNextRender,
+  computed,
+  DestroyRef,
   inject,
   Injectable,
   Injector,
@@ -30,6 +32,12 @@ async function fetchStatusDocument(): Promise<StatusDocument | null> {
   }
 }
 
+/** A project a page shows; without a page it counts for the whole life of the app. */
+interface Ask {
+  current: Signal<ProjectSnapshot | null>;
+  page: DestroyRef | null;
+}
+
 /** The status of all cards of a page: one request, one notice. */
 @Injectable({ providedIn: 'root' })
 export class DeliveryStatus {
@@ -37,22 +45,42 @@ export class DeliveryStatus {
   private readonly transferState = inject(TransferState);
   private readonly injector = inject(Injector);
   private readonly snapshots = new Map<ProjectKey, WritableSignal<ProjectSnapshot | null>>();
-  private readonly noticeText = signal<string | null>(null);
+  private readonly asks = signal<readonly Ask[]>([]);
+  private readonly refreshed = signal<boolean | null>(null);
   private fetched: StatusDocument | null = null;
   private refreshPlanned = false;
 
   /** Text for the single role="status" line of the page, null when all is fine. */
-  readonly notice: Signal<string | null> = this.noticeText.asReadonly();
+  readonly notice: Signal<string | null> = computed(() => {
+    const shown = this.asks().map((ask) => ask.current());
+    const refreshed = this.refreshed();
+    if (refreshed === null || shown.length === 0) return null;
+    return statusNotice(refreshed, shownTime(shown), new Date());
+  });
 
-  /** Snapshot of one project: from the prerender first, then the newer one from /status.json. */
-  snapshot(project: ProjectKey): Signal<ProjectSnapshot | null> {
+  /**
+   * Snapshot of one project: from the prerender first, then the newer one from /status.json.
+   * With a page the project counts for the notice only until that page is destroyed.
+   */
+  snapshot(project: ProjectKey, page?: DestroyRef): Signal<ProjectSnapshot | null> {
     this.planRefresh();
     let current = this.snapshots.get(project);
     if (!current) {
       current = signal(this.initialSnapshot(project));
       this.snapshots.set(project, current);
     }
+    this.countAsShown(current, page ?? null);
     return current.asReadonly();
+  }
+
+  // Cards ask from a computed, and signals must not be written in a reactive context.
+  private countAsShown(current: Ask['current'], page: Ask['page']): void {
+    untracked(() => {
+      if (this.asks().some((ask) => ask.current === current && ask.page === page)) return;
+      const shown: Ask = { current, page };
+      this.asks.update((asks) => [...asks, shown]);
+      page?.onDestroy(() => this.asks.update((asks) => asks.filter((ask) => ask !== shown)));
+    });
   }
 
   private initialSnapshot(project: ProjectKey): ProjectSnapshot | null {
@@ -76,7 +104,6 @@ export class DeliveryStatus {
     for (const [project, current] of this.snapshots) {
       current.set(pickNewerSnapshot(current(), pickProjectSnapshot(this.fetched, project)));
     }
-    const shown = [...this.snapshots.values()].map((current) => current());
-    this.noticeText.set(statusNotice(this.fetched !== null, shownTime(shown), new Date()));
+    this.refreshed.set(this.fetched !== null);
   }
 }

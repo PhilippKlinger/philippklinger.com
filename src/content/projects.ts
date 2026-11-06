@@ -46,6 +46,27 @@ export const projectPageTexts = {
 
 export const projects: Project[] = [
   {
+    slug: 'videoflix',
+    title: 'Videoflix',
+    label: 'Weiterbildung',
+    summary:
+      'Fullstack-Streaming-Plattform mit Angular, Django REST Framework und PostgreSQL; asynchrone Videoverarbeitung mit Redis/RQ, JWT-Auth und rollenbasierte Zugriffe.',
+    // DRAFT: meta description, shortened from the summary.
+    description:
+      'Videoflix: Fullstack-Streaming-Plattform mit Angular, Django REST Framework und PostgreSQL, asynchrone Videoverarbeitung, JWT-Auth und Rollen.',
+    stack: ['Angular', 'Django', 'PostgreSQL', 'Redis', 'Docker', 'GitHub Actions'],
+    chips: ['CI/CD', 'Docker', 'Security-Checks', 'SBOM', 'Monitoring'],
+    hasPage: true,
+    // DRAFT: link labels.
+    links: [
+      { label: 'Live ansehen', url: 'https://videoflix.philipp-klinger.com' },
+      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/videoflix-backend' },
+    ],
+    proof: 'CI → Image → Deploy → Betrieb',
+    evidence: 'videoflix',
+    preview: { src: 'images/projects/videoflix.webp', width: 640, height: 336 },
+  },
+  {
     slug: 'neuro-check-in',
     title: 'Neuro Check-in',
     label: 'Eigenes Produkt',
@@ -67,27 +88,6 @@ export const projects: Project[] = [
       { label: 'Website', url: 'https://neurocheckin.de' },
     ],
     preview: { src: 'images/projects/neuro-check-in.webp', width: 640, height: 336 },
-  },
-  {
-    slug: 'videoflix',
-    title: 'Videoflix',
-    label: 'Weiterbildung',
-    summary:
-      'Fullstack-Streaming-Plattform mit Angular, Django REST Framework und PostgreSQL; asynchrone Videoverarbeitung mit Redis/RQ, JWT-Auth und rollenbasierte Zugriffe.',
-    // DRAFT: meta description, shortened from the summary.
-    description:
-      'Videoflix: Fullstack-Streaming-Plattform mit Angular, Django REST Framework und PostgreSQL, asynchrone Videoverarbeitung, JWT-Auth und Rollen.',
-    stack: ['Angular', 'Django', 'PostgreSQL', 'Redis', 'Docker', 'GitHub Actions'],
-    chips: ['CI/CD', 'Docker', 'Security-Checks', 'SBOM', 'Monitoring'],
-    hasPage: true,
-    // DRAFT: link labels.
-    links: [
-      { label: 'Live ansehen', url: 'https://videoflix.philipp-klinger.com' },
-      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/videoflix-backend' },
-    ],
-    proof: 'CI → Image → Deploy → Betrieb',
-    evidence: 'videoflix',
-    preview: { src: 'images/projects/videoflix.webp', width: 640, height: 336 },
   },
   {
     slug: 'conduit',
