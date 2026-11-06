@@ -7,10 +7,15 @@
   <div class="overview">
     <div class="intro">
       <h1>{{ project().title }}</h1>
-      <p class="label">{{ project().label }}</p>
       <p class="summary">{{ project().summary }}</p>
-      @if (project().proof; as proof) {
-        <p class="proof">{{ proof }}</p>
+      @if (project().links.length > 0) {
+        <ul class="links">
+          @for (link of project().links; track link.url) {
+            <li>
+              <a [href]="link.url">{{ link.label }}</a>
+            </li>
+          }
+        </ul>
       }
     </div>
 
@@ -28,29 +33,55 @@
     }
   </div>
 
-  <div class="card details">
-    <section aria-labelledby="stack-title">
-      <h2 id="stack-title">{{ texts.stack }}</h2>
-      <ul class="stack">
-        @for (tool of project().stack; track tool) {
-          <li>{{ tool }}</li>
-        }
-      </ul>
-    </section>
+  <app-delivery-steps [slug]="project().slug" />
 
-    <section aria-labelledby="links-title">
-      <h2 id="links-title">{{ texts.links }}</h2>
-      <ul class="links">
-        @for (link of project().links; track link.url) {
-          <li>
-            <a [href]="link.url">{{ link.label }}</a>
-          </li>
-        }
-      </ul>
-    </section>
-  </div>
+  @if (built(); as built) {
+    <section class="how-built" aria-labelledby="how-built-title">
+      <h2 id="how-built-title">{{ deliveryTexts.howBuilt }}</h2>
+      <div class="blocks">
+        <section class="block block-architecture">
+          <h3>{{ deliveryTexts.architecture }}</h3>
+          <ol class="parts">
+            @for (part of built.architecture.parts; track part.name) {
+              <li>
+                <div class="part">
+                  <strong>{{ part.name }}</strong>
+                  <span>{{ part.role }}</span>
+                </div>
+              </li>
+            }
+          </ol>
+          <p>{{ built.architecture.summary }}</p>
+        </section>
 
-  @if (project().evidence; as evidence) {
-    <app-evidence-chain [project]="evidence" />
+        <section class="block block-decisions">
+          <h3>{{ deliveryTexts.decisions }}</h3>
+          @for (decision of built.decisions; track decision.title) {
+            <div class="decision">
+              <h4>{{ decision.title }}</h4>
+              <dl>
+                <dt>{{ blockTexts.reason }}</dt>
+                <dd>{{ decision.reason }}</dd>
+                <dt>{{ blockTexts.price }}</dt>
+                <dd>{{ decision.price }}</dd>
+              </dl>
+            </div>
+          }
+        </section>
+
+        <section class="block block-failure">
+          <h3>{{ deliveryTexts.failure }}</h3>
+          <h4>{{ built.failure.title }}</h4>
+          <dl>
+            <dt>{{ blockTexts.what }}</dt>
+            <dd>{{ built.failure.what }}</dd>
+            <dt>{{ blockTexts.found }}</dt>
+            <dd>{{ built.failure.found }}</dd>
+            <dt>{{ blockTexts.changed }}</dt>
+            <dd>{{ built.failure.changed }}</dd>
+          </dl>
+        </section>
+      </div>
+    </section>
   }
 </article>

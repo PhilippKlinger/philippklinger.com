@@ -25,19 +25,10 @@
   gap: var(--space-xl);
 }
 
-// Heading size, not display size: long titles must fit 390 px.
+// The lower bound keeps long titles inside 390 px.
 h1 {
-  font-size: var(--text-heading);
-}
-
-.label {
-  display: inline-block;
-  margin-top: var(--space-sm);
-  padding: 0.125rem var(--space-xs);
-  border: var(--border-width) solid var(--color-accent);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  color: var(--color-accent);
+  font-size: clamp(var(--text-heading), 7vw, 5rem);
+  line-height: 1.1;
 }
 
 .summary {
@@ -46,10 +37,23 @@ h1 {
   color: var(--color-text-muted);
 }
 
-.proof {
-  margin-top: var(--space-md);
-  font-family: var(--font-code);
-  color: var(--color-accent);
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
 }
 
 // Stripes behind the image as in the list's preview, here at rest and without motion.
@@ -78,40 +82,95 @@ h1 {
   }
 }
 
-.details {
-  display: grid;
-  gap: var(--space-lg);
+.how-built h2 {
+  font-size: var(--text-heading);
+  line-height: var(--leading-tight);
+}
 
-  h2 {
-    font-size: var(--text-lg);
+.blocks {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.block {
+  display: grid;
+  align-content: start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-step);
+  background: var(--color-card);
+  overflow-wrap: anywhere;
+
+  p,
+  dd {
+    color: var(--color-text-muted);
   }
 }
 
-.stack,
-.links {
-  margin: var(--space-sm) 0 0;
+h3 {
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+h4 {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+
+.parts {
+  display: grid;
+  margin: 0;
   padding: 0;
   list-style: none;
-}
 
-.stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-
-  li {
-    padding: 0.125rem var(--space-sm);
-    border-radius: var(--radius-pill);
-    background: var(--color-surface-strong);
-    font-size: var(--text-sm);
+  // Same arrow as between the steps; the order of the list already says it.
+  li + li::before {
+    content: '↓';
+    content: '↓' / '';
+    display: block;
+    padding-left: var(--space-sm);
+    color: var(--color-accent);
   }
 }
 
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: var(--space-lg);
+.part {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-small);
+  background: var(--color-step);
+
+  span {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+}
+
+.decision {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+dl {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+dt {
+  margin-top: var(--space-xs);
   font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+dd {
+  margin: 0;
 }
 
 @include bp.from(tablet) {
@@ -123,10 +182,10 @@ h1 {
   .media {
     --stripes-offset: var(--space-sm);
   }
+}
 
-  .details {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-xl);
-    padding-inline: var(--space-lg);
+@include bp.from(card) {
+  .blocks {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
