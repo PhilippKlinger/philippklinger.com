@@ -28,25 +28,39 @@ export class CursorCta {
     // Only in the browser: the prerender also destroys this component, in Node.
     afterNextRender(() => {
       destroyRef.onDestroy(() => this.stop());
-      if (matchMedia(RING_ALLOWED).matches) this.listen();
+      const allowed = matchMedia(RING_ALLOWED);
+      if (allowed.matches) this.listen(allowed);
     });
   }
 
-  private listen(): void {
+  private listen(allowed: MediaQueryList): void {
+    const options = { passive: true, signal: this.lifetime.signal };
+    addEventListener('pointermove', (event) => this.aimAt(event), options);
+    addEventListener('pointerover', (event) => this.update(event, allowed), options);
+    this.hideWhenOutOfReach(allowed);
+  }
+
+  // No pointerover reports any of these, the ring would stay and its loop keep running.
+  private hideWhenOutOfReach(allowed: MediaQueryList): void {
     const { signal } = this.lifetime;
-    addEventListener('pointermove', (event) => this.aimAt(event), { passive: true, signal });
-    addEventListener('pointerover', (event) => this.update(event), { passive: true, signal });
-    // Nothing else reports that the pointer left the window, the ring would stay and keep running.
     document.documentElement.addEventListener('pointerleave', () => this.hide(), { signal });
+    // The back/forward cache restores the page as it was left.
+    addEventListener('pagehide', () => this.hide(), { signal });
+    allowed.addEventListener('change', () => this.hideUnless(allowed.matches), { signal });
+  }
+
+  private hideUnless(stillAllowed: boolean): void {
+    if (!stillAllowed) this.hide();
   }
 
   private aimAt({ clientX, clientY }: PointerEvent): void {
     this.target = { x: clientX, y: clientY };
   }
 
-  private update(event: PointerEvent): void {
+  private update(event: PointerEvent, allowed: MediaQueryList): void {
     // A touchscreen on a device that also has a mouse must not bring the ring up.
-    const over = event.target instanceof Element && event.pointerType !== 'touch';
+    const over =
+      allowed.matches && event.target instanceof Element && event.pointerType !== 'touch';
     const text = over ? cursorText(event.target) : null;
     if (text) this.show(text, event);
     else this.hide();

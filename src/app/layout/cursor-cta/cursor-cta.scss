@@ -1,6 +1,5 @@
 // Sizes of the ring only (spec 8.2), the page has no other element to share them with.
 $ring-size: 6.5rem;
-$label-size: 0.8125rem;
 $label-leading: 1.15;
 $hidden-scale: 0.4;
 $fade: 0.18s ease;
@@ -20,7 +19,7 @@ $fade: 0.18s ease;
   background: var(--color-accent);
   color: var(--color-bg);
   font-family: var(--font-code);
-  font-size: $label-size;
+  font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   line-height: $label-leading;
   text-align: center;

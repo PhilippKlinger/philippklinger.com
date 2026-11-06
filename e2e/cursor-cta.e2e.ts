@@ -37,6 +37,35 @@ async function expectRingOn(page: Page, text: string): Promise<void> {
 
 const expectRingOff = (page: Page) => expect(ring(page)).toHaveCSS('opacity', '0');
 
+// home.e2e.ts skips position: fixed, so the ring has to prove this for itself.
+async function expectLabelFits(page: Page): Promise<void> {
+  const label = await ring(page).evaluate(async (host) => {
+    await document.fonts.ready;
+    const circle = host.getBoundingClientRect();
+    const center = { x: circle.x + circle.width / 2, y: circle.y + circle.height / 2 };
+    const range = document.createRange();
+    range.selectNodeContents(host);
+    const reach = [...range.getClientRects()].flatMap((line) =>
+      [line.left, line.right].flatMap((x) =>
+        [line.top, line.bottom].map((y) => Math.hypot(x - center.x, y - center.y)),
+      ),
+    );
+    return {
+      fontSize: parseFloat(getComputedStyle(host).fontSize),
+      reach: Math.max(...reach),
+      radius: circle.width / 2,
+    };
+  });
+  expect(label.fontSize).toBeGreaterThanOrEqual(14);
+  expect(label.reach, 'der Text passt in den Kreis').toBeLessThan(label.radius);
+}
+
+async function scrollUnderPointer(page: Page, element: Locator, pointer: Point): Promise<void> {
+  const box = await element.boundingBox();
+  if (!box) throw new Error('element has no box');
+  await page.mouse.wheel(0, box.y + box.height / 2 - pointer.y);
+}
+
 async function expectRingAt(page: Page, { x, y }: Point): Promise<void> {
   await expect(async () => {
     const box = await ring(page).boundingBox();
@@ -90,11 +119,13 @@ test.describe('mit Maus', () => {
     const next = await hoverCenter(page, projectCard(page).locator('.card-main > p'));
     await expectRingAt(page, next);
     await expectRingOn(page, 'Projekt ansehen');
+    await expectLabelFits(page);
   });
 
   test('[AK10] Berichtskarte hat ihren eigenen Text', async ({ page }) => {
     await hoverCenter(page, reportCard(page).locator('h3'));
     await expectRingOn(page, 'Berichte ansehen');
+    await expectLabelFits(page);
   });
 
   test('[AK10] über einem Link ist der Ring aus', async ({ page }) => {
@@ -114,6 +145,58 @@ test.describe('mit Maus', () => {
     await expectFramesRunning(page);
 
     await hoverCenter(page, page.locator('#projekte h2'));
+    await expectRingOff(page);
+    await expectNoFrames(page);
+  });
+
+  test('[AK10] wird Bewegung abgeschaltet, ist der Ring aus und startet nicht neu', async ({
+    page,
+  }) => {
+    await hoverProjectCard(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expectRingOff(page);
+    await expectNoFrames(page);
+
+    await hoverCenter(page, page.locator('#projekte h2'));
+    await hoverCenter(page, reportCard(page).locator('h3'));
+    await expect(ring(page)).not.toHaveClass(/is-on/);
+    await expect(ring(page)).toHaveText('Projekt ansehen');
+    await expectNoFrames(page);
+  });
+
+  test('[AK10] Scrollen unter dem ruhenden Zeiger schaltet den Ring passend', async ({ page }) => {
+    const pointer = await hoverProjectCard(page);
+
+    await scrollUnderPointer(page, page.locator('#projekte h2'), pointer);
+    await expectRingOff(page);
+    await expectNoFrames(page);
+
+    await scrollUnderPointer(page, reportCard(page).locator('h3'), pointer);
+    await expectRingOn(page, 'Berichte ansehen');
+  });
+
+  test('[AK10] Browser-Zurück unter dem ruhenden Zeiger: Ring aus, dann wieder an', async ({
+    page,
+  }) => {
+    const pointer = await hoverProjectCard(page);
+    await page.mouse.click(pointer.x, pointer.y);
+    await expect(page).toHaveURL(detailPage);
+
+    await page.goBack();
+    await expect(projectCard(page)).toBeVisible();
+    await expectRingOff(page);
+    await expectNoFrames(page);
+
+    await hoverCenter(page, reportCard(page).locator('h3'));
+    await expectRingOn(page, 'Berichte ansehen');
+  });
+
+  // Playwright's browser never restores from the back/forward cache, so only the event is real here.
+  test('[AK10] beim Verlassen der Seite geht der Ring aus', async ({ page }) => {
+    await hoverProjectCard(page);
+    await page.evaluate(() =>
+      dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
+    );
     await expectRingOff(page);
     await expectNoFrames(page);
   });
