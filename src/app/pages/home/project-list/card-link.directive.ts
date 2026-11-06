@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, inject } from '@angular/core';
 
 // Double and triple clicks select text, but their first click arrives with nothing selected yet.
 const SELECTION_WINDOW_MS = 300;
@@ -13,10 +13,15 @@ const isInteractive = (target: EventTarget | null) =>
 @Directive({ selector: '[appCardLink]', host: { 'data-card-link': '', '(click)': 'open($event)' } })
 export class CardLink {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private waiting?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.waiting));
+  }
 
   protected open(event: MouseEvent): void {
     if (event.detail > 1 || hasModifier(event) || isInteractive(event.target)) return;
-    setTimeout(() => this.forward(), SELECTION_WINDOW_MS);
+    this.waiting = setTimeout(() => this.forward(), SELECTION_WINDOW_MS);
   }
 
   private forward(): void {

@@ -95,6 +95,18 @@ describe('CardLink', () => {
     expect(clicks).toEqual([]);
   });
 
+  it('drops a waiting click when the card is destroyed', async () => {
+    const fixture = TestBed.createComponent(HostCard);
+    fixture.detectChanges();
+    const cta = (fixture.nativeElement as HTMLElement).querySelector('.cta') as HTMLElement;
+    const clicks = vi.fn((event: Event) => event.preventDefault());
+    cta.addEventListener('click', clicks);
+    (fixture.nativeElement as HTMLElement).querySelector('.text')?.dispatchEvent(plainClick());
+    fixture.destroy();
+    await afterSelectionWindow();
+    expect(clicks).not.toHaveBeenCalled();
+  });
+
   it('forwards only once for a double click that selects nothing', async () => {
     const { clicks, text } = renderCard();
     text.dispatchEvent(plainClick(1));

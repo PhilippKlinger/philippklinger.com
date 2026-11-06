@@ -180,6 +180,31 @@ test.describe('Karten', () => {
     expect(await page.evaluate(() => document.getSelection()?.toString())).not.toBe('');
   });
 
+  const newTabClicks: [string, Parameters<Locator['click']>[0]][] = [
+    ['Strg-Klick', { modifiers: ['ControlOrMeta'] }],
+    ['Mittelklick', { button: 'middle' }],
+  ];
+  for (const [name, options] of newTabClicks) {
+    test(`[AK2] ${name} auf die CTA öffnet einen neuen Tab, die Startseite bleibt`, async ({
+      page,
+      context,
+    }) => {
+      await page.goto('/');
+      const opened = context.waitForEvent('page');
+      await card(page, 'Conduit').locator('a[data-card-cta]').click(options);
+      await expect(await opened).toHaveURL(/\/projekte\/conduit\/?$/);
+      await expect(page).toHaveURL(/\/$/);
+    });
+
+    test(`[AK2] ${name} auf die Kartenfläche navigiert nicht`, async ({ page, context }) => {
+      await page.goto('/');
+      await card(page, 'Conduit').locator('.card-main > p').click(options);
+      await afterSelectionWindow(page);
+      await expect(page).toHaveURL(/\/$/);
+      expect(context.pages()).toHaveLength(1);
+    });
+  }
+
   test('[AK2] Tastatur erreicht jede CTA in Lesereihenfolge', async ({ page }) => {
     await page.goto('/');
     await page.locator('#projekte a[data-card-cta]').first().focus();
