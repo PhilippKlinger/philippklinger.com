@@ -7,6 +7,21 @@ import { pages } from './support/site';
 
 const navLabels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
+const buildLine = 'Diese Seite: getestet und deployt per GitHub Actions';
+const brightestHaze = 'rgb(31, 83, 74)'; // #1f534a
+
+function luminance(color: string): number {
+  const [red = 0, green = 0, blue = 0] = (color.match(/\d+/g) ?? []).map((part) => {
+    const channel = Number(part) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrast(first: string, second: string): number {
+  const [dark = 0, light = 0] = [luminance(first), luminance(second)].sort((a, b) => a - b);
+  return (light + 0.05) / (dark + 0.05);
+}
 
 for (const path of pages) {
   test.describe(`Layout ${path}`, () => {
@@ -25,11 +40,10 @@ for (const path of pages) {
       for (const name of ['GitHub', 'LinkedIn', 'E-Mail', 'Docs', 'Impressum', 'Datenschutz']) {
         await expect(footer.getByRole('link', { name, exact: true })).toBeVisible();
       }
-      // Short build note instead of the former section (Grill 2026-11-04).
-      await expect(footer.locator('.built')).toContainText('Built with Angular');
-      await expect(footer.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute(
+      await expect(footer.locator('.built')).toContainText(buildLine);
+      await expect(footer.getByRole('link', { name: 'So ist diese Seite gebaut' })).toHaveAttribute(
         'href',
-        'https://github.com/PhilippKlinger/philippklinger.com',
+        '/projekte/portfolio/',
       );
       await expect(footer.getByRole('link', { name: 'Impressum', exact: true })).toHaveAttribute(
         'href',
@@ -39,6 +53,41 @@ for (const path of pages) {
         'href',
         '/datenschutz/',
       );
+    });
+
+    test('[AK11] Footer hat einen festen Hintergrund', async ({ page }) => {
+      await page.goto(path);
+      const host = page.locator('app-footer');
+      await expect(host).toHaveCSS('background-color', 'rgb(28, 28, 28)');
+      await expect(host).toHaveCSS('border-top-style', 'solid');
+      const { width, pageWidth } = await host.evaluate((element) => ({
+        width: element.getBoundingClientRect().width,
+        pageWidth: document.documentElement.clientWidth,
+      }));
+      expect(width).toBe(pageWidth);
+    });
+
+    // CI builds without build-info.json, so this is the state every run here sees.
+    test('[AK11] Build-Zeile ohne Build-Daten liest sich normal', async ({ page }) => {
+      await page.goto(path);
+      const footer = page.locator('footer');
+      await expect(footer.locator('.built')).toHaveText(`${buildLine} · So ist diese Seite gebaut`);
+      await expect(footer).not.toContainText('undefined');
+      await expect(footer.locator('.built')).not.toContainText('Build');
+      await expect(footer.getByRole('link', { name: buildLine })).toHaveAttribute(
+        'href',
+        'https://github.com/PhilippKlinger/philippklinger.com/actions',
+      );
+    });
+
+    test('[AK11] Build-Zeile hält 4,5:1 auf dem hellsten Haze-Wert', async ({ page }) => {
+      await page.goto(path);
+      const colors = await page
+        .locator('footer .built, footer .built a')
+        .evaluateAll((elements) => elements.map((element) => getComputedStyle(element).color));
+      for (const color of colors) {
+        expect(contrast(color, brightestHaze)).toBeGreaterThanOrEqual(4.5);
+      }
     });
 
     test('[WCAG 2.4.7] jeder Tab-Stopp hat einen sichtbaren Fokus', async ({ page }) => {

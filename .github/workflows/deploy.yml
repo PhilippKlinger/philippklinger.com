@@ -57,6 +57,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/collect-status.mjs status-snapshot.json
 
+      # Footer line: which commit and which run built this page. Prerender only.
+      - name: Write build info
+        run: |
+          set -Eeuo pipefail
+          jq -nc --arg sha "$GITHUB_SHA" --arg runId "$GITHUB_RUN_ID" \
+            '{sha: $sha, runId: $runId}' > build-info.json
+
       - name: Build static site
         run: npm run build
 
@@ -132,7 +139,7 @@ jobs:
           SITE: https://preview.philipp-klinger.com
         run: |
           set -Eeuo pipefail
-          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
@@ -145,6 +152,7 @@ jobs:
           check "project page not 200" "$(curl -sSI "$SITE/projekte/videoflix/")" '^HTTP/[0-9.]+ 200'
           check "site page not 200" "$(curl -sSI "$SITE/projekte/portfolio/")" '^HTTP/[0-9.]+ 200'
           check "unknown path not 404" "$(curl -sSI "$SITE/gibt-es-nicht/")" '^HTTP/[0-9.]+ 404'
+          check "footer does not name this run" "$(curl -sS "$SITE/")" "actions/runs/${GITHUB_RUN_ID}"
           echo "Preview answers as expected."
 
   production:
@@ -196,12 +204,12 @@ jobs:
           SITE: https://philipp-klinger.com
         run: |
           set -Eeuo pipefail
-          check() { echo "$2" | grep -qiE "$3" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
           check "HSTS missing" "$home" '^strict-transport-security:'
-          if echo "$home" | grep -qi '^x-robots-tag:'; then
+          if grep -qi '^x-robots-tag:' <<<"$home"; then
             echo "::error::production must stay indexable"
             exit 1
           fi
