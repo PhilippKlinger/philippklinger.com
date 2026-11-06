@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { projects } from '../src/content/projects';
 import type { StatusDocument } from '../src/content/status';
 
 // Software Delivery on the project pages (spec 5, 6, 7). A real snapshot of status.json from the
@@ -402,6 +403,37 @@ test.describe('Abruf von /status.json', () => {
       await page.waitForLoadState('networkidle');
       expect(requests()).toBe(0);
       await expect(notice(page)).toBeEmpty();
+    });
+  }
+});
+
+test.describe('Vorschaubild', () => {
+  for (const { slug, preview } of projects) {
+    if (!preview) continue;
+
+    test(`[Regel web-quality] ${slug}: Höhe ist reserviert, nichts springt`, async ({ page }) => {
+      let deliver = () => {};
+      const delivered = new Promise<void>((resolve) => (deliver = resolve));
+      await page.route(`**/${preview.src}`, async (route) => {
+        await delivered;
+        await route.continue();
+      });
+      await page.goto(`/projekte/${slug}/`, { waitUntil: 'domcontentloaded' });
+      const image = page.locator('main .media img');
+      await expect(image).toBeVisible();
+      expect(await image.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(0);
+      const before = (await image.boundingBox())!;
+      const stepsBefore = (await delivery(page).boundingBox())!;
+      expect(before.height).toBeCloseTo((before.width * preview.height) / preview.width, 0);
+
+      deliver();
+      await expect
+        .poll(() => image.evaluate((el: HTMLImageElement) => el.naturalWidth))
+        .toBe(preview.width);
+      const after = (await image.boundingBox())!;
+      const stepsAfter = (await delivery(page).boundingBox())!;
+      expect(after.height).toBeCloseTo(before.height, 0);
+      expect(stepsAfter.y).toBeCloseTo(stepsBefore.y, 0);
     });
   }
 });
