@@ -180,19 +180,20 @@ test('[Spec 8.1] kein Fehler in der Konsole, kein Fremdabruf', async ({
   expect(foreign).toEqual([]);
 });
 
-test('[Spec 8.1] Tabwechsel zählen nicht als langsame Frames', async ({ page }, testInfo) => {
+test('[Spec 8.1] kurze Tabwechsel zählen nicht als langsame Frames', async ({ page }, testInfo) => {
   desktopOnly(testInfo);
   await openQuietPage(page);
 
   // Headless pages never get hidden. Blocking right after a frame gives the same gap in
-  // the frames, and the events are the ones a tab switch fires around it.
-  for (let pause = 0; pause < 2; pause++) {
+  // the frames, and the events are the ones a tab switch fires around it. Below one second,
+  // because frameTime ignores longer gaps by itself, and together too slow without the events.
+  for (let pause = 0; pause < 3; pause++) {
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
           requestAnimationFrame(() => {
             document.dispatchEvent(new Event('visibilitychange'));
-            const end = performance.now() + 1200;
+            const end = performance.now() + 900;
             while (performance.now() < end);
             document.dispatchEvent(new Event('visibilitychange'));
             resolve();
@@ -202,7 +203,7 @@ test('[Spec 8.1] Tabwechsel zählen nicht als langsame Frames', async ({ page },
   }
   await waitForFrames(page, 130);
 
-  await expectStillRunning(page, 'nach zwei Tabwechseln');
+  await expectStillRunning(page, 'nach drei Tabwechseln');
 });
 
 test('[Spec 13] zu langsam: statische Ebene, Kontext frei', async ({ page }, testInfo) => {

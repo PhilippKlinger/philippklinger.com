@@ -46,11 +46,26 @@ describe('frameTime', () => {
     expect(frameTime(116, 100)).toBe(16);
   });
 
+  it('still counts a frame of exactly one second', () => {
+    expect(frameTime(1100, 100)).toBe(1000);
+  });
+
   // A hidden tab or a sleeping laptop pauses the frames; that says nothing about the GPU.
-  it('counts one long pause as a single second at most', () => {
-    const times = [...samples(119, 16), frameTime(600_000, 1)];
-    expect(times.at(-1)).toBe(1000);
-    expect(isTooSlow(times)).toBe(false);
+  it('ignores a gap above one second', () => {
+    expect(frameTime(1101, 100)).toBeNull();
+  });
+
+  it('never gets too slow from several gaps between 60 Hz frames', () => {
+    const times: number[] = [];
+    let previous = 1;
+    for (let frame = 1; frame <= 1000; frame++) {
+      const now = previous + (frame % 20 === 0 ? 5000 : 16.7);
+      const time = frameTime(now, previous);
+      previous = now;
+      if (time !== null) times.push(time);
+      expect(isTooSlow(times.slice(-120))).toBe(false);
+    }
+    expect(times.length).toBeGreaterThan(900);
   });
 });
 

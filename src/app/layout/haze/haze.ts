@@ -68,7 +68,7 @@ export class Haze {
 
   private run(): void {
     const { signal } = this.lifetime;
-    // A hidden tab has no frames; that gap says nothing about the GPU.
+    // A short tab switch stays below the limit of frameTime, but is no slow frame either.
     document.addEventListener('visibilitychange', () => (this.lastFrame = 0), { signal });
     this.followsPointer = matchMedia(FINE_POINTER).matches;
     if (this.followsPointer) {
@@ -100,8 +100,10 @@ export class Haze {
   }
 
   private measure(now: number): void {
-    if (this.lastFrame) this.frameTimes.push(frameTime(now, this.lastFrame));
+    const time = this.lastFrame ? frameTime(now, this.lastFrame) : null;
     this.lastFrame = now;
+    if (time === null) return;
+    this.frameTimes.push(time);
     if (isTooSlow(this.frameTimes)) this.halt('slow');
     else if (this.frameTimes.length === FRAME_SAMPLES) this.frameTimes.shift();
   }

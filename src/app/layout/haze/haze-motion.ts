@@ -28,9 +28,10 @@ export function driftTarget(now: number, width: number, height: number): { x: nu
   };
 }
 
-/** Time since the last frame; a pause of the whole page counts as one long frame only. */
-export function frameTime(now: number, previous: number): number {
-  return Math.min(now - previous, LONGEST_FRAME_MS);
+/** Time since the last frame, or null for a pause of the whole page: it says nothing about the GPU. */
+export function frameTime(now: number, previous: number): number | null {
+  const time = now - previous;
+  return time > LONGEST_FRAME_MS ? null : time;
 }
 
 export function isTooSlow(frameTimesMs: number[]): boolean {
