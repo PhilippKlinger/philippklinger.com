@@ -1,0 +1,36 @@
+<article class="card" appCardLink>
+  <div class="card-main">
+    <div class="signal">
+      <b>{{ content.signal.status }}</b>
+      <span>{{ content.signal.when }}</span>
+    </div>
+    <h3>{{ content.title }}</h3>
+    <p>{{ content.text }}</p>
+    <ul class="chips" i18n-aria-label aria-label="Technik">
+      @for (chip of content.chips; track chip) {
+        <li>{{ chip }}</li>
+      }
+    </ul>
+    <div class="actions">
+      <a class="cta" data-card-cta data-cursor="Berichte ansehen" [href]="content.cta.url">{{
+        content.cta.label
+      }}</a>
+    </div>
+  </div>
+  <div class="flow">
+    <p class="flow-title">{{ content.panelTitle }}</p>
+    <ul class="reports">
+      @for (report of content.reports; track report.title) {
+        <li class="report">
+          <strong>{{ report.title }}</strong>
+          <span>{{ report.what }}</span>
+          <div class="report-links">
+            @for (link of report.links; track link.url) {
+              <a [href]="link.url">{{ link.label }}</a>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</article>
