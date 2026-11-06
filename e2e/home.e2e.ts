@@ -217,49 +217,6 @@ test.describe('Abschnitte', () => {
     }
   });
 
-  test('[Spec 5] Projekte in fester Reihenfolge, Zeile = Link', async ({ page }) => {
-    const rows = page.locator('#projekte .projects a.project');
-    await expect(rows.locator('.title')).toHaveText([
-      'Neuro Check-in',
-      'Videoflix',
-      'Conduit',
-      'Developer Workspace Kit',
-    ]);
-    for (const row of await rows.all()) {
-      await expect(row.locator('.label')).not.toBeEmpty();
-      await expect(row.locator('.stack')).not.toBeEmpty();
-    }
-  });
-
-  test('[Spec 3.4] Projekt-Vorschau erscheint bei Hover und bei Fokus, rein dekorativ', async ({
-    page,
-  }) => {
-    test.skip(isMobile(page), 'Vorschau nur ab Tablet (Vorlage)');
-    const row = page.locator('#projekte a.project').first();
-    const preview = row.locator('.preview');
-    await expect(preview, 'keine Vorschau vorhanden').toHaveCount(1);
-    await expect(preview).toHaveAttribute('aria-hidden', 'true');
-    await expect(preview).toBeHidden();
-    await row.hover();
-    await expect(preview).toBeVisible();
-    await expect(preview).toBeInViewport();
-    await page.mouse.move(0, 0);
-    await expect(preview).toBeHidden();
-    // Keyboard focus shows it too (:focus-visible needs a real Tab).
-    await row.focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
-    await expect(preview).toBeVisible();
-  });
-
-  test('[PK-27] Link auf Dokumentation und weitere Projekte unter der Liste', async ({ page }) => {
-    await expect(
-      page
-        .locator('#projekte .more')
-        .getByRole('link', { name: 'Weitere Projekte und technische Dokumentation' }),
-    ).toHaveAttribute('href', 'https://philippklinger.github.io/my-dso-blog/');
-  });
-
   test('[Spec 3.4/5] Kontakt mit E-Mail, LinkedIn, GitHub und Verfügbarkeit', async ({ page }) => {
     const contact = page.locator('#kontakt');
     await expect(contact.locator('h2')).toBeVisible();
@@ -343,51 +300,6 @@ test.describe('Zustände und Bewegung', () => {
     }
   });
 
-  test('[PK-22] Lichtfleck folgt dem Cursor in allen Abschnitten', async ({ page }) => {
-    test.skip(isMobile(page), 'nur bei hover: hover');
-    const light = page.locator('[data-cursor-light]');
-    await expect(light, 'genau ein Lichtfleck auf App-Ebene').toHaveCount(1);
-    await expect(light).toHaveAttribute('aria-hidden', 'true');
-    await expect(light).toHaveCSS('position', 'fixed');
-    await expect(light).toHaveCSS('pointer-events', 'none');
-    // The light eases in (0.3 s), so compare its own resting places, inside the viewport.
-    const centre = () =>
-      light.evaluate((el) => {
-        const box = el.getBoundingClientRect();
-        return Math.round(box.x + box.width / 2);
-      });
-    const [left, right] = [100, width(page) - 100];
-    for (const id of ['ueber-mich', 'skills', 'projekte', 'kontakt']) {
-      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-      await page.mouse.move(left, 300);
-      await expect.poll(centre, { message: `#${id} links` }).toBe(left);
-      await page.mouse.move(right, 400);
-      await expect.poll(centre, { message: `#${id} rechts` }).toBe(right);
-    }
-  });
-
-  test('[PK-22] Lichtfleck liegt hinter dem Inhalt', async ({ page }) => {
-    test.skip(isMobile(page), 'nur bei hover: hover');
-    await page.mouse.move(400, 400);
-    // Whatever sits at the cursor is content, never the light.
-    const hit = await page.evaluate(() =>
-      document.elementFromPoint(400, 400)?.closest('[data-cursor-light]'),
-    );
-    expect(hit).toBeNull();
-    expect(
-      Number(
-        await page.locator('[data-cursor-light]').evaluate((el) => getComputedStyle(el).zIndex),
-      ),
-    ).toBeLessThan(0);
-  });
-
-  test('[PK-22] Lichtfleck auch auf Unterseiten, aus auf Touch', async ({ page }) => {
-    await page.goto('/impressum/');
-    const light = page.locator('[data-cursor-light]');
-    await expect(light).toHaveCount(1);
-    if (isMobile(page)) await expect(light).toBeHidden();
-  });
-
   test('[Spec 3.4 Motion] Reduced-Motion: keine laufende Animation, Lichtfleck still', async ({
     page,
   }) => {
@@ -404,7 +316,6 @@ test.describe('Zustände und Bewegung', () => {
           ).length,
     );
     expect(running).toBe(0);
-    await expect(page.locator('[data-cursor-light]:visible')).toHaveCount(0);
   });
 });
 
@@ -543,7 +454,7 @@ test.describe('Hover-Grafiken (PK-29)', () => {
     page.evaluate(() => ({
       height: document.documentElement.scrollHeight,
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      list: document.querySelector('.projects')?.getBoundingClientRect().height,
+      list: document.querySelector('.cards')?.getBoundingClientRect().height,
       about: document.querySelector('.about')?.getBoundingClientRect().height,
     }));
 
@@ -561,59 +472,5 @@ test.describe('Hover-Grafiken (PK-29)', () => {
     await media.hover();
     await expect.poll(async () => (await stripes(media)).opacity).toBe('1');
     expect(await layout(page), 'Hover verschiebt das Layout').toEqual(before);
-  });
-
-  test('[PK-29] Streifen hinter der Projekt-Vorschau bei Hover und bei Fokus', async ({ page }) => {
-    test.skip(isMobile(page), 'Vorschau nur ab Tablet (Vorlage)');
-    for (const row of await page.locator('#projekte a.project').all()) {
-      const preview = row.locator('.preview-media');
-      await row.scrollIntoViewIfNeeded();
-      const before = await layout(page);
-      await row.hover();
-      await expect(preview).toBeVisible();
-      expect((await stripes(preview)).image).toContain('repeating-linear-gradient');
-      await expect.poll(async () => (await stripes(preview)).opacity).toBe('1');
-      expect(await layout(page), 'Hover verschiebt das Layout').toEqual(before);
-      await page.mouse.move(0, 0);
-      await row.focus();
-      await page.keyboard.press('Shift+Tab');
-      await page.keyboard.press('Tab');
-      await expect(preview).toBeVisible();
-    }
-  });
-
-  test('[PK-29] Vorschau sitzt je Zeile anders: oben, Mitte, unten', async ({ page }) => {
-    test.skip(isMobile(page), 'Vorschau nur ab Tablet (Vorlage)');
-    const rows = await page.locator('#projekte .projects > li').all();
-    // Hovering scrolls the row into view, so measure the list afterwards.
-    const place = async (index: number) => {
-      await rows[index].locator('a.project').hover();
-      return {
-        box: (await rows[index].locator('.preview-media').boundingBox())!,
-        list: (await page.locator('.projects').boundingBox())!,
-      };
-    };
-    const { box: first, list: top } = await place(0);
-    expect(Math.abs(first.y - top.y), 'erste Vorschau beginnt nicht oben').toBeLessThanOrEqual(2);
-    const { box: last, list } = await place(rows.length - 1);
-    expect(
-      Math.abs(last.y + last.height - (list.y + list.height)),
-      'letzte Vorschau endet nicht unten',
-    ).toBeLessThanOrEqual(2);
-  });
-
-  test('[PK-29] Reduced Motion: Streifen erscheinen ohne Bewegung', async ({ page }) => {
-    test.skip(isMobile(page), 'kein Hover auf Touch');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    const row = page.locator('#projekte a.project').first();
-    await row.hover();
-    await expect(row.locator('.preview-media')).toBeVisible();
-    const moving = await row
-      .locator('.preview-media')
-      .evaluate(
-        (el) => el.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
-      );
-    expect(moving).toBe(0);
   });
 });

@@ -1,0 +1,48 @@
+// Same frame as a project card: these files are scoped to this component when loaded here.
+@use '../project-card/project-card';
+@use '../delivery-flow/delivery-flow';
+
+.reports {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.625rem calc(var(--space-sm) * 0.75);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-small);
+  background: var(--color-step);
+
+  strong {
+    font-weight: var(--weight-bold);
+  }
+
+  span {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+}
+
+.report-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-sm);
+  font-size: var(--text-sm);
+
+  a {
+    display: inline-grid;
+    align-items: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    color: var(--color-text);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+}

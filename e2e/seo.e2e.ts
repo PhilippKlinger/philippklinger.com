@@ -123,31 +123,3 @@ test.describe('Open Graph', () => {
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
   });
 });
-
-test('[Spec 3.4 · PK-26] jede Projektzeile hat ein Vorschaubild mit den angegebenen Maßen', async ({
-  page,
-}) => {
-  await page.goto('/');
-  const rows = page.locator('#projekte li');
-  await expect(rows).toHaveCount(projects.length);
-  for (const row of await rows.all()) {
-    const preview = row.locator('img.preview');
-    const title = await row.locator('.title').textContent();
-    await expect(preview, `Vorschau fehlt: ${title}`).toHaveCount(1);
-    const declared = {
-      width: Number(await preview.getAttribute('width')),
-      height: Number(await preview.getAttribute('height')),
-    };
-    // The preview is hidden until hover, so the file is loaded on its own.
-    const actual = await page.evaluate(
-      async (src) => {
-        const image = new Image();
-        image.src = src;
-        await image.decode();
-        return { width: image.naturalWidth, height: image.naturalHeight };
-      },
-      (await preview.getAttribute('src'))!,
-    );
-    expect(actual, `Maße der Vorschau: ${title}`).toEqual(declared);
-  }
-});

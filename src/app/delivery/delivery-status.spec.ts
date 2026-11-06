@@ -1,4 +1,12 @@
-import { ApplicationRef, computed, makeStateKey, TransferState } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  makeStateKey,
+  TransferState,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { deliveryTexts, ProjectSnapshot } from '../../content/software-delivery';
 import { ProjectKey, StatusDocument } from '../../content/status';
@@ -24,6 +32,20 @@ function serviceWithBuild(): DeliveryStatus {
     providers: [{ provide: STATUS_SNAPSHOT, useValue: statusDocument() }],
   });
   return TestBed.inject(DeliveryStatus);
+}
+
+@Component({ template: '' })
+class ShowingPage {
+  readonly ref = inject(DestroyRef);
+}
+
+const showingPage = () => TestBed.createComponent(ShowingPage);
+
+/** Without a server behind it the real request fails, no mock involved. */
+async function afterFailedRequest(status: DeliveryStatus, asked: () => void): Promise<void> {
+  asked();
+  TestBed.tick();
+  await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));
 }
 
 describe('DeliveryStatus', () => {
@@ -82,5 +104,61 @@ describe('DeliveryStatus', () => {
     TestBed.tick();
     await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));
     expect(snapshot()?.generatedAt).toBe(generatedAt);
+  });
+
+  it('counts a project asked after the request at once', async () => {
+    const status = TestBed.inject(DeliveryStatus);
+    const page = showingPage();
+    await afterFailedRequest(status, () =>
+      status.snapshot('videoflix', page.componentInstance.ref),
+    );
+    page.destroy();
+    expect(status.notice()).toBeNull();
+    status.snapshot('conduit');
+    expect(status.notice()).toBe(deliveryTexts.refreshFailed);
+  });
+
+  it('stops counting a project when the page showing it is gone', async () => {
+    const status = TestBed.inject(DeliveryStatus);
+    const page = showingPage();
+    const ask = () => status.snapshot('conduit', page.componentInstance.ref);
+    await afterFailedRequest(status, ask);
+    // Cards ask again whenever their view is recomputed; one leaving must release all of that.
+    ask();
+    page.destroy();
+    expect(status.notice()).toBeNull();
+  });
+
+  it('keeps counting a project while another page still shows it', async () => {
+    const status = TestBed.inject(DeliveryStatus);
+    const [first, second] = [showingPage(), showingPage()];
+    await afterFailedRequest(status, () => {
+      status.snapshot('conduit', first.componentInstance.ref);
+      status.snapshot('conduit', second.componentInstance.ref);
+    });
+    first.destroy();
+    expect(status.notice()).toBe(deliveryTexts.refreshFailed);
+    second.destroy();
+    expect(status.notice()).toBeNull();
+  });
+
+  it('keeps the value for a page that asks for a released project again', async () => {
+    const status = serviceWithBuild();
+    const page = showingPage();
+    await afterFailedRequest(status, () =>
+      status.snapshot('videoflix', page.componentInstance.ref),
+    );
+    page.destroy();
+    expect(status.snapshot('videoflix')()?.generatedAt).toBe(generatedAt);
+    expect(status.notice()).toBe(deliveryTexts.refreshFailed);
+  });
+
+  it('can be asked by a page from a computed', () => {
+    const status = serviceWithBuild();
+    const page = showingPage();
+    const generated = computed(
+      () => status.snapshot('videoflix', page.componentInstance.ref)()?.generatedAt,
+    );
+    expect(generated()).toBe(generatedAt);
   });
 });

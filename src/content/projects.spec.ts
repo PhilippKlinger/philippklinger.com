@@ -3,8 +3,8 @@ import { portfolioProject, projects } from './projects';
 describe('projects', () => {
   it('lists the four projects of phase 1 in order', () => {
     expect(projects.map((project) => project.slug)).toEqual([
-      'neuro-check-in',
       'videoflix',
+      'neuro-check-in',
       'conduit',
       'developer-workspace-kit',
     ]);

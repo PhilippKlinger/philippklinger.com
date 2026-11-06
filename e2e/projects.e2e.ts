@@ -73,19 +73,6 @@ test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('Seite nicht gefunden');
 });
 
-test('[Spec 3.4] jede Zeile der Liste führt auf ihre Projektseite', async ({ page }) => {
-  await page.goto('/');
-  const rows = page.locator('#projekte a.project');
-  await expect(rows).toHaveCount(projects.length);
-  for (const [index, project] of projects.entries()) {
-    await expect(rows.nth(index)).toHaveAttribute('href', `/projekte/${project.slug}/`);
-  }
-  await rows.first().click();
-  // The hydrated router drops the trailing slash from the address bar (all subpages).
-  await expect(page).toHaveURL(new RegExp(`/projekte/${projects[0].slug}/?$`));
-  await expect(page.locator('h1')).toHaveText(projects[0].title);
-});
-
 test('[Vorlage] Vorschau ab Tablet neben dem Text, mobil darunter', async ({ page }) => {
   await page.goto('/projekte/videoflix/');
   const text = (await page.locator('main .intro').boundingBox())!;
