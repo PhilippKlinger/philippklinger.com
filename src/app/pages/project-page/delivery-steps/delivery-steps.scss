@@ -32,8 +32,9 @@ h2 {
   margin-top: var(--space-xs);
   color: var(--color-text-muted);
 
+  // Stays in the accessibility tree: a live region must exist before its text arrives.
   &:empty {
-    display: none;
+    margin-top: 0;
   }
 }
 

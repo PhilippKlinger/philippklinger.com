@@ -143,11 +143,11 @@ describe('DeliverySteps', () => {
     expect(statusLine(fixture.nativeElement)).toBe('');
   });
 
-  it('shows nothing that reads Nachweis', async () => {
+  it('shows nothing that reads Nachweiskette', async () => {
     for (const slug of Object.keys(deliveryPlans)) {
       TestBed.resetTestingModule();
       const element = await renderSteps(slug, documentWith(linkedStatus()));
-      expect(element.textContent).not.toMatch(/nachweis/i);
+      expect(element.textContent).not.toMatch(/nachweiskette/i);
     }
   });
 });

@@ -271,6 +271,24 @@ test.describe('Abruf von /status.json', () => {
     await expect(steps(page)).toHaveCount(6);
   });
 
+  test('[WCAG 4.1.3] die Hinweiszeile steht vor dem Abruf im Accessibility-Baum', async ({
+    page,
+  }) => {
+    let failRequest = () => {};
+    const requestMayFail = new Promise<void>((resolve) => (failRequest = resolve));
+    await page.route('**/status.json', async (route) => {
+      await requestMayFail;
+      await route.fulfill({ status: 500, body: 'error' });
+    });
+    await page.goto('/projekte/videoflix/');
+    // getByRole skips what is hidden from assistive technology, display: none included.
+    const region = delivery(page).getByRole('status');
+    await expect(region).toHaveCount(1);
+    await expect(region).toBeEmpty();
+    failRequest();
+    await expect(region).toHaveText(refreshFailed);
+  });
+
   test('[AK6] Abbruch der Verbindung: freundlicher Hinweis', async ({ page }) => {
     await page.route('**/status.json', (route) => route.abort());
     await page.goto('/projekte/videoflix/');
