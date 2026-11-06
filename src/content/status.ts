@@ -525,8 +525,9 @@ async function collectAttestation(
   source: AttestationSource,
   greenSha: string | null,
 ): Promise<AttestationSignal> {
-  const origin = source.kind === 'image' ? { sourceSha: greenSha } : {};
   const digest = await attestationDigest(ctx, source, greenSha);
+  // Without a digest no image is known, so there is no commit it could have been built from.
+  const origin = source.kind === 'image' ? { sourceSha: digest ? greenSha : null } : {};
   // The digest alone proves the image exists, so it stays when the attestation is missing.
   const missing = { reachable: false, subjectDigest: digest, provenanceCount: null, ...origin };
   if (digest === null) return missing;

@@ -655,7 +655,7 @@ describe('collectStatus', () => {
         reachable: false,
         subjectDigest: null,
         provenanceCount: null,
-        sourceSha: GREEN_SHA,
+        sourceSha: null,
       });
       expect(calls.some((c) => c.url.includes('videoflix-backend/attestations'))).toBe(false);
     });
