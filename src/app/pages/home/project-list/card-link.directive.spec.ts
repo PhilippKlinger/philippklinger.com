@@ -107,6 +107,41 @@ describe('CardLink', () => {
     expect(clicks).not.toHaveBeenCalled();
   });
 
+  // A quick second click on a link must not be replaced by the waiting click of the surface.
+  it.each([
+    ['plain', {}],
+    ['ctrl', { ctrlKey: true }],
+  ])('drops a waiting click when a link is clicked with a %s click', async (_name, init) => {
+    const { card, clicks, text } = renderCard();
+    const quiet = card.querySelector('.quiet') as HTMLElement;
+    quiet.addEventListener('click', (event) => event.preventDefault());
+    text.dispatchEvent(plainClick());
+    quiet.dispatchEvent(plainClick(1, init));
+    await afterSelectionWindow();
+    expect(clicks).toEqual([]);
+  });
+
+  it('forwards only once for two single clicks on the surface', async () => {
+    const { clicks, text } = renderCard();
+    text.dispatchEvent(plainClick());
+    text.dispatchEvent(plainClick());
+    await afterSelectionWindow();
+    expect(clicks).toHaveLength(1);
+  });
+
+  it('drops every waiting click when the card is destroyed after two clicks', async () => {
+    const fixture = TestBed.createComponent(HostCard);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    const clicks = vi.fn((event: Event) => event.preventDefault());
+    host.querySelector('.cta')?.addEventListener('click', clicks);
+    host.querySelector('.text')?.dispatchEvent(plainClick());
+    host.querySelector('.text')?.dispatchEvent(plainClick());
+    fixture.destroy();
+    await afterSelectionWindow();
+    expect(clicks).not.toHaveBeenCalled();
+  });
+
   it('forwards only once for a double click that selects nothing', async () => {
     const { clicks, text } = renderCard();
     text.dispatchEvent(plainClick(1));

@@ -20,7 +20,9 @@ export class CardLink {
   }
 
   protected open(event: MouseEvent): void {
-    if (event.detail > 1 || hasModifier(event) || isInteractive(event.target)) return;
+    if (event.detail > 1) return;
+    clearTimeout(this.waiting);
+    if (hasModifier(event) || isInteractive(event.target)) return;
     this.waiting = setTimeout(() => this.forward(), SELECTION_WINDOW_MS);
   }
 

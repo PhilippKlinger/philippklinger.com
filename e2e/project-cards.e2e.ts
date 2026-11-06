@@ -120,7 +120,9 @@ test.describe('Karten', () => {
     const links = page.locator('#projekte .cta-quiet, #projekte .report-links a');
     await expect(links).toHaveCount(6 + 7);
     for (const link of await links.all()) {
-      expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      const box = (await link.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.width, await link.textContent()).toBeGreaterThanOrEqual(44);
     }
   });
 
