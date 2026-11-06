@@ -57,7 +57,12 @@ export function healthyStatus(): ProjectStatus {
           {
             repo,
             reachable: true,
-            attestation: { reachable: true, subjectDigest: 'sha256:abc', provenanceCount: 1 },
+            attestation: {
+              reachable: true,
+              subjectDigest: 'sha256:abc',
+              provenanceCount: 1,
+              sourceSha: sha,
+            },
             sbom: { reachable: true, spdxVersion: 'SPDX-2.3', packageCount: 520 },
             scorecard: { reachable: true, score: 6.7, date: '2026-11-05T19:28:28Z' },
           },

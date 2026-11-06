@@ -28,8 +28,11 @@ export const statusSources: StatusSources = {
           workflows: [...videoflixChecks],
           attestation: { kind: 'image', image: 'philippklinger/videoflix-frontend' },
         },
-        // Only compose files and docs: no workflows, no build output to attest.
-        { name: `${owner}/videoflix-deploy`, workflows: [] },
+        // Compose files, docs and the deploy workflow: no build output to attest.
+        {
+          name: `${owner}/videoflix-deploy`,
+          workflows: [{ name: 'Deploy', file: 'deploy.yml', kind: 'deploy' }],
+        },
       ],
       versionEndpoints: [
         {
@@ -68,6 +71,21 @@ export const statusSources: StatusSources = {
       ],
       uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'portfolio' },
       // No restore test exists for the static site: stays "not reachable" until one does.
+      restoreTest: null,
+    },
+    conduit: {
+      repos: [
+        {
+          name: `${owner}/conduit-container`,
+          ciWorkflow: 'ci.yml',
+          // deployment.yml runs on main only after the rework (EV-13).
+          workflows: [{ name: 'CI', file: 'ci.yml', kind: 'tests' }],
+          // CI tags every image with the commit SHA.
+          attestation: { kind: 'image', image: 'philippklinger/conduit-backend' },
+        },
+      ],
+      versionEndpoints: [],
+      uptime: null,
       restoreTest: null,
     },
   },
