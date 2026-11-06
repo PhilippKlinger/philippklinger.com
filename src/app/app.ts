@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CursorCta } from './layout/cursor-cta/cursor-cta';
 import { Footer } from './layout/footer/footer';
 import { Haze } from './layout/haze/haze';
 import { Header } from './layout/header/header';
 
 @Component({
-  imports: [RouterOutlet, Haze, Header, Footer],
+  imports: [RouterOutlet, Haze, Header, Footer, CursorCta],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

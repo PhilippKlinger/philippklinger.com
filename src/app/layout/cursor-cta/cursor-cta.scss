@@ -1,0 +1,41 @@
+// Sizes of the ring only (spec 8.2), the page has no other element to share them with.
+$ring-size: 6.5rem;
+$label-leading: 1.15;
+$hidden-scale: 0.4;
+$fade: 0.18s ease;
+
+// On top of the page, but clicks go through to the card below.
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: $ring-size;
+  height: $ring-size;
+  margin: calc($ring-size / -2) 0 0 calc($ring-size / -2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  line-height: $label-leading;
+  text-align: center;
+  opacity: 0;
+  scale: $hidden-scale;
+  transition:
+    opacity $fade,
+    scale $fade;
+  pointer-events: none;
+
+  @media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+:host(.is-on) {
+  opacity: 1;
+  scale: 1;
+}
