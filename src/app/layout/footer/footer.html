@@ -5,12 +5,15 @@
     </a>
     <p>{{ profile.role }}</p>
     <p>{{ profile.location }}</p>
-    <!-- Short note on how the site is built (Grill 2026-11-04, option C). -->
+    <!-- Local and PR builds have no run to name, so the line links to all runs (spec 9). -->
     <p class="built">
-      Built with Angular · CI/CD ·
-      <a [href]="repositoryUrl" i18n>Source on GitHub</a>
+      @if (runLink; as run) {
+        {{ buildLine.line }}, <a [href]="run.url">{{ run.label }}</a>
+      } @else {
+        <a [href]="allRunsUrl">{{ buildLine.line }}</a>
+      }
       ·
-      <a href="/projekte/portfolio/" i18n>So ist diese Seite gebaut</a>
+      <a href="/projekte/portfolio/">{{ buildLine.howBuilt }}</a>
     </p>
   </div>
 
