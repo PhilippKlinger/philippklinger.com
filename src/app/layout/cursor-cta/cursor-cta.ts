@@ -46,7 +46,7 @@ export class CursorCta {
   private listen(allowed: MediaQueryList): void {
     const options = { passive: true, signal: this.lifetime.signal };
     this.dot().start(this.lifetime.signal);
-    addEventListener('pointermove', (event) => this.move(event), options);
+    addEventListener('pointermove', (event) => this.move(event, allowed), options);
     addEventListener('pointerover', (event) => this.update(event, allowed), options);
     this.hideWhenOutOfReach(allowed);
   }
@@ -69,9 +69,11 @@ export class CursorCta {
     if (!stillAllowed) this.hide();
   }
 
-  private move(event: PointerEvent): void {
+  // Decides the ring too: a pointer already inside an element gets no pointerover, and the dot
+  // alone would leave nothing visible over a card.
+  private move(event: PointerEvent, allowed: MediaQueryList): void {
     this.aimAt(event);
-    this.dot().follow(event);
+    this.update(event, allowed);
   }
 
   private aimAt({ clientX, clientY }: PointerEvent): void {

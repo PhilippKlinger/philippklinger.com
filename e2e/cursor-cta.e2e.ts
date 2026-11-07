@@ -106,6 +106,9 @@ async function hoverProjectCard(page: Page): Promise<Point> {
   return point;
 }
 
+// Stays on the same element, so the browser reports a pointermove but no pointerover.
+const moveWithinElement = (page: Page, { x, y }: Point) => page.mouse.move(x + 3, y + 1);
+
 test.describe('mit Maus', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     desktopOnly(testInfo);
@@ -164,6 +167,18 @@ test.describe('mit Maus', () => {
     await expectNoFrames(page);
   });
 
+  test('[AK10] Reduced Motion an und aus: die nächste Bewegung über der Karte bringt den Ring', async ({
+    page,
+  }) => {
+    const pointer = await hoverProjectCard(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expectRingOff(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+    await moveWithinElement(page, pointer);
+    await expectRingOn(page, 'Projekt ansehen');
+  });
+
   test('[AK10] Scrollen unter dem ruhenden Zeiger schaltet den Ring passend', async ({ page }) => {
     const pointer = await hoverProjectCard(page);
 
@@ -199,6 +214,19 @@ test.describe('mit Maus', () => {
     );
     await expectRingOff(page);
     await expectNoFrames(page);
+  });
+
+  test('[AK10] nach pagehide: die nächste Bewegung über der Karte bringt den Ring', async ({
+    page,
+  }) => {
+    const pointer = await hoverProjectCard(page);
+    await page.evaluate(() =>
+      dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
+    );
+    await expectRingOff(page);
+
+    await moveWithinElement(page, pointer);
+    await expectRingOn(page, 'Projekt ansehen');
   });
 
   test('[AK10] verlässt der Zeiger das Fenster, ist der Ring aus', async ({ page }) => {
