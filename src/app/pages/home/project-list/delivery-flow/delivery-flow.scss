@@ -58,8 +58,10 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 
+  // The label says it all, so the arrow has empty alternative text for screen readers.
   &::before {
     content: '↓';
+    content: '↓' / '';
     font-size: var(--text-base);
     color: var(--color-accent);
   }

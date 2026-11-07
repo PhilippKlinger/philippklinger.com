@@ -278,6 +278,16 @@ test.describe('Karten', () => {
     ]);
   });
 
+  test('[WCAG 1.1.1] der Pfeil hat leeren Alternativtext', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'CSS-Regel, eine Breite genügt');
+    await page.goto('/');
+    const arrow = card(page, 'Videoflix').locator('.flow-arrow').first();
+    const content = await arrow.evaluate(
+      (element) => getComputedStyle(element, '::before').content,
+    );
+    expect(content).toBe('"↓" / ""');
+  });
+
   test('[AK3] Fußzeile und Signal folgen den Daten', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/');
