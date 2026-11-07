@@ -83,8 +83,18 @@ export class Haze {
     if (this.followsPointer) {
       addEventListener('pointermove', (event) => this.aimAt(event), { passive: true, signal });
     }
+    matchMedia(REDUCED_MOTION).addEventListener('change', (event) => this.settle(event), {
+      signal,
+    });
     this.state.set('running');
     this.frameId = requestAnimationFrame(this.frame);
+  }
+
+  // Turning motion back on starts nothing again, like the ring.
+  private settle({ matches }: MediaQueryListEvent): void {
+    if (!matches) return;
+    cancelAnimationFrame(this.frameId);
+    this.drawStill();
   }
 
   private aimAt({ clientX, clientY }: PointerEvent): void {

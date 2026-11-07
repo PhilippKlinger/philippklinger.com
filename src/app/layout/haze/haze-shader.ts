@@ -86,6 +86,16 @@ function readUniforms(gl: WebGLRenderingContext, program: WebGLProgram): Uniform
   };
 }
 
+function fitCanvas(gl: WebGLRenderingContext): { width: number; height: number } {
+  const { width, height } = renderSize(innerWidth, innerHeight, devicePixelRatio);
+  if (gl.canvas.width !== width || gl.canvas.height !== height) {
+    gl.canvas.width = width;
+    gl.canvas.height = height;
+    gl.viewport(0, 0, width, height);
+  }
+  return { width, height };
+}
+
 function paint(
   gl: WebGLRenderingContext,
   uniforms: Uniforms,
@@ -93,12 +103,7 @@ function paint(
   light: Point,
   energy: number,
 ): void {
-  const { width, height } = renderSize(innerWidth, innerHeight, devicePixelRatio);
-  if (gl.canvas.width !== width || gl.canvas.height !== height) {
-    gl.canvas.width = width;
-    gl.canvas.height = height;
-    gl.viewport(0, 0, width, height);
-  }
+  const { width, height } = fitCanvas(gl);
   gl.uniform2f(uniforms.res, width, height);
   gl.uniform2f(uniforms.pointer, light.x / innerWidth, 1 - light.y / innerHeight);
   gl.uniform1f(uniforms.time, time);

@@ -112,11 +112,16 @@ describe('isTooSlow', () => {
     expect(isTooSlow(samples(120, 16))).toBe(false);
   });
 
-  it('is not too slow at exactly 33 ms', () => {
-    expect(isTooSlow(samples(120, 33))).toBe(false);
+  // Power saving and 30 Hz monitors throttle the frames; that says nothing about the GPU.
+  it('is not too slow at a throttled 30 Hz', () => {
+    expect(isTooSlow(samples(120, 33.4))).toBe(false);
   });
 
-  it('is too slow at 40 ms', () => {
-    expect(isTooSlow(samples(120, 40))).toBe(true);
+  it('is not too slow at exactly 40 ms', () => {
+    expect(isTooSlow(samples(120, 40))).toBe(false);
+  });
+
+  it('is too slow at 41 ms', () => {
+    expect(isTooSlow(samples(120, 41))).toBe(true);
   });
 });

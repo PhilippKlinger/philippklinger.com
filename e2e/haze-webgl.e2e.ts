@@ -3,7 +3,7 @@ import { expectBehindContent, expectOneDecorativeLayer } from './support/haze';
 
 // The only tests with WebGL: a software GPU gives a real context even with
 // failIfMajorPerformanceCaveat. Reaching the "slow" state takes 120 frames, so about
-// 4 seconds at the earliest. In parallel the shaders slow each other down until they
+// 5 seconds at the earliest. In parallel the shaders slow each other down until they
 // get there, so these tests run one after the other.
 test.describe.configure({ mode: 'serial' });
 test.use({
@@ -34,7 +34,7 @@ const expectStillRunning = async (page: Page, moment: string) =>
   ).toBe('running');
 
 /**
- * Fewer pixels and nothing else to paint, so the frames stay far below the limit of 33 ms on
+ * Fewer pixels and nothing else to paint, so the frames stay far below the limit of 40 ms on
  * every machine, also next to other work, and the "slow" state cannot end the measurement.
  */
 const openQuietPage = async (page: Page) => {
@@ -184,6 +184,29 @@ test('[AK9] Reduced Motion: ein Standbild', async ({ page }, testInfo) => {
   expect(await backdropBrightness(page), 'das Standbild ist gezeichnet').toBeGreaterThan(15);
 });
 
+test('[AK9] wird Bewegung abgeschaltet, bleibt das Standbild', async ({ page }, testInfo) => {
+  desktopOnly(testInfo);
+  await openQuietPage(page);
+  await waitForFrames(page, 2);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(haze(page)).toHaveAttribute('data-haze-state', 'still');
+
+  // The grain changes about 12 times a second, so 30 frames would show in the picture.
+  const still = await picture(page);
+  await waitForFrames(page, 30);
+  expect(still.equals(await picture(page)), 'keine Frames mehr').toBe(true);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await waitForFrames(page, 30);
+  await expect(haze(page), 'Zurückschalten startet nichts neu').toHaveAttribute(
+    'data-haze-state',
+    'still',
+  );
+  expect(still.equals(await picture(page)), 'Zurückschalten zeichnet nichts').toBe(true);
+  expect(await backdropBrightness(page), 'das Standbild ist gezeichnet').toBeGreaterThan(15);
+});
+
 test('[AK9] nach Kontextverlust bleibt die statische Ebene', async ({ page }, testInfo) => {
   desktopOnly(testInfo);
   await page.goto('/');
@@ -231,7 +254,7 @@ test('[Spec 8.1] kurze Tabwechsel zählen nicht als langsame Frames', async ({ p
   // Headless pages never get hidden. Blocking right after a frame gives the same gap in
   // the frames, and the events are the ones a tab switch fires around it. Below one second,
   // because frameTime ignores longer gaps by itself, and together too slow without the events.
-  for (let pause = 0; pause < 3; pause++) {
+  for (let pause = 0; pause < 5; pause++) {
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
@@ -247,7 +270,7 @@ test('[Spec 8.1] kurze Tabwechsel zählen nicht als langsame Frames', async ({ p
   }
   await waitForFrames(page, 130);
 
-  await expectStillRunning(page, 'nach drei Tabwechseln');
+  await expectStillRunning(page, 'nach fünf Tabwechseln');
 });
 
 test('[Spec 13] zu langsam: statische Ebene, Kontext frei', async ({ page }, testInfo) => {
@@ -256,10 +279,10 @@ test('[Spec 13] zu langsam: statische Ebene, Kontext frei', async ({ page }, tes
   await page.goto('/');
   await expect(haze(page)).toHaveAttribute('data-haze-state', 'running');
 
-  // Real load on the main thread: every frame takes longer than the limit of 33 ms.
+  // Real load on the main thread: every frame takes longer than the limit of 40 ms.
   await page.evaluate(() => {
     const burn = () => {
-      const end = performance.now() + 45;
+      const end = performance.now() + 55;
       while (performance.now() < end);
       requestAnimationFrame(burn);
     };
