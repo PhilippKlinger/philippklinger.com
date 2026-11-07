@@ -7,10 +7,17 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { driftTarget, ease, FRAME_SAMPLES, frameTime, isTooSlow } from './haze-motion';
+import {
+  driftTarget,
+  ease,
+  FRAME_SAMPLES,
+  frameTime,
+  isTooSlow,
+  pointerEnergy,
+} from './haze-motion';
 import { createPainter, type Painter, type Point } from './haze-shader';
 
-const EASING = 0.045;
+const EASING = 0.07;
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 
@@ -38,6 +45,8 @@ export class Haze {
   private followsPointer = false;
   private target: Point = { x: 0, y: 0 };
   private light: Point = { x: 0, y: 0 };
+  // Stays 0 without a fine pointer, nothing else moves it.
+  private energy = 0;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -62,7 +71,7 @@ export class Haze {
   }
 
   private drawStill(): void {
-    this.paint?.(0, this.light);
+    this.paint?.(0, this.light, 0);
     this.state.set('still');
   }
 
@@ -79,6 +88,8 @@ export class Haze {
   }
 
   private aimAt({ clientX, clientY }: PointerEvent): void {
+    const moved = Math.hypot(clientX - this.target.x, clientY - this.target.y);
+    this.energy = pointerEnergy(this.energy, moved, 0);
     this.target = { x: clientX, y: clientY };
   }
 
@@ -87,7 +98,8 @@ export class Haze {
     this.frameId = requestAnimationFrame(this.frame);
     if (document.hidden) return;
     this.moveLight(now);
-    this.paint?.(now, this.light);
+    this.energy = pointerEnergy(this.energy, 0, this.lastFrame ? now - this.lastFrame : 0);
+    this.paint?.(now, this.light, this.energy);
     this.measure(now);
   };
 

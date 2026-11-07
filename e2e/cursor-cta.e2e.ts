@@ -106,6 +106,9 @@ async function hoverProjectCard(page: Page): Promise<Point> {
   return point;
 }
 
+// Stays on the same element, so the browser reports a pointermove but no pointerover.
+const moveWithinElement = (page: Page, { x, y }: Point) => page.mouse.move(x + 3, y + 1);
+
 test.describe('mit Maus', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     desktopOnly(testInfo);
@@ -164,6 +167,18 @@ test.describe('mit Maus', () => {
     await expectNoFrames(page);
   });
 
+  test('[AK10] Reduced Motion an und aus: die nächste Bewegung über der Karte bringt den Ring', async ({
+    page,
+  }) => {
+    const pointer = await hoverProjectCard(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expectRingOff(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+    await moveWithinElement(page, pointer);
+    await expectRingOn(page, 'Projekt ansehen');
+  });
+
   test('[AK10] Scrollen unter dem ruhenden Zeiger schaltet den Ring passend', async ({ page }) => {
     const pointer = await hoverProjectCard(page);
 
@@ -199,6 +214,19 @@ test.describe('mit Maus', () => {
     );
     await expectRingOff(page);
     await expectNoFrames(page);
+  });
+
+  test('[AK10] nach pagehide: die nächste Bewegung über der Karte bringt den Ring', async ({
+    page,
+  }) => {
+    const pointer = await hoverProjectCard(page);
+    await page.evaluate(() =>
+      dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
+    );
+    await expectRingOff(page);
+
+    await moveWithinElement(page, pointer);
+    await expectRingOn(page, 'Projekt ansehen');
   });
 
   test('[AK10] verlässt der Zeiger das Fenster, ist der Ring aus', async ({ page }) => {
@@ -263,4 +291,228 @@ test('[AK10] Touch: kein Ring, CTA sichtbar', async ({ page }, testInfo) => {
   await expect(ring(page)).toHaveCount(1);
   await expect(ring(page)).toBeHidden();
   await expect(projectCard(page).locator('a[data-card-cta]')).toBeVisible();
+});
+
+// The dot that replaces the normal pointer (PK-36). Only an addition: without it the pointer stays.
+const dot = (page: Page) => page.locator('app-cursor-dot');
+const heading = (page: Page) => page.locator('#projekte h2');
+
+const expectDotOn = (page: Page) => expect(dot(page)).toHaveCSS('opacity', '1');
+const expectDotOff = (page: Page) => expect(dot(page)).toHaveCSS('opacity', '0');
+const expectNormalPointer = (page: Page) =>
+  expect(page.locator('html')).not.toHaveClass(/has-custom-cursor/);
+
+const expectDotSize = async (page: Page, size: string) => {
+  await expect(dot(page)).toHaveCSS('width', size);
+  await expect(dot(page)).toHaveCSS('height', size);
+};
+
+const accentColor = (page: Page) =>
+  page.evaluate(() => {
+    const probe = document.createElement('i');
+    probe.style.color = 'var(--color-accent)';
+    document.body.append(probe);
+    const { color } = getComputedStyle(probe);
+    probe.remove();
+    return color;
+  });
+
+/** Everything on this page that would still show a pointer of the browser. */
+const elementsWithPointer = (page: Page) =>
+  page.evaluate(() => {
+    const shows = (element: Element, pseudo?: string) =>
+      getComputedStyle(element, pseudo).cursor !== 'none';
+    return [...document.querySelectorAll('html, body, body *')]
+      .filter((element) => !element.matches('input, textarea'))
+      .filter((el) => shows(el) || shows(el, '::before') || shows(el, '::after'))
+      .map((el) => el.tagName + (typeof el.className === 'string' ? `.${el.className}` : ''));
+  });
+
+const addFields = (page: Page) =>
+  heading(page).evaluate((title) => {
+    title.insertAdjacentHTML('afterend', '<input aria-label="Feld"><textarea aria-label="Text">');
+  });
+
+test.describe('eigener Zeiger', () => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    desktopOnly(testInfo);
+    await page.goto('/');
+  });
+
+  test('[PK-36] der Punkt folgt dem Zeiger ohne Verzögerung', async ({ page }) => {
+    await expectNormalPointer(page);
+
+    const first = await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+    await expectDotSize(page, '10px');
+    await expect(dot(page)).toHaveCSS('background-color', await accentColor(page));
+    await expect(dot(page)).toHaveAttribute('aria-hidden', 'true');
+    await expect(dot(page)).toHaveCSS('pointer-events', 'none');
+
+    // Read right after the move, without polling: there is no frame and no easing in between.
+    const [x, y] = [Math.round(first.x) + 40, Math.round(first.y) + 5];
+    await page.mouse.move(x, y);
+    expect(await dot(page).evaluate((el) => el.style.translate)).toBe(`${x}px ${y}px`);
+    const box = await dot(page).boundingBox();
+    expect(box!.x + box!.width / 2).toBeCloseTo(x);
+    expect(box!.y + box!.height / 2).toBeCloseTo(y);
+  });
+
+  test('[PK-36] sobald der Ring an ist, ist der Punkt weg', async ({ page }) => {
+    await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+
+    await hoverProjectCard(page);
+    await expectDotOff(page);
+
+    await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+    await expectRingOff(page);
+  });
+
+  test('[PK-36] über einem Link wird der Punkt zum Kreis', async ({ page }) => {
+    await hoverCenter(page, projectCard(page).locator('a[data-card-cta]'));
+    await expectDotOn(page);
+    await expectDotSize(page, '20px');
+    await expect(dot(page)).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(dot(page)).toHaveCSS('border-top-width', '2px');
+    await expect(dot(page)).toHaveCSS('border-top-color', await accentColor(page));
+    // Centred on the pointer also while it is larger.
+    await expect(dot(page)).toHaveCSS('margin-left', '-10px');
+
+    await hoverCenter(page, heading(page));
+    await expectDotSize(page, '10px');
+  });
+
+  test('[PK-36] über einem Knopf wird der Punkt zum Kreis', async ({ page }) => {
+    await hoverCenter(page, page.locator('.band-pause'));
+    await expectDotOn(page);
+    await expectDotSize(page, '20px');
+  });
+
+  test('[PK-36] über Eingabefeldern bleibt der normale Zeiger', async ({ page }) => {
+    await addFields(page);
+
+    for (const field of ['#projekte input', '#projekte textarea']) {
+      await hoverCenter(page, heading(page));
+      await expectDotOn(page);
+      await hoverCenter(page, page.locator(field));
+      await expectDotOff(page);
+      await expect(page.locator(field)).toHaveCSS('cursor', 'auto');
+    }
+  });
+
+  test('[PK-36] auf der Startseite zeigt nichts mehr den Standardzeiger', async ({ page }) => {
+    await hoverCenter(page, heading(page));
+    await expect.poll(() => elementsWithPointer(page)).toEqual([]);
+    await expect(projectCard(page)).toHaveCSS('cursor', 'none');
+  });
+
+  test('[PK-36] auf einer Detailseite zeigt nichts mehr den Standardzeiger', async ({ page }) => {
+    await page.goto('/projekte/videoflix/');
+    await page.mouse.move(300, 300);
+    await expect.poll(() => elementsWithPointer(page)).toEqual([]);
+  });
+
+  test('[PK-36] im Header-Menü zeigt nichts mehr den Standardzeiger', async ({ page }) => {
+    await page.setViewportSize({ width: 700, height: 800 });
+    const menu = page.locator('app-header .menu-button');
+    await hoverCenter(page, menu);
+    await expect(menu).toHaveCSS('cursor', 'none');
+    await page.mouse.down();
+    await page.mouse.up();
+    await hoverCenter(page, page.locator('#main-nav a').first());
+    await expectDotSize(page, '20px');
+    await expect.poll(() => elementsWithPointer(page)).toEqual([]);
+  });
+
+  test('[PK-36] außerhalb des Fensters ist der Punkt aus, danach wieder da', async ({ page }) => {
+    await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+
+    await page.mouse.move(-5, -5);
+    await expectDotOff(page);
+    await expectNormalPointer(page);
+
+    await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+  });
+
+  test('[PK-36] beim Verlassen der Seite ist der Punkt aus', async ({ page }) => {
+    await hoverCenter(page, heading(page));
+    await page.evaluate(() =>
+      dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
+    );
+    await expectDotOff(page);
+    await expectNormalPointer(page);
+  });
+
+  test('[PK-36] wird Bewegung abgeschaltet, kommt der normale Zeiger zurück', async ({ page }) => {
+    await hoverCenter(page, heading(page));
+    await expectDotOn(page);
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expectNormalPointer(page);
+    await expect(dot(page)).toBeHidden();
+
+    await page.mouse.move(400, 400);
+    await expectNormalPointer(page);
+  });
+
+  test('[PK-36] Berührung auf einem Gerät mit Maus bringt keinen Punkt', async ({ page }) => {
+    await heading(page).dispatchEvent('pointermove', { bubbles: true, pointerType: 'touch' });
+    await expectDotOff(page);
+    await expectNormalPointer(page);
+  });
+
+  test('[PK-36] der Punkt am Fensterrand erzeugt keinen Überlauf', async ({ page }) => {
+    const { width, height } = page.viewportSize()!;
+    await page.mouse.move(width - 1, height - 1);
+    await expectDotOn(page);
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBe(0);
+  });
+});
+
+for (const [name, media] of [
+  ['Reduced Motion', { reducedMotion: 'reduce' }],
+  ['Forced Colors', { forcedColors: 'active' }],
+] as const) {
+  test(`[PK-36] ${name}: normaler Zeiger, kein Punkt`, async ({ page }, testInfo) => {
+    desktopOnly(testInfo);
+    await page.emulateMedia(media);
+    await page.goto('/');
+
+    await hoverCenter(page, heading(page));
+    await expect(dot(page)).toHaveCount(1);
+    await expect(dot(page)).toBeHidden();
+    await expectNormalPointer(page);
+    await expect(projectCard(page)).toHaveCSS('cursor', 'pointer');
+  });
+}
+
+test('[PK-36] Touch: normaler Zeiger, kein Punkt', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'Nur das Gerät mit Touch');
+  await page.goto('/');
+
+  await page.touchscreen.tap(195, 300);
+  await expect(dot(page)).toHaveCount(1);
+  await expect(dot(page)).toBeHidden();
+  await expectNormalPointer(page);
+});
+
+test.describe('ohne JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('[PK-36] normaler Zeiger, kein Punkt', async ({ page }, testInfo) => {
+    desktopOnly(testInfo);
+    await page.goto('/');
+
+    await hoverCenter(page, projectCard(page).locator('h3'));
+    await expectDotOff(page);
+    await expect(projectCard(page)).toHaveCSS('cursor', 'pointer');
+  });
 });

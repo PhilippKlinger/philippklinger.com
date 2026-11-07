@@ -2,6 +2,9 @@ const RESOLUTION = 0.6;
 export const FRAME_SAMPLES = 120;
 const SLOW_FRAME_MS = 33;
 const LONGEST_FRAME_MS = 1000;
+const FULL_ENERGY_PX = 400;
+const ENERGY_LEFT_PER_FRAME = 0.94;
+const MS_PER_FRAME_AT_60_HZ = 1000 / 60;
 
 /** Canvas size in device pixels; a low device pixel ratio lowers it further, a high one never raises it. */
 export function renderSize(
@@ -26,6 +29,12 @@ export function driftTarget(now: number, width: number, height: number): { x: nu
     x: width * (0.55 + Math.sin(now * 0.00017) * 0.3),
     y: height * (0.4 + Math.cos(now * 0.00023) * 0.25),
   };
+}
+
+/** How strongly a fast pointer still stirs the haze, 0 to 1. Fades by time, so alike at any frame rate. */
+export function pointerEnergy(energy: number, movedPx: number, elapsedMs: number): number {
+  const faded = energy * ENERGY_LEFT_PER_FRAME ** (elapsedMs / MS_PER_FRAME_AT_60_HZ);
+  return Math.min(1, faded + movedPx / FULL_ENERGY_PX);
 }
 
 /** Time since the last frame, or null for a pause of the whole page: it says nothing about the GPU. */

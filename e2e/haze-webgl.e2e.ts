@@ -12,7 +12,13 @@ test.use({
   },
 });
 
-// Far above the grain of 1.5 steps per channel, far below the measured gain of 22.
+declare global {
+  interface Window {
+    hazeEnergy: number;
+  }
+}
+
+// Far above the grain of 1.5 steps per channel, far below the measured gain of 20.
 const POINTER_GAIN = 8;
 
 const desktopOnly = (testInfo: TestInfo) =>
@@ -100,7 +106,7 @@ test('[AK9] läuft und bewegt sich mit dem Zeiger', async ({ page }, testInfo) =
   const before = await brightnessAround(page, nearX, nearY);
   await expectStillRunning(page, 'beim ersten Bild');
   await page.mouse.move(nearX, nearY);
-  // At 0.045 per frame the light covers 87 % of its way in 45 frames.
+  // At 0.07 per frame the light covers 96 % of its way in 45 frames.
   await waitForFrames(page, 45);
   const near = await brightnessAround(page, nearX, nearY);
   await page.mouse.move(farX, farY);
@@ -111,6 +117,44 @@ test('[AK9] läuft und bewegt sich mit dem Zeiger', async ({ page }, testInfo) =
   // Far, near, far again: only the pointer explains a rise and a fall on this short time.
   expect(near, 'heller, wenn der Zeiger dort ist').toBeGreaterThan(before + POINTER_GAIN);
   expect(near, 'wieder dunkler, wenn er weg ist').toBeGreaterThan(after + POINTER_GAIN);
+});
+
+// Only records and still calls the original. The shader compiler drops a uniform that has no
+// effect on the colour, so a shader that ignores the energy leaves nothing to record here.
+const recordEnergy = (page: Page) =>
+  page.addInitScript(() => {
+    const { getUniformLocation, uniform1f } = WebGLRenderingContext.prototype;
+    let energyLocation: WebGLUniformLocation | null = null;
+    WebGLRenderingContext.prototype.getUniformLocation = function (program, name) {
+      const location = getUniformLocation.call(this, program, name);
+      if (name === 'uEnergy') energyLocation = location;
+      return location;
+    };
+    WebGLRenderingContext.prototype.uniform1f = function (location, value) {
+      if (location && location === energyLocation) window.hazeEnergy = value;
+      uniform1f.call(this, location, value);
+    };
+  });
+
+const hazeEnergy = (page: Page) => page.evaluate(() => window.hazeEnergy);
+
+test('[PK-36] schnelle Bewegung gibt dem Haze einen Impuls, der abklingt', async ({
+  page,
+}, testInfo) => {
+  desktopOnly(testInfo);
+  await recordEnergy(page);
+  await openQuietPage(page);
+  await waitForFrames(page, 2);
+  expect(await hazeEnergy(page), 'ohne Bewegung kein Impuls').toBe(0);
+
+  await page.mouse.move(10, 10);
+  await waitForFrames(page, 2);
+  const after = await hazeEnergy(page);
+  expect(after, 'die Strecke kommt an').toBeGreaterThan(0.2);
+
+  await waitForFrames(page, 45);
+  expect(await hazeEnergy(page), 'klingt von allein ab').toBeLessThan(after * 0.5);
+  await expectStillRunning(page, 'beim letzten Bild');
 });
 
 test('[AK9] liegt auch im Lauf als eine Ebene hinter dem Inhalt', async ({ page }, testInfo) => {

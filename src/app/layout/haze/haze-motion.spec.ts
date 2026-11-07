@@ -1,4 +1,4 @@
-import { driftTarget, ease, frameTime, isTooSlow, renderSize } from './haze-motion';
+import { driftTarget, ease, frameTime, isTooSlow, pointerEnergy, renderSize } from './haze-motion';
 
 const samples = (count: number, ms: number) => new Array<number>(count).fill(ms);
 
@@ -38,6 +38,40 @@ describe('driftTarget', () => {
       expect(y).toBeGreaterThan(0);
       expect(y).toBeLessThan(500);
     }
+  });
+});
+
+describe('pointerEnergy', () => {
+  const FRAME_AT_60_HZ = 1000 / 60;
+
+  it('grows with the distance of a move', () => {
+    expect(pointerEnergy(0, 100, 0)).toBeCloseTo(0.25);
+    expect(pointerEnergy(0.25, 100, 0)).toBeCloseTo(0.5);
+  });
+
+  it('never exceeds 1', () => {
+    expect(pointerEnergy(0.9, 400, 0)).toBe(1);
+  });
+
+  it('fades by 0.94 per frame at 60 Hz', () => {
+    expect(pointerEnergy(1, 0, FRAME_AT_60_HZ)).toBeCloseTo(0.94, 8);
+  });
+
+  it('fades alike at every frame rate', () => {
+    let at120Hz = 1;
+    for (let frame = 0; frame < 120; frame++) {
+      at120Hz = pointerEnergy(at120Hz, 0, FRAME_AT_60_HZ / 2);
+    }
+    let at30Hz = 1;
+    for (let frame = 0; frame < 30; frame++) {
+      at30Hz = pointerEnergy(at30Hz, 0, FRAME_AT_60_HZ * 2);
+    }
+    expect(at120Hz).toBeCloseTo(0.94 ** 60, 8);
+    expect(at30Hz).toBeCloseTo(0.94 ** 60, 8);
+  });
+
+  it('stays 0 without a move', () => {
+    expect(pointerEnergy(0, 0, 1000)).toBe(0);
   });
 });
 
