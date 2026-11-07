@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { pages } from './support/site';
 
-// Header and footer on every page, checked against the template "Version 2"
+// Header and footer on every page, checked against the design
 // (docs/design in the private workspace) and spec 3.4.
 
 const navLabels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
@@ -116,7 +116,7 @@ for (const path of pages) {
 }
 
 test.describe('Header je Breite', () => {
-  test('[Vorlage] Mobil Menü-Knopf statt Navigation, ab Tablet Navigation sichtbar', async ({
+  test('[Design] Mobil Menü-Knopf statt Navigation, ab Tablet Navigation sichtbar', async ({
     page,
   }) => {
     await page.goto('/');
@@ -131,7 +131,7 @@ test.describe('Header je Breite', () => {
     }
   });
 
-  test('[Vorlage] Logo „PK“ führt zur Startseite', async ({ page }) => {
+  test('[Design] Logo „PK“ führt zur Startseite', async ({ page }) => {
     await page.goto('/impressum/');
     await page
       .locator('header')

@@ -62,7 +62,7 @@ export interface DeliveryPlan {
   /** Absent: fixed content only. */
   statusKey?: ProjectKey;
   runningLabel?: string;
-  fixedSignal?: { status: string; when: string };
+  fixedSignal?: DeliveryView['signal'];
   /** Overrides the counter. */
   footnote?: string;
   repoLabels?: Record<string, string>;
@@ -80,7 +80,8 @@ export interface DeliveryStepView {
 }
 
 export interface DeliveryView {
-  signal: { status: string; when: string };
+  /** The state sets icon and color, so a red signal never looks like a green one. */
+  signal: { state: StepState; status: string; when: string };
   steps: DeliveryStepView[];
   counter: string;
 }
@@ -553,8 +554,11 @@ function operatingSignal(
 ): Signal | null {
   const states = statesWith(plan, steps, OPERATING_SOURCES);
   const isRunning = states.length > 0 && states.every((state) => state === 'verified');
-  if (plan.runningLabel && isRunning) return { status: plan.runningLabel, when: stand };
-  return states.includes('deviation') ? { status: 'Abweichung im Betrieb', when: stand } : null;
+  if (plan.runningLabel && isRunning)
+    return { state: 'verified', status: plan.runningLabel, when: stand };
+  return states.includes('deviation')
+    ? { state: 'deviation', status: 'Abweichung im Betrieb', when: stand }
+    : null;
 }
 
 // DRAFT: signal text, wording to be approved (PK-23).
@@ -565,18 +569,23 @@ function checksSignal(
 ): Signal | null {
   const states = statesWith(plan, steps, ['checks']);
   const runs = runsOf(status, 'check');
-  if (states.includes('deviation')) return { status: 'Prüfung rot', when: lastRun(runs) };
+  if (states.includes('deviation'))
+    return { state: 'deviation', status: 'Prüfung rot', when: lastRun(runs) };
   if (!states.includes('verified')) return null;
-  return { status: 'CI grün', when: lastRun(runs.filter((run) => run.kind === 'tests')) };
+  return {
+    state: 'verified',
+    status: 'CI grün',
+    when: lastRun(runs.filter((run) => run.kind === 'tests')),
+  };
 }
 
 // DRAFT: signal text, wording to be approved (PK-23).
-const NO_SIGNAL: Signal = { status: 'Stand nicht abrufbar', when: '' };
+const NO_SIGNAL: Signal = { state: 'unavailable', status: 'Stand nicht abrufbar', when: '' };
 
 // DRAFT: signal text, wording to be approved (PK-23).
 function fallbackSignal(steps: DeliveryStepView[], stand: string): Signal {
   const hasProof = steps.some((step) => step.state === 'verified' || step.state === 'partial');
-  return hasProof ? { status: 'Teilweise belegt', when: stand } : NO_SIGNAL;
+  return hasProof ? { state: 'partial', status: 'Teilweise belegt', when: stand } : NO_SIGNAL;
 }
 
 function signalOf(plan: DeliveryPlan, steps: DeliveryStepView[], snapshot: Snapshot): Signal {

@@ -102,6 +102,20 @@ const healthyRoutes: [RegExp, Handler][] = [
       return json({ total_count: 1, workflow_runs: [run(repo)] });
     },
   ],
+  [
+    /\/actions\/runs\/\d+\/jobs/,
+    () =>
+      json({
+        jobs: [
+          {
+            ...internal,
+            name: 'Deploy preview',
+            conclusion: 'success',
+            completed_at: '2026-11-05T10:05:00Z',
+          },
+        ],
+      }),
+  ],
   [/\/attestations\/sha256:/, () => json({ attestations: [{ ...internal, bundle: {} }] })],
   [
     /\/dependency-graph\/sbom/,
@@ -869,6 +883,103 @@ describe('collectStatus for Conduit and the deploy run', () => {
       checks.links.filter((link) => link.source === repo).map((link) => link.workflow);
     expect(runsOf('PhilippKlinger/videoflix-backend')).toEqual(['CI', 'CodeQL', 'Security Checks']);
     expect(runsOf('PhilippKlinger/videoflix-deploy')).toEqual(['Deploy']);
+  });
+});
+
+describe('collectStatus for a single job of a workflow', () => {
+  const repo = 'PhilippKlinger/site';
+  const JOB_FINISHED = '2026-11-05T11:00:00Z';
+  const source: ProjectSource = {
+    ...noSource,
+    repos: [
+      {
+        name: repo,
+        workflows: [{ name: 'Preview', file: 'deploy.yml', kind: 'deploy', job: 'Deploy preview' }],
+      },
+    ],
+  };
+  const finished = (conclusion: string) => ({
+    name: 'Deploy preview',
+    status: 'completed',
+    conclusion,
+    completed_at: JOB_FINISHED,
+  });
+  const waitingProduction = { name: 'Deploy production', status: 'waiting', conclusion: null };
+
+  function jobsByRun(jobs: Record<number, unknown[]>): [RegExp, Handler][] {
+    return [
+      [
+        /\/actions\/workflows\/deploy\.yml\/runs/,
+        () =>
+          json({
+            workflow_runs: Object.keys(jobs)
+              .map(Number)
+              .sort((a, b) => b - a)
+              .map((id) => run(repo, { id, status: 'waiting', conclusion: null })),
+          }),
+      ],
+      [
+        /\/actions\/runs\/(\d+)\/jobs/,
+        (url) => json({ jobs: jobs[Number(/runs\/(\d+)\/jobs/.exec(url)?.[1])] }),
+      ],
+    ];
+  }
+  const signalOf = async (routes: [RegExp, Handler][]) =>
+    (await collectConduit(fakeFetch(routes).fetch, source)).checks;
+
+  it('reads the job while the run still waits for the approval of another job', async () => {
+    const checks = await signalOf(jobsByRun({ 7: [finished('success'), waitingProduction] }));
+    expect(checks.signals.workflows[0]).toEqual({
+      repo,
+      workflow: 'Preview',
+      file: 'deploy.yml',
+      kind: 'deploy',
+      reachable: true,
+      conclusion: 'success',
+      headSha: GREEN_SHA,
+      completedAt: JOB_FINISHED,
+    });
+    expect(checks.links).toContainEqual({
+      kind: 'workflow-run',
+      source: repo,
+      url: `https://github.com/${repo}/actions/runs/7`,
+      workflow: 'Preview',
+    });
+  });
+
+  it('reports a failed job', async () => {
+    const checks = await signalOf(jobsByRun({ 7: [finished('failure')] }));
+    expect(checks.signals.workflows[0].conclusion).toBe('failure');
+  });
+
+  it('falls back to the last run whose job has a verdict', async () => {
+    const running = { name: 'Deploy preview', status: 'in_progress', conclusion: null };
+    const checks = await signalOf(jobsByRun({ 8: [running], 7: [finished('success')] }));
+    expect(checks.links[0].url).toBe(`https://github.com/${repo}/actions/runs/7`);
+    expect(checks.signals.workflows[0].conclusion).toBe('success');
+  });
+
+  it('reports the preview job of this website', async () => {
+    const { portfolio } = (await collect(fakeFetch().fetch)).projects;
+    const preview = portfolio.checks.signals.workflows.find((w) => w.kind === 'deploy');
+    expect(preview).toMatchObject({ workflow: 'Deploy preview', conclusion: 'success' });
+  });
+
+  it('does not fall back to an older run when the jobs of the newest cannot be read', async () => {
+    const unreadable: [RegExp, Handler] = [
+      /\/actions\/runs\/8\/jobs/,
+      () => json({}, { status: 500 }),
+    ];
+    const newestUnreadable: Record<number, unknown[]> = { 8: [], 7: [finished('success')] };
+    const checks = await signalOf([unreadable, ...jobsByRun(newestUnreadable)]);
+    expect(checks.signals.workflows[0]).toMatchObject({ reachable: false, conclusion: null });
+    expect(checks.links).toEqual([]);
+  });
+
+  it('is not reachable when no run has that job', async () => {
+    const checks = await signalOf(jobsByRun({ 7: [waitingProduction] }));
+    expect(checks.signals.workflows[0]).toMatchObject({ reachable: false, conclusion: null });
+    expect(checks.links).toEqual([]);
   });
 });
 

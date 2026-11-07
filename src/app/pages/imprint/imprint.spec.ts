@@ -24,7 +24,7 @@ describe('Imprint', () => {
     expect(mail?.getAttribute('href')).toBe(`mailto:${profile.email}`);
   });
 
-  it('credits the design template (DECISIONS 2026-11-03)', () => {
-    expect(page.textContent).toContain('Developer Akademie GmbH');
+  it('names no design template or school (DECISIONS 2026-11-07)', () => {
+    expect(page.textContent).not.toMatch(/Developer Akademie|Vorlage/);
   });
 });
