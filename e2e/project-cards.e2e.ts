@@ -95,7 +95,7 @@ test.describe('Karten', () => {
   test('[AK1] jede Karte hat Signal, Titel, Text, Chips, Aktionen und Panel', async ({ page }) => {
     await page.goto('/');
     for (const item of await cards(page).all()) {
-      await expect(item.locator('.signal b')).toBeVisible();
+      await expect(item.locator('.signal .state')).toBeVisible();
       await expect(item.locator('.card-main > p')).toBeVisible();
       await expect(item.locator('.chips li').first()).toBeVisible();
       await expect(item.locator('.actions a').first()).toBeVisible();
@@ -292,16 +292,16 @@ test.describe('Karten', () => {
     await serveStatus(page);
     await page.goto('/');
     const videoflix = card(page, 'Videoflix');
-    await expect(videoflix.locator('.signal b')).toHaveText('CI grün');
-    await expect(videoflix.locator('.signal span')).toHaveText('zuletzt 05.11.');
+    await expect(videoflix.locator('.signal .state')).toHaveText('CI grün');
+    await expect(videoflix.locator('.signal-when')).toHaveText('zuletzt 05.11.');
     await expect(videoflix.locator('.flow-foot')).toHaveText('2 von 6 belegt');
     const neuro = card(page, 'Neuro Check-in');
-    await expect(neuro.locator('.signal b')).toHaveText('Live im Play Store');
-    await expect(neuro.locator('.signal span')).toHaveText('Version 1.11.2');
+    await expect(neuro.locator('.signal .state')).toHaveText('Live im Play Store');
+    await expect(neuro.locator('.signal-when')).toHaveText('Version 1.11.2');
     await expect(neuro.locator('.flow-foot')).toHaveText('1 von 3 öffentlich belegt, Code privat');
     const kit = card(page, 'Developer Workspace Kit');
-    await expect(kit.locator('.signal b')).toHaveText('Code privat');
-    await expect(kit.locator('.signal span')).toHaveText('Version 0.5.0');
+    await expect(kit.locator('.signal .state')).toHaveText('Code privat');
+    await expect(kit.locator('.signal-when')).toHaveText('Version 0.5.0');
     await expect(kit.locator('.flow-foot')).toHaveText('Öffentliches Repo folgt');
   });
 
@@ -375,7 +375,7 @@ test.describe('Status im Browser', () => {
   test('[Spec 6.1] Startseite fragt status.json genau einmal', async ({ page }) => {
     const requests = await serveStatus(page);
     await page.goto('/');
-    await expect(card(page, 'Conduit').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
     await page.waitForLoadState('networkidle');
     expect(requests).toHaveLength(1);
   });
@@ -390,11 +390,11 @@ test.describe('Status im Browser', () => {
     await serveStatus(page, statusFile(failChecks));
     await page.goto('/');
     const videoflix = card(page, 'Videoflix');
-    await expect(videoflix.locator('.signal b')).toHaveText('Prüfung rot');
+    await expect(videoflix.locator('.signal .state')).toHaveText('Prüfung rot');
     await expect(
       stepOf(videoflix, 'Tests & Security-Checks').locator('.state-deviation'),
     ).toBeVisible();
-    await expect(card(page, 'Conduit').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
     await expect(notice(page)).toBeEmpty();
   });
 
@@ -410,7 +410,7 @@ test.describe('Status im Browser', () => {
     );
     await serveStatus(page);
     await page.goto('/');
-    await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
   });
 
   test('[Spec 6.1] ein älterer Stand aus status.json verdrängt den vorgerenderten nicht', async ({
@@ -427,7 +427,7 @@ test.describe('Status im Browser', () => {
     await page.goto('/');
     await expect.poll(() => requests).toHaveLength(1);
     await page.waitForLoadState('networkidle');
-    await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
   });
 
   test('[AK6] Status ohne conduit: Conduit nicht abrufbar, Videoflix normal', async ({ page }) => {
@@ -435,11 +435,11 @@ test.describe('Status im Browser', () => {
     page.on('pageerror', (error) => errors.push(error));
     await serveStatus(page, statusFile(dropConduit));
     await page.goto('/');
-    await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
     await expect(card(page, 'Videoflix').locator('.flow-foot')).toHaveText('2 von 6 belegt');
     const conduit = card(page, 'Conduit');
-    await expect(conduit.locator('.signal b')).toHaveText('Stand nicht abrufbar');
-    await expect(conduit.locator('.signal span')).toHaveCount(0);
+    await expect(conduit.locator('.signal .state')).toHaveText('Stand nicht abrufbar');
+    await expect(conduit.locator('.signal-when')).toHaveCount(0);
     await expect(conduit.locator('.flow-step .state')).toHaveText([
       'Nicht abrufbar',
       'Nicht abrufbar',
@@ -469,8 +469,10 @@ test.describe('Status im Browser', () => {
       await expect(cards(page)).toHaveCount(5);
       await expect(page.locator('#projekte a[data-card-cta]')).toHaveCount(5);
       await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 4 + 3);
-      await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('Stand nicht abrufbar');
-      await expect(card(page, 'Neuro Check-in').locator('.signal b')).toHaveText(
+      await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText(
+        'Stand nicht abrufbar',
+      );
+      await expect(card(page, 'Neuro Check-in').locator('.signal .state')).toHaveText(
         'Live im Play Store',
       );
       await expect(page.locator('#projekte')).not.toContainText(/undefined|null|NaN|Error/);
@@ -507,7 +509,7 @@ test.describe('Status im Browser', () => {
     );
     await page.goto('/');
     await expect(notice(page)).toHaveText(staleNotice);
-    await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+    await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
   });
 
   test.describe('Startseite → Detailseite → zurück', () => {
@@ -522,8 +524,8 @@ test.describe('Status im Browser', () => {
     test('[Spec 6.1] gesunder Stand: Karten zeigen ihn, kein Hinweis', async ({ page }) => {
       await serveStatus(page);
       await goAndReturn(page);
-      await expect(card(page, 'Conduit').locator('.signal b')).toHaveText('CI grün');
-      await expect(card(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+      await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
+      await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
       await page.waitForLoadState('networkidle');
       await expect(notice(page)).toBeEmpty();
     });
@@ -531,7 +533,9 @@ test.describe('Status im Browser', () => {
     test('[AK6] Status ohne conduit: Hinweis steht auch nach dem Rückweg', async ({ page }) => {
       await serveStatus(page, statusFile(dropConduit));
       await goAndReturn(page);
-      await expect(card(page, 'Conduit').locator('.signal b')).toHaveText('Stand nicht abrufbar');
+      await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText(
+        'Stand nicht abrufbar',
+      );
       await expect(notice(page)).toHaveText(failedNotice);
     });
 

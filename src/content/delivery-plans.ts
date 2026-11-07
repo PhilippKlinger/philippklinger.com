@@ -113,7 +113,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
   },
   'neuro-check-in': {
     // Stays fixed until the decision of PK-35; the version follows the next release.
-    fixedSignal: { status: 'Live im Play Store', when: neuroRelease },
+    fixedSignal: { state: 'verified', status: 'Live im Play Store', when: neuroRelease },
     steps: [
       privateStep('Code', 'CI'),
       privateStep('Unit- & E2E-Tests', 'Release'),
@@ -166,7 +166,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
     ],
   },
   'developer-workspace-kit': {
-    fixedSignal: { status: 'Code privat', when: 'Version 0.5.0' },
+    fixedSignal: { state: 'private', status: 'Code privat', when: 'Version 0.5.0' },
     footnote: 'Öffentliches Repo folgt',
     steps: [privateStep('Code', 'CI'), privateStep('CI', 'Release'), privateStep('Release')],
   },

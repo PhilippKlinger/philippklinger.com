@@ -52,5 +52,5 @@
       }
     }
   </svg>
-  {{ labels[state()] }}
+  {{ label() ?? labels[state()] }}
 </span>

@@ -5,13 +5,14 @@ import { buildDeliveryView, DeliveryView } from '../../../../../content/software
 import { DeliveryStatus } from '../../../../delivery/delivery-status';
 import { CardLink } from '../card-link.directive';
 import { DeliveryFlow } from '../delivery-flow/delivery-flow';
+import { StateBadge } from '../../../../delivery/state-badge/state-badge';
 
 // DRAFT: wording to be approved (PK-23).
 const ctaLabel = 'Projektdetails ansehen';
 
 @Component({
   selector: 'app-project-card',
-  imports: [CardLink, DeliveryFlow],
+  imports: [CardLink, DeliveryFlow, StateBadge],
   templateUrl: './project-card.html',
   styleUrl: './project-card.scss',
 })

@@ -65,15 +65,15 @@ describe('ProjectCard', () => {
   it('shows the fixed signal of Neuro Check-in without a status request', () => {
     const snapshot = vi.spyOn(TestBed.inject(DeliveryStatus), 'snapshot');
     const host = render('neuro-check-in');
-    expect(host.querySelector('.signal b')?.textContent).toBe('Live im Play Store');
-    expect(host.querySelector('.signal span')?.textContent).toBe('Version 1.11.2');
+    expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Live im Play Store');
+    expect(host.querySelector('.signal-when')?.textContent).toBe('Version 1.11.2');
     expect(snapshot).not.toHaveBeenCalled();
   });
 
   it('shows no empty time without data', () => {
     const host = render('videoflix');
-    expect(host.querySelector('.signal b')?.textContent).toBe('Stand nicht abrufbar');
-    expect(host.querySelector('.signal span')).toBeNull();
+    expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Stand nicht abrufbar');
+    expect(host.querySelector('.signal-when')).toBeNull();
   });
 
   it('builds signal and steps from the snapshot of its project', () => {
@@ -90,14 +90,16 @@ describe('ProjectCard', () => {
       ],
     });
     const host = render('videoflix');
-    expect(host.querySelector('.signal b')?.textContent).not.toBe('Stand nicht abrufbar');
+    expect(host.querySelector('.signal .state')?.textContent?.trim()).not.toBe(
+      'Stand nicht abrufbar',
+    );
     expect(host.querySelector('.flow-step .state')?.textContent?.trim()).toBe('Belegt');
     expect(host.querySelectorAll('.flow-step')).toHaveLength(6);
   });
 
   it('keeps Conduit readable when the status has no entry for it', () => {
     const host = render('conduit');
-    expect(host.querySelector('.signal b')?.textContent).toBe('Stand nicht abrufbar');
+    expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Stand nicht abrufbar');
     expect(textsOf(host, '.flow-step strong')).toEqual([
       'Code',
       'CI',

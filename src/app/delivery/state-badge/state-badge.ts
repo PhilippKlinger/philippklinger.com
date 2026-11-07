@@ -9,5 +9,7 @@ import { deliveryTexts, StepState } from '../../../content/software-delivery';
 })
 export class StateBadge {
   readonly state = input.required<StepState>();
+  /** Replaces the word of the state, the icon stays. */
+  readonly label = input<string>();
   protected readonly labels = deliveryTexts.stateLabels;
 }
