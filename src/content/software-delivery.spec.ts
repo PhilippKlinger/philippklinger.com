@@ -175,11 +175,30 @@ describe('buildDeliveryView', () => {
       expect(stepView(step(['code']), status).state).toBe('deviation');
     });
 
-    it('counts a restore test without a result as proven, with its date', () => {
-      const status = provenStatus((item) => {
-        item.restore.signals.result = null;
+    describe('restore test without a result', () => {
+      const unknownResults: [string, Change][] = [
+        ['no result', (item) => (item.restore.signals.result = null)],
+        [
+          'an unknown result',
+          (item) => Object.assign(item.restore.signals, { result: 'probably fine' }),
+        ],
+      ];
+
+      it.each(unknownResults)('%s is no proof, even with a date', (_name, change) => {
+        expect(stepView(step(['restore']), provenStatus(change)).state).toBe('unavailable');
+        expect(stepView(step(['restore'], false), provenStatus(change)).state).toBe('notSetUp');
       });
-      expect(stepView(step(['restore']), status).state).toBe('verified');
+
+      it.each(unknownResults)('%s has no event text', (_name, change) => {
+        expect(eventOf('restore', change)).toBeNull();
+      });
+    });
+
+    it('still names a failed restore test without a date as a deviation', () => {
+      const status = provenStatus((item) => {
+        item.restore.signals = { testedAt: null, result: 'failed' };
+      });
+      expect(stepView(step(['restore']), status).state).toBe('deviation');
     });
 
     it('never shows verified without a public link', () => {
