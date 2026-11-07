@@ -1,4 +1,4 @@
-# Quality gates of stage 1 (spec section 4). Based on the docker-cicd template,
+# Quality gates of stage 1 (spec section 4). Based on the docker-cicd pattern,
 # without the image and deploy jobs: the site is static and deployed via FTPS later.
 # Actions are pinned by commit SHA; update the SHAs together with their version comments.
 name: CI

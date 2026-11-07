@@ -9,8 +9,6 @@ export const address = ['Philipp Klinger', 'Ostlandstraße 11', '49504 Lotte'];
 export const imprint = {
   providerHeading: 'Angaben gemäß § 5 DDG',
   contactHeading: 'Kontakt',
-  designHeading: 'Gestaltung',
-  design: 'Gestaltung auf Grundlage einer Vorlage der Developer Akademie GmbH.',
 };
 
 export const privacy = {

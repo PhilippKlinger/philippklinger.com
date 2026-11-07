@@ -8,9 +8,7 @@ Portfolio-Website von Philipp Klinger (DevSecOps & Fullstack). Die Seite zeigt z
 
 ## Herkunft
 
-**Neuaufbau 2026.** Die Vorgängerversion entstand in der Weiterbildung bei der Developer Akademie (Angular 16, Akademie-Vorlage) und ist über den Tag [`v1-legacy`](https://github.com/PhilippKlinger/philippklinger.com/tree/v1-legacy) erhalten.
-
-Das Design basiert auf einer Portfolio-Vorlage der Developer Akademie GmbH, angepasst und erweitert.
+**Neuaufbau 2026.** Die Vorgängerversion (Angular 16) ist über den Tag [`v1-legacy`](https://github.com/PhilippKlinger/philippklinger.com/tree/v1-legacy) erhalten.
 
 **Eigener Beitrag:** Neuaufbau auf Angular 22 mit statischem Prerendering, eigene Seitenstruktur, Design-Tokens mit WCAG-AA-Kontrasten, Quality Gates in der CI und abgesicherter `main`-Branch.
 

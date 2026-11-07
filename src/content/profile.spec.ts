@@ -1,7 +1,7 @@
 import { about, profile } from './profile';
 
 describe('about.points', () => {
-  it('pairs each point with its icon in the order of the design template', () => {
+  it('pairs each point with its icon in the designed order', () => {
     expect(about.points.map((point) => point.icon)).toEqual(['location', 'cognition', 'wrench']);
   });
 
