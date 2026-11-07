@@ -13,28 +13,10 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  min-height: 2.75rem;
+  font-weight: var(--weight-bold);
   color: var(--color-text);
   text-decoration: none;
-}
-
-.logo-mark {
-  font-family: var(--font-code);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
-  color: var(--color-accent);
-}
-
-.logo-name {
-  display: none;
-  font-weight: var(--weight-bold);
-  font-size: var(--text-lg);
-  line-height: 1;
-
-  // One word per line.
-  span {
-    display: block;
-  }
 }
 
 // Three lines drawn with one element and its two pseudo elements.
@@ -104,7 +86,7 @@
     display: block;
     padding-block: var(--space-xs);
     font-family: var(--font-code);
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     color: var(--color-text);
     text-decoration: none;
 
@@ -119,11 +101,9 @@
     display: none;
   }
 
-  // Design: navigation on the left, logo on the right.
   .nav {
     display: block;
     position: static;
-    order: -1;
     padding: 0;
     background: none;
 
@@ -131,9 +111,5 @@
       flex-direction: row;
       gap: var(--space-md);
     }
-  }
-
-  .logo-name {
-    display: block;
   }
 }

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { holdHero } from './support/motion';
 import { notFoundPage, pages } from './support/site';
 
 // axe cannot see through the canvas and answers "incomplete" for text above it, so text on
@@ -12,6 +13,7 @@ for (const path of [...pages, notFoundPage]) {
   test(`[Spec 8.1 · WCAG 1.4.3] Kontrast auf dem hellsten Haze: ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
+    await holdHero(page);
     // Without the darker gradients of the sections, which axe could not judge either.
     await page.addStyleTag({
       content: `app-haze { display: none; } body { background: ${brightestHaze}; }
