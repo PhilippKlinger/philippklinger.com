@@ -224,6 +224,8 @@ const CONCLUSIONS = [
   'stale',
   'startup_failure',
 ] as const;
+// A newer push cancels the older run, so these say nothing about the code and are no counter-proof.
+const NO_VERDICT: unknown[] = ['cancelled', 'skipped', 'neutral', 'stale', 'action_required'];
 const ENFORCEMENTS = ['active', 'evaluate', 'disabled'] as const;
 const RULESET_TARGETS = ['branch', 'tag', 'push', 'repository'] as const;
 const RESTORE_RESULTS = ['passed', 'failed'] as const;
@@ -407,14 +409,22 @@ async function collectCodeRepo(
   };
 }
 
+function isOwnMainRun(run: unknown, repo: string): run is JsonObject {
+  if (!isObject(run) || run['head_branch'] !== DEFAULT_BRANCH) return false;
+  // The branch filter of the API also matches pull requests from a fork's "main".
+  const head = run['head_repository'];
+  return run['event'] !== 'pull_request' && isObject(head) && head['full_name'] === repo;
+}
+
+function pickLatestRun(runs: unknown[], repo: string, status: string): JsonObject | undefined {
+  const own = runs.filter((run): run is JsonObject => isOwnMainRun(run, repo));
+  if (status !== 'completed') return own[0];
+  return own.find((run) => !NO_VERDICT.includes(run['conclusion']));
+}
+
 function parseLatestRun(json: unknown, repo: string, status: string): LatestRun | null {
   if (!isObject(json) || !Array.isArray(json['workflow_runs'])) return null;
-  // The branch filter of the API also matches pull requests from a fork's "main".
-  const latest = json['workflow_runs'].find((run: unknown) => {
-    if (!isObject(run) || run['head_branch'] !== DEFAULT_BRANCH) return false;
-    const head = run['head_repository'];
-    return run['event'] !== 'pull_request' && isObject(head) && head['full_name'] === repo;
-  }) as JsonObject | undefined;
+  const latest = pickLatestRun(json['workflow_runs'], repo, status);
   if (!latest) return null;
 
   const id = count(latest['id']);

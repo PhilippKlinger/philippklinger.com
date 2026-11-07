@@ -573,6 +573,70 @@ describe('collectStatus', () => {
       expect(checks.signals.workflows[0].headSha).toBe(OLD_SHA);
     });
 
+    describe('runs without a verdict', () => {
+      const backendRuns = (conclusions: string[]) =>
+        fakeFetch([
+          [
+            /videoflix-backend.actions.*status=completed/,
+            () =>
+              json({
+                workflow_runs: conclusions.map((conclusion, index) =>
+                  run('PhilippKlinger/videoflix-backend', {
+                    conclusion,
+                    id: 200 + index,
+                    updated_at: `2026-11-0${5 - index}T10:00:00Z`,
+                  }),
+                ),
+              }),
+          ],
+        ]).fetch;
+
+      it.each([
+        [['cancelled', 'success'], 'success'],
+        [['cancelled', 'failure'], 'failure'],
+        [['skipped', 'timed_out'], 'timed_out'],
+        [['neutral', 'startup_failure'], 'startup_failure'],
+        [['stale', 'action_required', 'failure'], 'failure'],
+      ])('reads %j as %s', async (conclusions, expected) => {
+        const { checks } = (await collect(backendRuns(conclusions))).projects.videoflix;
+        expect(checks.signals.workflows[0].conclusion).toBe(expected);
+      });
+
+      it('takes link and time from the chosen run', async () => {
+        const { checks } = (await collect(backendRuns(['cancelled', 'success']))).projects
+          .videoflix;
+        expect(checks.signals.workflows[0].completedAt).toBe('2026-11-04T10:00:00Z');
+        expect(checks.links.find((link) => link.kind === 'workflow-run')?.url).toBe(
+          'https://github.com/PhilippKlinger/videoflix-backend/actions/runs/201',
+        );
+      });
+
+      it('reports no run when none of them has a verdict', async () => {
+        const { checks } = (await collect(backendRuns(['cancelled', 'cancelled']))).projects
+          .videoflix;
+        expect(checks.signals.workflows[0].reachable).toBe(false);
+        expect(checks.signals.workflows[0].conclusion).toBeNull();
+        expect(checks.signals.workflows[0].completedAt).toBeNull();
+      });
+
+      it('does not skip anything when looking for the latest green run', async () => {
+        const { fetch } = fakeFetch([
+          [
+            /videoflix-backend.actions.*status=success/,
+            () =>
+              json({
+                workflow_runs: [
+                  run('PhilippKlinger/videoflix-backend', { conclusion: 'cancelled' }),
+                  run('PhilippKlinger/videoflix-backend', { head_sha: OLD_SHA }),
+                ],
+              }),
+          ],
+        ]);
+        const { live } = (await collect(fetch)).projects.videoflix;
+        expect(live.signals.components[0].latestGreenSha).toBeNull();
+      });
+    });
+
     it('ignores runs of pull requests from a fork branch named main', async () => {
       const { fetch } = fakeFetch([
         [
