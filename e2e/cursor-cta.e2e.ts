@@ -200,6 +200,9 @@ test.describe('mit Maus', () => {
     await page.goBack();
     await expect(projectCard(page)).toBeVisible();
     await expectRingOff(page);
+    // The hero runs its own loop while it is in view; below it only the ring could ask for frames.
+    await scrollUnderPointer(page, page.locator('#projekte h2'), pointer);
+    await expectRingOff(page);
     await expectNoFrames(page);
 
     await hoverCenter(page, reportCard(page).locator('h3'));

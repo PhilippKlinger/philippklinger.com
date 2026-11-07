@@ -96,9 +96,11 @@ test.describe('Hero', () => {
     ];
     const last = (await link.last().boundingBox())!;
     expect(nav!.x, 'Navigation steht rechts vom Logo').toBeGreaterThan(logo!.x + logo!.width);
-    expect(last.x + last.width, 'Navigation endet am rechten Rand').toBeGreaterThan(
-      width(page) * 0.9,
-    );
+    // The header is centred, so the right edge mirrors the left one on every width.
+    expect(
+      Math.abs(last.x + last.width - (width(page) - logo!.x)),
+      'Navigation endet am rechten Inhaltsrand',
+    ).toBeLessThanOrEqual(1);
   });
 });
 
