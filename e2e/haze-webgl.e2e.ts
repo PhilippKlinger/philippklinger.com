@@ -3,7 +3,7 @@ import { expectBehindContent, expectOneDecorativeLayer } from './support/haze';
 
 // The only tests with WebGL: a software GPU gives a real context even with
 // failIfMajorPerformanceCaveat. Reaching the "slow" state takes 120 frames, so about
-// 4 seconds at the earliest. In parallel the shaders slow each other down until they
+// 5 seconds at the earliest. In parallel the shaders slow each other down until they
 // get there, so these tests run one after the other.
 test.describe.configure({ mode: 'serial' });
 test.use({
@@ -254,7 +254,7 @@ test('[Spec 8.1] kurze Tabwechsel zählen nicht als langsame Frames', async ({ p
   // Headless pages never get hidden. Blocking right after a frame gives the same gap in
   // the frames, and the events are the ones a tab switch fires around it. Below one second,
   // because frameTime ignores longer gaps by itself, and together too slow without the events.
-  for (let pause = 0; pause < 3; pause++) {
+  for (let pause = 0; pause < 5; pause++) {
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
@@ -270,7 +270,7 @@ test('[Spec 8.1] kurze Tabwechsel zählen nicht als langsame Frames', async ({ p
   }
   await waitForFrames(page, 130);
 
-  await expectStillRunning(page, 'nach drei Tabwechseln');
+  await expectStillRunning(page, 'nach fünf Tabwechseln');
 });
 
 test('[Spec 13] zu langsam: statische Ebene, Kontext frei', async ({ page }, testInfo) => {
