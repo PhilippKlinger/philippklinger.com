@@ -317,6 +317,26 @@ const accentColor = (page: Page) =>
     return color;
   });
 
+// Decoded by the browser itself, so the test needs no image library.
+const decodeRgba = (page: Page, png: Buffer) =>
+  page.evaluate(async (base64) => {
+    const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext('2d')!;
+    context.drawImage(bitmap, 0, 0);
+    return [...context.getImageData(0, 0, bitmap.width, bitmap.height).data];
+  }, png.toString('base64'));
+
+const pixelsOffColor = (rgba: number[], color: string) => {
+  const rgb = color.match(/\d+/g)!.map(Number);
+  let off = 0;
+  for (let pixel = 0; pixel < rgba.length; pixel += 4) {
+    if (rgb.some((channel, index) => Math.abs(rgba[pixel + index] - channel) > 40)) off += 1;
+  }
+  return off;
+};
+
 /** Everything on this page that would still show a pointer of the browser. */
 const elementsWithPointer = (page: Page) =>
   page.evaluate(() => {
@@ -388,6 +408,22 @@ test.describe('eigener Zeiger', () => {
     await hoverCenter(page, page.locator('.band-pause'));
     await expectDotOn(page);
     await expectDotSize(page, '20px');
+  });
+
+  test('[PK-36] über einem gefüllten Knopf bleibt der Kreis sichtbar', async ({ page }) => {
+    const accent = await accentColor(page);
+    const button = page.getByRole('link', { name: 'Projekte ansehen', exact: true });
+    const box = await button.boundingBox();
+    // The label starts 25 px into the button, the circle with its edge is 22 px wide: the
+    // label stays out of the picture, or its dark text would count as a visible circle.
+    const [x, y] = [Math.round(box!.x) + 13, Math.round(box!.y + box!.height / 2)];
+    await page.mouse.move(x, y);
+    await expectDotOn(page);
+    await expectDotSize(page, '20px');
+    await expect(button).toHaveCSS('background-color', accent);
+
+    const png = await page.screenshot({ clip: { x: x - 11, y: y - 11, width: 22, height: 22 } });
+    expect(pixelsOffColor(await decodeRgba(page, png), accent)).toBeGreaterThan(30);
   });
 
   test('[PK-36] über Eingabefeldern bleibt der normale Zeiger', async ({ page }) => {
