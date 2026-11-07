@@ -452,19 +452,20 @@ function fetchLatestRun(
   );
 }
 
+/** null: the answer is unusable. `job: null`: readable, but this job has no verdict in that run. */
 function parseFinishedJob(
   json: unknown,
   name: string,
-): { conclusion: string; completedAt: string } | null {
+): { job: { conclusion: string; completedAt: string } | null } | null {
   if (!isObject(json) || !Array.isArray(json['jobs'])) return null;
   const job = json['jobs'].find(
     (entry: unknown) =>
       isObject(entry) && entry['name'] === name && !NO_VERDICT.includes(entry['conclusion']),
   );
-  if (!isObject(job)) return null;
+  if (!isObject(job)) return { job: null };
   const conclusion = oneOf(job['conclusion'], CONCLUSIONS);
   const completedAt = timestamp(job['completed_at']);
-  return conclusion && completedAt ? { conclusion, completedAt } : null;
+  return { job: conclusion && completedAt ? { conclusion, completedAt } : null };
 }
 
 /** The newest of the last runs in which this job has a verdict. */
@@ -486,10 +487,12 @@ async function fetchLatestJob(
     const id = count(run['id']);
     const headSha = matching(run['head_sha'], FULL_SHA);
     if (id === null || headSha === null) continue;
-    const job = await getGitHub(ctx, `/repos/${repo}/actions/runs/${id}/jobs`, (json) =>
+    const answer = await getGitHub(ctx, `/repos/${repo}/actions/runs/${id}/jobs`, (json) =>
       parseFinishedJob(json, name),
     );
-    if (job) return { id, headSha, ...job };
+    // An older run must not stand in for a newer one that could not be read: it may be green.
+    if (!answer) return null;
+    if (answer.job) return { id, headSha, ...answer.job };
   }
   return null;
 }

@@ -965,6 +965,17 @@ describe('collectStatus for a single job of a workflow', () => {
     expect(preview).toMatchObject({ workflow: 'Deploy preview', conclusion: 'success' });
   });
 
+  it('does not fall back to an older run when the jobs of the newest cannot be read', async () => {
+    const unreadable: [RegExp, Handler] = [
+      /\/actions\/runs\/8\/jobs/,
+      () => json({}, { status: 500 }),
+    ];
+    const newestUnreadable: Record<number, unknown[]> = { 8: [], 7: [finished('success')] };
+    const checks = await signalOf([unreadable, ...jobsByRun(newestUnreadable)]);
+    expect(checks.signals.workflows[0]).toMatchObject({ reachable: false, conclusion: null });
+    expect(checks.links).toEqual([]);
+  });
+
   it('is not reachable when no run has that job', async () => {
     const checks = await signalOf(jobsByRun({ 7: [waitingProduction] }));
     expect(checks.signals.workflows[0]).toMatchObject({ reachable: false, conclusion: null });

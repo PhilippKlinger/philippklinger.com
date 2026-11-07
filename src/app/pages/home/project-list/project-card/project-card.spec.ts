@@ -97,6 +97,26 @@ describe('ProjectCard', () => {
     expect(host.querySelectorAll('.flow-step')).toHaveLength(6);
   });
 
+  it('shows a red check with the state of a deviation, not of a green signal', () => {
+    const status = healthyStatus();
+    status.checks.signals.workflows[0].conclusion = 'failure';
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: STATUS_SNAPSHOT,
+          useValue: {
+            schemaVersion: 1,
+            generatedAt: '2026-11-06T00:58:11.069Z',
+            projects: { videoflix: status, portfolio: healthyStatus() },
+          },
+        },
+      ],
+    });
+    const host = render('videoflix');
+    expect(host.querySelector('.signal .state-deviation')).not.toBeNull();
+    expect(host.querySelector('.signal .state-verified')).toBeNull();
+  });
+
   it('keeps Conduit readable when the status has no entry for it', () => {
     const host = render('conduit');
     expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Stand nicht abrufbar');

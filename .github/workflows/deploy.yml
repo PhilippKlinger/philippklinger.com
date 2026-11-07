@@ -1,5 +1,5 @@
 # Deploys the static build via FTPS to All-Inkl (spec 3.5).
-# main is protected by required checks, so every push here passed CI before.
+# main is protected by required checks, so every push here passed them in its pull request.
 # Upload with lftp from the Ubuntu archive instead of a third-party action:
 # no foreign code ever sees the FTP credentials.
 # The production job ships the exact files the preview job built and tested,

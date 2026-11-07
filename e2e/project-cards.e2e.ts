@@ -95,7 +95,7 @@ test.describe('Karten', () => {
   test('[AK1] jede Karte hat Signal, Titel, Text, Chips, Aktionen und Panel', async ({ page }) => {
     await page.goto('/');
     for (const item of await cards(page).all()) {
-      await expect(item.locator('.signal .state')).toBeVisible();
+      await expect(item.locator('.signal :is(.state, b)')).toBeVisible();
       await expect(item.locator('.card-main > p')).toBeVisible();
       await expect(item.locator('.chips li').first()).toBeVisible();
       await expect(item.locator('.actions a').first()).toBeVisible();
