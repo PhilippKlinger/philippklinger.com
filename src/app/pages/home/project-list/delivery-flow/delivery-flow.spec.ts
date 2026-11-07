@@ -4,7 +4,7 @@ import { DeliveryView } from '../../../../../content/software-delivery';
 import { DeliveryFlow } from './delivery-flow';
 
 const view: DeliveryView = {
-  signal: { status: 'CI grün', when: 'zuletzt 05.11.' },
+  signal: { state: 'verified', status: 'CI grün', when: 'zuletzt 05.11.' },
   counter: '1 von 3 belegt',
   steps: [
     { name: 'Code', arrowToNext: 'CI', state: 'verified', sentence: 'a', event: null, links: [] },

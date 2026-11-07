@@ -1,6 +1,6 @@
 @use 'sass:map';
 
-// Breakpoints of the design template (mobile 390, tablet 768, desktop 1440).
+// Breakpoints of the design (mobile 390, tablet 768, desktop 1440).
 // Media queries cannot read custom properties, so they live here as Sass.
 $breakpoints: (
   tablet: 768px,

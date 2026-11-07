@@ -73,7 +73,7 @@ test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('Seite nicht gefunden');
 });
 
-test('[Vorlage] Vorschau ab Tablet neben dem Text, mobil darunter', async ({ page }) => {
+test('[Design] Vorschau ab Tablet neben dem Text, mobil darunter', async ({ page }) => {
   await page.goto('/projekte/videoflix/');
   const text = (await page.locator('main .intro').boundingBox())!;
   const image = (await page.locator('main img').boundingBox())!;

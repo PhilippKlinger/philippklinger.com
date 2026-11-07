@@ -340,10 +340,10 @@ test.describe('Abruf von /status.json', () => {
       await leaveConduitForHome(page);
       await expect(page.locator('#projekte .notice')).toBeEmpty();
       held.answer();
-      await expect(homeCard(page, 'Conduit').locator('.signal b')).toHaveText(
+      await expect(homeCard(page, 'Conduit').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
-      await expect(homeCard(page, 'Videoflix').locator('.signal b')).toHaveText('CI grün');
+      await expect(homeCard(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toHaveText(refreshFailed);
       expect(held.requests()).toBe(1);
     });
@@ -352,7 +352,7 @@ test.describe('Abruf von /status.json', () => {
       const held = await holdStatus(page, () => undefined);
       await leaveConduitForHome(page);
       held.answer();
-      await expect(homeCard(page, 'Conduit').locator('.signal b')).toHaveText('CI grün');
+      await expect(homeCard(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toBeEmpty();
       expect(held.requests()).toBe(1);
     });

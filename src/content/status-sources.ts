@@ -57,6 +57,8 @@ export const statusSources: StatusSources = {
           workflows: [
             { name: 'CI', file: 'ci.yml', kind: 'tests' },
             { name: 'CodeQL', file: 'codeql.yml', kind: 'scan' },
+            // The run stays open while production waits for approval, so ask for the job.
+            { name: 'Deploy preview', file: 'deploy.yml', kind: 'deploy', job: 'Deploy preview' },
           ],
           // The deploy attests the built files, so the live file itself proves its origin.
           attestation: { kind: 'file', url: 'https://preview.philipp-klinger.com/version.json' },

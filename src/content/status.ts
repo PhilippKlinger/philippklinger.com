@@ -142,6 +142,8 @@ export interface WorkflowSource {
   name: string;
   file: string;
   kind: WorkflowKind;
+  /** Report this job, not the run: a run stays open while another job waits for approval. */
+  job?: string;
 }
 
 export type AttestationSource =
@@ -226,6 +228,7 @@ const CONCLUSIONS = [
 ] as const;
 // A newer push cancels the older run, so these say nothing about the code and are no counter-proof.
 const NO_VERDICT: unknown[] = ['cancelled', 'skipped', 'neutral', 'stale', 'action_required'];
+const JOB_RUNS_TO_CHECK = 3;
 const ENFORCEMENTS = ['active', 'evaluate', 'disabled'] as const;
 const RULESET_TARGETS = ['branch', 'tag', 'push', 'repository'] as const;
 const RESTORE_RESULTS = ['passed', 'failed'] as const;
@@ -449,15 +452,64 @@ function fetchLatestRun(
   );
 }
 
+/** null: the answer is unusable. `job: null`: readable, but this job has no verdict in that run. */
+function parseFinishedJob(
+  json: unknown,
+  name: string,
+): { job: { conclusion: string; completedAt: string } | null } | null {
+  if (!isObject(json) || !Array.isArray(json['jobs'])) return null;
+  const job = json['jobs'].find(
+    (entry: unknown) =>
+      isObject(entry) && entry['name'] === name && !NO_VERDICT.includes(entry['conclusion']),
+  );
+  if (!isObject(job)) return { job: null };
+  const conclusion = oneOf(job['conclusion'], CONCLUSIONS);
+  const completedAt = timestamp(job['completed_at']);
+  return { job: conclusion && completedAt ? { conclusion, completedAt } : null };
+}
+
+/** The newest of the last runs in which this job has a verdict. */
+async function fetchLatestJob(
+  ctx: Context,
+  repo: string,
+  file: string,
+  name: string,
+): Promise<LatestRun | null> {
+  const runs = await getGitHub(
+    ctx,
+    `/repos/${repo}/actions/workflows/${file}/runs?branch=${DEFAULT_BRANCH}&per_page=${JOB_RUNS_TO_CHECK}`,
+    (json) =>
+      isObject(json) && Array.isArray(json['workflow_runs'])
+        ? json['workflow_runs'].filter((run): run is JsonObject => isOwnMainRun(run, repo))
+        : null,
+  );
+  for (const run of runs ?? []) {
+    const id = count(run['id']);
+    const headSha = matching(run['head_sha'], FULL_SHA);
+    if (id === null || headSha === null) continue;
+    const answer = await getGitHub(ctx, `/repos/${repo}/actions/runs/${id}/jobs`, (json) =>
+      parseFinishedJob(json, name),
+    );
+    // An older run must not stand in for a newer one that could not be read: it may be green.
+    if (!answer) return null;
+    if (answer.job) return { id, headSha, ...answer.job };
+  }
+  return null;
+}
+
 async function collectWorkflow(
   ctx: Context,
   repo: string,
   workflow: WorkflowSource,
 ): Promise<{ signal: WorkflowSignal; link: StatusLink | null; greenSha: string | null }> {
-  const [latest, green] = await Promise.all([
-    fetchLatestRun(ctx, repo, workflow.file, 'completed'),
-    fetchLatestRun(ctx, repo, workflow.file, 'success'),
-  ]);
+  const [latest, green] = await Promise.all(
+    workflow.job
+      ? [fetchLatestJob(ctx, repo, workflow.file, workflow.job), null]
+      : [
+          fetchLatestRun(ctx, repo, workflow.file, 'completed'),
+          fetchLatestRun(ctx, repo, workflow.file, 'success'),
+        ],
+  );
   return {
     greenSha: green?.headSha ?? null,
     link: latest && {

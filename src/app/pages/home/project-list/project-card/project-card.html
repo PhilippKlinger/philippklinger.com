@@ -1,9 +1,9 @@
 <article class="card" appCardLink>
   <div class="card-main">
     <div class="signal">
-      <b>{{ view().signal.status }}</b>
+      <app-state-badge [state]="view().signal.state" [label]="view().signal.status" />
       @if (view().signal.when; as when) {
-        <span>{{ when }}</span>
+        <span class="signal-when">{{ when }}</span>
       }
     </div>
     <h3>{{ project().title }}</h3>

@@ -831,7 +831,11 @@ describe('buildDeliveryView', () => {
     });
 
     it('shows the fixed signal', () => {
-      const fixedSignal = { status: 'Live im Play Store', when: 'Version 1.11.2' };
+      const fixedSignal = {
+        state: 'verified' as const,
+        status: 'Live im Play Store',
+        when: 'Version 1.11.2',
+      };
       expect(buildDeliveryView({ steps: [release], fixedSignal }, null).signal).toEqual(
         fixedSignal,
       );
@@ -866,7 +870,11 @@ describe('buildDeliveryView', () => {
       buildDeliveryView(measuredPlan, snapshotOf(provenStatus(change))).signal;
 
     it('shows the running label only when live and stability are verified', () => {
-      expect(signalOf()).toEqual({ status: 'Läuft in Produktion', when: 'Stand 06.11., 01:58' });
+      expect(signalOf()).toEqual({
+        state: 'verified',
+        status: 'Läuft in Produktion',
+        when: 'Stand 06.11., 01:58',
+      });
       const notMonitored = signalOf((status) => {
         status.stability.reachable = false;
       });
@@ -887,11 +895,15 @@ describe('buildDeliveryView', () => {
           workflow({ workflow: 'CodeQL', kind: 'scan', completedAt: '2026-11-06T02:00:00Z' }),
         ];
       });
-      expect(signal).toEqual({ status: 'CI grün', when: 'zuletzt 05.11.' });
+      expect(signal).toEqual({ state: 'verified', status: 'CI grün', when: 'zuletzt 05.11.' });
     });
 
     it('shows "Abweichung im Betrieb" before "CI grün" when live or stability deviate', () => {
-      const expected = { status: 'Abweichung im Betrieb', when: 'Stand 06.11., 01:58' };
+      const expected = {
+        state: 'deviation',
+        status: 'Abweichung im Betrieb',
+        when: 'Stand 06.11., 01:58',
+      };
       expect(signalOf(liveAhead)).toEqual(expected);
       expect(signalOf(monitorDown)).toEqual(expected);
     });
@@ -917,7 +929,7 @@ describe('buildDeliveryView', () => {
           }),
         ];
       });
-      expect(signal).toEqual({ status: 'Prüfung rot', when: 'zuletzt 05.11.' });
+      expect(signal).toEqual({ state: 'deviation', status: 'Prüfung rot', when: 'zuletzt 05.11.' });
     });
 
     it('shows "Teilweise belegt" with data but neither running nor green', () => {
@@ -925,11 +937,16 @@ describe('buildDeliveryView', () => {
         status.stability.reachable = false;
         status.checks.signals.workflows[0].reachable = false;
       });
-      expect(signal).toEqual({ status: 'Teilweise belegt', when: 'Stand 06.11., 01:58' });
+      expect(signal).toEqual({
+        state: 'partial',
+        status: 'Teilweise belegt',
+        when: 'Stand 06.11., 01:58',
+      });
     });
 
     it('shows "Stand nicht abrufbar" when no step has any proof, with empty when', () => {
       expect(buildDeliveryView(measuredPlan, snapshotOf(emptyStatus())).signal).toEqual({
+        state: 'unavailable',
         status: 'Stand nicht abrufbar',
         when: '',
       });
@@ -946,6 +963,7 @@ describe('buildDeliveryView', () => {
 
     it('shows "Stand nicht abrufbar" without a snapshot, with empty when', () => {
       expect(buildDeliveryView(measuredPlan, null).signal).toEqual({
+        state: 'unavailable',
         status: 'Stand nicht abrufbar',
         when: '',
       });

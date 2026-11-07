@@ -1,17 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 import { about } from '../src/content/profile';
 
-// Start page against the template "Version 2" (docs/design in the private
+// Start page against the design (docs/design in the private
 // workspace), spec 3.4 (sections, tokens, motion) and spec 5 (content).
 
 const width = (page: Page) => page.viewportSize()?.width ?? 0;
 const isMobile = (page: Page) => width(page) < 768;
 
-/** Template colours as computed by the browser (spec 3.4). */
+/** Design colours as computed by the browser (spec 3.4). */
 const colors = {
   bg: 'rgb(28, 28, 28)',
   accent: 'rgb(61, 207, 182)',
-  templateGrey: 'rgb(113, 113, 113)',
+  forbiddenGrey: 'rgb(113, 113, 113)',
 };
 
 test.beforeEach(async ({ page }) => {
@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Aufbau', () => {
-  test('[Spec 3.4] Abschnitte in der Reihenfolge der Vorlage', async ({ page }) => {
+  test('[Spec 3.4] Abschnitte in der festgelegten Reihenfolge', async ({ page }) => {
     const ids = await page.locator('main section[id]').evaluateAll((s) => s.map((el) => el.id));
     expect(ids).toEqual(['ueber-mich', 'skills', 'projekte', 'kontakt']);
   });
@@ -57,7 +57,7 @@ test.describe('Hero', () => {
     expect((await claim.allInnerTexts()).join(' ').length).toBeGreaterThan(40);
   });
 
-  test('[Vorlage] zwei Buttons: Projekte ansehen → #projekte, Kontakt → #kontakt', async ({
+  test('[Design] zwei Buttons: Projekte ansehen → #projekte, Kontakt → #kontakt', async ({
     page,
   }) => {
     const hero = page.locator('.hero');
@@ -71,7 +71,7 @@ test.describe('Hero', () => {
     );
   });
 
-  test('[Vorlage] füllt den ersten Bildschirm, Band unten noch sichtbar', async ({ page }) => {
+  test('[Design] füllt den ersten Bildschirm, Band unten noch sichtbar', async ({ page }) => {
     const viewport = page.viewportSize()!;
     const hero = await page.locator('.hero').boundingBox();
     const band = await page.locator('.band').boundingBox();
@@ -82,7 +82,7 @@ test.describe('Hero', () => {
     ).toBeLessThanOrEqual(viewport.height);
   });
 
-  test('[Vorlage] E-Mail und Social-Links senkrecht am rechten Rand', async ({ page }) => {
+  test('[Design] E-Mail und Social-Links senkrecht am rechten Rand', async ({ page }) => {
     const social = await page.locator('.social').boundingBox();
     expect(social!.x, 'Social-Leiste steht nicht rechts').toBeGreaterThan(width(page) * 0.75);
     if (!isMobile(page)) {
@@ -90,7 +90,7 @@ test.describe('Hero', () => {
     }
   });
 
-  test('[Vorlage] Pfeil, E-Mail und Social-Links sind sichtbar und nicht vom Band verdeckt', async ({
+  test('[Design] Pfeil, E-Mail und Social-Links sind sichtbar und nicht vom Band verdeckt', async ({
     page,
   }) => {
     const targets = [
@@ -114,7 +114,7 @@ test.describe('Hero', () => {
     }
   });
 
-  test('[Vorlage] Seitenleisten überlappen Text und Buttons des Hero nicht', async ({ page }) => {
+  test('[Design] Seitenleisten überlappen Text und Buttons des Hero nicht', async ({ page }) => {
     // Line boxes of the texts plus the buttons: the real content, not the wide containers.
     const content = await page.locator('.hero .intro').evaluate((intro) => {
       const rects: { left: number; right: number; top: number; bottom: number }[] = [];
@@ -138,7 +138,7 @@ test.describe('Hero', () => {
     }
   });
 
-  test('[Vorlage] Band-Einträge stehen einzeilig in einer Reihe', async ({ page }) => {
+  test('[Design] Band-Einträge stehen einzeilig in einer Reihe', async ({ page }) => {
     // Visible copy of the marquee; the screen-reader list is 1px and not measured.
     const items = await page.locator('.band-track li').evaluateAll((lis) =>
       lis.map((li) => {
@@ -156,7 +156,7 @@ test.describe('Hero', () => {
     expect(Math.max(...tops) - Math.min(...tops), 'Einträge stehen untereinander').toBeLessThan(80);
   });
 
-  test('[Vorlage] Pfeil führt zu Über mich', async ({ page }) => {
+  test('[Design] Pfeil führt zu Über mich', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'Weiter zu Über mich' })).toHaveAttribute(
       'href',
       /#ueber-mich$/,
@@ -179,7 +179,7 @@ test.describe('Hero', () => {
     expect(running === 0 || pause === 1).toBe(true);
   });
 
-  test('[Vorlage Widescreen] Band läuft über die volle Breite', async ({ page }) => {
+  test('[Design Widescreen] Band läuft über die volle Breite', async ({ page }) => {
     const band = await page.locator('.band').boundingBox();
     expect(band!.x).toBeLessThanOrEqual(1);
     expect(band!.x + band!.width).toBeGreaterThanOrEqual(width(page) - 1);
@@ -245,13 +245,13 @@ test.describe('Design-Tokens', () => {
     expect(loaded).toEqual([true, true]);
   });
 
-  test('[Spec 3.4 Kontrast] Grau #717171 der Vorlage kommt nicht vor', async ({ page }) => {
+  test('[Spec 3.4 Kontrast] Grau #717171 kommt nicht vor', async ({ page }) => {
     const grey = await page.evaluate(
-      (templateGrey) =>
+      (forbiddenGrey) =>
         [...document.querySelectorAll('body *')]
-          .filter((el) => getComputedStyle(el).color === templateGrey)
+          .filter((el) => getComputedStyle(el).color === forbiddenGrey)
           .map((el) => el.tagName.toLowerCase()),
-      colors.templateGrey,
+      colors.forbiddenGrey,
     );
     expect(grey).toEqual([]);
   });
@@ -269,7 +269,7 @@ test.describe('Design-Tokens', () => {
     expect(small, small.join(', ')).toEqual([]);
   });
 
-  test('[Vorlage Widescreen] Inhalt ab 1440 px gleich breit und mittig', async ({ page }) => {
+  test('[Design Widescreen] Inhalt ab 1440 px gleich breit und mittig', async ({ page }) => {
     test.skip(width(page) < 1440, 'nur ab 1440 px');
     for (const section of await page.locator('main section.section').all()) {
       const box = (await section.boundingBox())!;
@@ -281,7 +281,7 @@ test.describe('Design-Tokens', () => {
 });
 
 test.describe('Zustände und Bewegung', () => {
-  test('[Vorlage Components] Buttons und Navigation ändern sich bei Hover', async ({ page }) => {
+  test('[Design Components] Buttons und Navigation ändern sich bei Hover', async ({ page }) => {
     test.skip(isMobile(page), 'kein Hover auf Touch');
     const targets = [
       page.locator('.hero').getByRole('link', { name: 'Projekte ansehen' }),

@@ -270,7 +270,11 @@ describe('deliveryPlans', () => {
 
   it('fixes signal and event of Neuro Check-in', () => {
     const plan = deliveryPlans['neuro-check-in'];
-    expect(plan.fixedSignal).toEqual({ status: 'Live im Play Store', when: 'Version 1.11.2' });
+    expect(plan.fixedSignal).toEqual({
+      state: 'verified',
+      status: 'Live im Play Store',
+      when: 'Version 1.11.2',
+    });
     const release = plan.steps.at(-1) as FixedStep;
     expect(release.state).toBe('verified');
     expect(release.sentence).toBe('Die App ist öffentlich im Play Store verfügbar.');
@@ -293,7 +297,11 @@ describe('deliveryPlans', () => {
 
   it('fixes signal and footnote of the Kit', () => {
     const plan = deliveryPlans['developer-workspace-kit'];
-    expect(plan.fixedSignal).toEqual({ status: 'Code privat', when: 'Version 0.5.0' });
+    expect(plan.fixedSignal).toEqual({
+      state: 'private',
+      status: 'Code privat',
+      when: 'Version 0.5.0',
+    });
     expect(plan.footnote).toBe('Öffentliches Repo folgt');
   });
 });

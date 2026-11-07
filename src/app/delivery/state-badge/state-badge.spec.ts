@@ -20,6 +20,15 @@ function render(state: StepState): HTMLElement {
 }
 
 describe('StateBadge', () => {
+  it('shows a given word instead of the label of the state', () => {
+    const fixture = TestBed.createComponent(StateBadge);
+    fixture.componentRef.setInput('state', 'deviation');
+    fixture.componentRef.setInput('label', 'Prüfung rot');
+    fixture.detectChanges();
+    const badge = (fixture.nativeElement as HTMLElement).querySelector('span.state-deviation');
+    expect(badge?.textContent?.trim()).toBe('Prüfung rot');
+  });
+
   it.each(stepStates)('shows icon and word for %s', (state) => {
     const badge = render(state).querySelector(`span.state.state-${state}`);
     expect(badge?.textContent?.trim()).toBe(deliveryTexts.stateLabels[state]);
