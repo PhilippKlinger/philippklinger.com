@@ -206,9 +206,9 @@ function stabilityProofs({ reachable, signals }: ProjectStatus['stability']): Pr
   return [up >= total];
 }
 
-function restoreProof({ testedAt, result }: ProjectStatus['restore']['signals']): Proof {
+function restoreProof({ result }: ProjectStatus['restore']['signals']): Proof {
   if (result === 'failed') return false;
-  return result === 'passed' || testedAt !== null ? true : null;
+  return result === 'passed' ? true : null;
 }
 
 // No components: nothing proves what runs live, so a green deploy run alone is not enough.
@@ -334,10 +334,11 @@ function stabilityEvent({ reachable, signals }: ProjectStatus['stability']): str
 }
 
 // DRAFT: event text, wording to be approved (PK-23).
-function restoreEvent({ testedAt, result }: ProjectStatus['restore']['signals']): string | null {
-  const date = formatTime(dateFormat, testedAt);
-  if (date === null) return null;
-  return `Letzter Restore-Test ${result === 'failed' ? 'fehlgeschlagen' : 'erfolgreich'}, ${date}`;
+function restoreEvent(signals: ProjectStatus['restore']['signals']): string | null {
+  const date = formatTime(dateFormat, signals.testedAt);
+  const proof = restoreProof(signals);
+  if (date === null || proof === null) return null;
+  return `Letzter Restore-Test ${proof ? 'erfolgreich' : 'fehlgeschlagen'}, ${date}`;
 }
 
 const eventOf: Record<StepSource, (status: ProjectStatus) => string | null> = {
