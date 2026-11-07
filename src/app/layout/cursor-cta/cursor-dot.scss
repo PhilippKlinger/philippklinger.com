@@ -2,6 +2,7 @@
 $dot-size: 10px;
 $circle-size: 20px;
 $circle-line: 2px;
+$circle-edge: 1px;
 
 // On top of the page like the ring, clicks go through. No transition on its position: it
 // stands in for the pointer and must not lag behind.
@@ -42,4 +43,9 @@ $circle-line: 2px;
   margin: calc($circle-size / -2) 0 0 calc($circle-size / -2);
   border: $circle-line solid var(--color-accent);
   background: transparent;
+  // The hero buttons fill with the accent on hover, where the line alone would disappear and
+  // leave no pointer at all. In the page color the edge stays invisible on the dark page.
+  box-shadow:
+    0 0 0 $circle-edge var(--color-bg),
+    inset 0 0 0 $circle-edge var(--color-bg);
 }
