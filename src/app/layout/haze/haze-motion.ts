@@ -1,6 +1,6 @@
 const RESOLUTION = 0.6;
 export const FRAME_SAMPLES = 120;
-const SLOW_FRAME_MS = 33;
+const SLOW_FRAME_MS = 40;
 const LONGEST_FRAME_MS = 1000;
 const FULL_ENERGY_PX = 400;
 const ENERGY_LEFT_PER_FRAME = 0.94;

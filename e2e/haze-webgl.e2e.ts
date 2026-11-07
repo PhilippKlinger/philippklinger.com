@@ -34,7 +34,7 @@ const expectStillRunning = async (page: Page, moment: string) =>
   ).toBe('running');
 
 /**
- * Fewer pixels and nothing else to paint, so the frames stay far below the limit of 33 ms on
+ * Fewer pixels and nothing else to paint, so the frames stay far below the limit of 40 ms on
  * every machine, also next to other work, and the "slow" state cannot end the measurement.
  */
 const openQuietPage = async (page: Page) => {
@@ -279,10 +279,10 @@ test('[Spec 13] zu langsam: statische Ebene, Kontext frei', async ({ page }, tes
   await page.goto('/');
   await expect(haze(page)).toHaveAttribute('data-haze-state', 'running');
 
-  // Real load on the main thread: every frame takes longer than the limit of 33 ms.
+  // Real load on the main thread: every frame takes longer than the limit of 40 ms.
   await page.evaluate(() => {
     const burn = () => {
-      const end = performance.now() + 45;
+      const end = performance.now() + 55;
       while (performance.now() < end);
       requestAnimationFrame(burn);
     };
