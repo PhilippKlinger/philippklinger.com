@@ -184,6 +184,29 @@ test('[AK9] Reduced Motion: ein Standbild', async ({ page }, testInfo) => {
   expect(await backdropBrightness(page), 'das Standbild ist gezeichnet').toBeGreaterThan(15);
 });
 
+test('[AK9] wird Bewegung abgeschaltet, bleibt das Standbild', async ({ page }, testInfo) => {
+  desktopOnly(testInfo);
+  await openQuietPage(page);
+  await waitForFrames(page, 2);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(haze(page)).toHaveAttribute('data-haze-state', 'still');
+
+  // The grain changes about 12 times a second, so 30 frames would show in the picture.
+  const still = await picture(page);
+  await waitForFrames(page, 30);
+  expect(still.equals(await picture(page)), 'keine Frames mehr').toBe(true);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await waitForFrames(page, 30);
+  await expect(haze(page), 'Zurückschalten startet nichts neu').toHaveAttribute(
+    'data-haze-state',
+    'still',
+  );
+  expect(still.equals(await picture(page)), 'Zurückschalten zeichnet nichts').toBe(true);
+  expect(await backdropBrightness(page), 'das Standbild ist gezeichnet').toBeGreaterThan(15);
+});
+
 test('[AK9] nach Kontextverlust bleibt die statische Ebene', async ({ page }, testInfo) => {
   desktopOnly(testInfo);
   await page.goto('/');
