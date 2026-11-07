@@ -252,7 +252,8 @@ $wide: 1100px;
   }
 }
 
-.loop.paused .value,
+// .station: must outweigh the rule above with its attribute, also after view encapsulation.
+.loop.paused .station .value,
 .loop .box:has(:focus-visible) .value {
   opacity: 1;
   pointer-events: auto;
@@ -301,7 +302,8 @@ $wide: 1100px;
   }
 
   .stations {
-    grid-template-columns: repeat(5, 1fr) var(--node);
+    // minmax: a long value wraps in its column instead of pushing the next one onto its neighbour.
+    grid-template-columns: repeat(5, minmax(0, 1fr)) var(--node);
   }
 
   // From the left text edge to the last station on the right content edge. The chain ends there.
@@ -363,7 +365,6 @@ $wide: 1100px;
 
   .value {
     text-align: left;
-    white-space: nowrap;
   }
 
   .station:last-child {

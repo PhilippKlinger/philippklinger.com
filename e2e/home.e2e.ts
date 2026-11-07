@@ -90,8 +90,15 @@ test.describe('Hero', () => {
     const link = page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link');
     await expect(link.first()).toHaveCSS('font-family', /Fira Code/);
     await expect(link.first()).toHaveCSS('font-size', '16px');
-    const nav = (await link.first().boundingBox())!;
-    expect(nav.x, 'Navigation steht rechts vom Logo').toBeGreaterThan(width(page) / 2);
+    const [logo, nav] = [
+      await page.locator('header .logo').boundingBox(),
+      await link.first().boundingBox(),
+    ];
+    const last = (await link.last().boundingBox())!;
+    expect(nav!.x, 'Navigation steht rechts vom Logo').toBeGreaterThan(logo!.x + logo!.width);
+    expect(last.x + last.width, 'Navigation endet am rechten Rand').toBeGreaterThan(
+      width(page) * 0.9,
+    );
   });
 });
 

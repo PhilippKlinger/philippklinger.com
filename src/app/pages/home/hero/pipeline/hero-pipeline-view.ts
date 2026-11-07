@@ -54,6 +54,7 @@ export class HeroPipelineView {
   private previous = 0;
   private shown: HeroPipeline | null = null;
   private holdOn = ':has(:focus-visible)';
+  private lifetime: AbortController | null = null;
 
   constructor() {
     afterNextRender(() => {
@@ -63,13 +64,13 @@ export class HeroPipelineView {
       if (matchMedia(CAN_HOVER).matches) this.holdOn = ':hover, :has(:focus-visible)';
       const controller = new AbortController();
       reduced.addEventListener('change', () => this.stop(), { signal: controller.signal });
-      this.destroyRef.onDestroy(() => {
-        controller.abort();
-        cancelAnimationFrame(this.frameId);
-      });
+      // Out of view nothing is to be seen, so no frame is spent on it.
+      const onScreen = new IntersectionObserver(([entry]) => this.run(entry.isIntersecting));
+      onScreen.observe(this.host);
+      controller.signal.addEventListener('abort', () => onScreen.disconnect());
+      this.lifetime = controller;
+      this.destroyRef.onDestroy(() => this.stopFrames());
       this.moving.set(true);
-      this.previous = performance.now();
-      this.frameId = requestAnimationFrame(this.tick);
     });
   }
 
@@ -77,8 +78,20 @@ export class HeroPipelineView {
     this.motion.toggle();
   }
 
-  private stop(): void {
+  private run(inView: boolean): void {
     cancelAnimationFrame(this.frameId);
+    if (!inView) return;
+    this.previous = performance.now();
+    this.frameId = requestAnimationFrame(this.tick);
+  }
+
+  private stopFrames(): void {
+    this.lifetime?.abort();
+    cancelAnimationFrame(this.frameId);
+  }
+
+  private stop(): void {
+    this.stopFrames();
     this.moving.set(false);
     this.showEndState();
   }
