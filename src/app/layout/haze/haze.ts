@@ -16,6 +16,7 @@ import {
   pointerEnergy,
 } from './haze-motion';
 import { createPainter, type Painter, type Point } from './haze-shader';
+import { MotionPause } from '../motion-pause';
 
 const EASING = 0.07;
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
@@ -35,6 +36,7 @@ function whenIdle(start: () => void): void {
 })
 export class Haze {
   protected readonly state = signal<'off' | 'still' | 'running' | 'slow'>('off');
+  private readonly motion = inject(MotionPause);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   // Ends the listeners and an idle start that has not happened yet.
   private readonly lifetime = new AbortController();
@@ -107,6 +109,11 @@ export class Haze {
   private readonly frame = (now: number): void => {
     this.frameId = requestAnimationFrame(this.frame);
     if (document.hidden) return;
+    if (this.motion.paused()) {
+      // The time of the pause is no slow frame.
+      this.lastFrame = 0;
+      return;
+    }
     this.moveLight(now);
     this.energy = pointerEnergy(this.energy, 0, this.lastFrame ? now - this.lastFrame : 0);
     this.paint?.(now, this.light, this.energy);

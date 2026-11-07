@@ -207,6 +207,26 @@ test('[AK9] wird Bewegung abgeschaltet, bleibt das Standbild', async ({ page }, 
   expect(await backdropBrightness(page), 'das Standbild ist gezeichnet').toBeGreaterThan(15);
 });
 
+test('[WCAG 2.2.2] der Pause-Knopf des Hero hält auch den Haze an', async ({ page }, testInfo) => {
+  desktopOnly(testInfo);
+  await page.setViewportSize({ width: 600, height: 400 });
+  await page.goto('/');
+  await expect(haze(page)).toHaveAttribute('data-haze-state', 'running');
+
+  const pause = page.locator('.hero .pause');
+  await pause.click();
+  await waitForFrames(page, 2);
+  // The grain changes about 12 times a second, so 30 frames would show in the picture.
+  const still = await picture(page);
+  await waitForFrames(page, 30);
+  expect(still.equals(await picture(page)), 'keine Frames mehr').toBe(true);
+  await expectStillRunning(page, 'in der Pause');
+
+  await pause.click();
+  await waitForFrames(page, 30);
+  expect(still.equals(await picture(page)), 'läuft weiter').toBe(false);
+});
+
 test('[AK9] nach Kontextverlust bleibt die statische Ebene', async ({ page }, testInfo) => {
   desktopOnly(testInfo);
   await page.goto('/');
