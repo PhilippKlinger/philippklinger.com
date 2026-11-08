@@ -3,9 +3,11 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { DeliveryStatus } from '../../../../delivery/delivery-status';
 import { MotionPause } from '../../../../layout/motion-pause';
@@ -50,7 +52,9 @@ export class HeroPipelineView {
   // Only a change of state goes into the signal; nothing here may render per frame.
   protected readonly frame = signal<HeroFrame | null>(null);
 
+  /** 0 while no frame is requested. */
   private frameId = 0;
+  private inView = false;
   private elapsed = 0;
   private previous = 0;
   private shown: HeroPipeline | null = null;
@@ -58,20 +62,12 @@ export class HeroPipelineView {
   private lifetime: AbortController | null = null;
 
   constructor() {
-    afterNextRender(() => {
-      const reduced = matchMedia(REDUCED_MOTION);
-      if (reduced.matches) return;
-      // A tap would leave a hover behind that holds the run until the next tap elsewhere.
-      if (matchMedia(CAN_HOVER).matches) this.holdOn = ':hover, :has(:focus-visible)';
-      const controller = new AbortController();
-      reduced.addEventListener('change', () => this.stop(), { signal: controller.signal });
-      // Out of view nothing is to be seen, so no frame is spent on it.
-      const onScreen = new IntersectionObserver(([entry]) => this.run(entry.isIntersecting));
-      onScreen.observe(this.host);
-      controller.signal.addEventListener('abort', () => onScreen.disconnect());
-      this.lifetime = controller;
-      this.destroyRef.onDestroy(() => this.stopFrames());
-      this.moving.set(true);
+    afterNextRender(() => this.start());
+    // A run that stands asks for no frames. New data and the pause control wake it to check again.
+    effect(() => {
+      this.pipeline();
+      this.paused();
+      untracked(() => this.wake());
     });
   }
 
@@ -79,16 +75,59 @@ export class HeroPipelineView {
     this.motion.toggle();
   }
 
-  private run(inView: boolean): void {
-    cancelAnimationFrame(this.frameId);
-    if (!inView) return;
+  private start(): void {
+    const reduced = matchMedia(REDUCED_MOTION);
+    if (reduced.matches) return;
+    // A tap would leave a hover behind that holds the run until the next tap elsewhere.
+    if (matchMedia(CAN_HOVER).matches) this.holdOn = ':hover, :has(:focus-visible)';
+    const lifetime = new AbortController();
+    reduced.addEventListener('change', () => this.stop(), { signal: lifetime.signal });
+    this.watchHold(lifetime.signal);
+    this.watchView(lifetime.signal);
+    this.lifetime = lifetime;
+    this.destroyRef.onDestroy(() => this.stopFrames());
+    this.moving.set(true);
+  }
+
+  // Out of view nothing is to be seen, so no frame is spent on it.
+  private watchView(signal: AbortSignal): void {
+    // A fast scroll can report out and in at once, so the last entry counts.
+    const onScreen = new IntersectionObserver((entries) =>
+      this.see(entries.at(-1)!.isIntersecting),
+    );
+    onScreen.observe(this.host);
+    signal.addEventListener('abort', () => onScreen.disconnect());
+  }
+
+  // Leaving the stations may end a hold; the next frame checks it.
+  private watchHold(signal: AbortSignal): void {
+    const box = this.host.querySelector('.box');
+    for (const type of ['pointerleave', 'focusout']) {
+      box?.addEventListener(type, () => this.wake(), { signal });
+    }
+  }
+
+  private see(inView: boolean): void {
+    this.inView = inView;
+    if (inView) this.wake();
+    else this.sleep();
+  }
+
+  private wake(): void {
+    if (!this.inView || this.frameId) return;
     this.previous = performance.now();
     this.frameId = requestAnimationFrame(this.tick);
   }
 
+  private sleep(): void {
+    cancelAnimationFrame(this.frameId);
+    this.frameId = 0;
+  }
+
   private stopFrames(): void {
     this.lifetime?.abort();
-    cancelAnimationFrame(this.frameId);
+    this.inView = false;
+    this.sleep();
   }
 
   private stop(): void {
@@ -104,26 +143,33 @@ export class HeroPipelineView {
   }
 
   private readonly tick = (now: number): void => {
-    this.frameId = requestAnimationFrame(this.tick);
-    const step = Math.min(now - this.previous, MAX_STEP_MS);
+    this.frameId = 0;
+    // The frame time can lie just before the request.
+    const step = Math.min(Math.max(now - this.previous, 0), MAX_STEP_MS);
     this.previous = now;
+    if (this.advance(step)) this.frameId = requestAnimationFrame(this.tick);
+  };
 
+  /** Shows the next frame; false when the run stands and needs no frame until it is woken. */
+  private advance(step: number): boolean {
     const pipeline = this.pipeline();
-    if (pipeline !== this.shown) {
-      // Newer data from /status.json: start the run again with it.
-      this.shown = pipeline;
-      this.elapsed = 0;
-    } else if (this.isHeld()) {
-      return;
-    }
+    if (!this.takeNew(pipeline) && this.isHeld()) return false;
     if (pipeline.still) {
       this.showEndState();
-      return;
+      return false;
     }
-
     this.elapsed = (this.elapsed + step) % heroCycleMs(pipeline);
     this.show(heroFrame(pipeline, this.elapsed));
-  };
+    return true;
+  }
+
+  // Newer data from /status.json: start the run again with it.
+  private takeNew(pipeline: HeroPipeline): boolean {
+    if (pipeline === this.shown) return false;
+    this.shown = pipeline;
+    this.elapsed = 0;
+    return true;
+  }
 
   // Only the stations hold the run. The pause control must not: after a click it keeps the focus
   // and the pointer, and the run would not continue when it says so.

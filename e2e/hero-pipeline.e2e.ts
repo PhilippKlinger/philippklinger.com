@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import type { ProjectStatus, StatusDocument } from '../src/content/status';
-import { holdHero } from './support/motion';
+import { countFrames, expectFramesRunning, expectNoFrames, holdHero } from './support/motion';
 
 // The delivery chain in the hero (docs/plan-hero.md, H1 to H7). A real snapshot of status.json
 // with a time set per test, completed by what the collector writes for this website since #46.
@@ -222,6 +222,38 @@ test.describe('Schleife', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('.hero .value a').first()).toBeFocused();
     await expectHeld(page);
+  });
+});
+
+// A run that stands asks for no frames (decision "Schleife nur im Bild"). The haze is off here,
+// without WebGL, so the hero is the only loop on the page.
+test.describe('Frames', () => {
+  test.beforeEach(({ page }) => countFrames(page));
+
+  test('[H3] Pause: keine Frames, Fortsetzen läuft weiter', async ({ page }) => {
+    await openWith(page);
+    await expectFramesRunning(page);
+    await pause(page).click();
+    await expectNoFrames(page);
+    await pause(page).click();
+    await expectFramesRunning(page);
+  });
+
+  test('[H3] Hover hält ohne Frames, danach läuft es weiter', async ({ page }) => {
+    test.skip(page.viewportSize()!.width < 768, 'kein Hover auf Touch');
+    await openWith(page);
+    await expectFramesRunning(page);
+    await page.locator('.hero .box').hover();
+    await expectNoFrames(page);
+    await page.mouse.move(0, 0);
+    await expectFramesRunning(page);
+  });
+
+  test('[H1] keine Daten: die Kette steht ohne Frames', async ({ page }) => {
+    await page.route('**/status.json', (route) => route.fulfill({ status: 500, body: 'error' }));
+    await page.goto('/');
+    await expect(pause(page)).toBeVisible();
+    await expectNoFrames(page);
   });
 });
 
