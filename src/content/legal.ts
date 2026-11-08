@@ -45,7 +45,7 @@ export const privacy = {
     {
       heading: 'Scrollposition im Browser',
       paragraphs: [
-        'Die Startseite merkt sich im sessionStorage Ihres Browsers nur die Scrollposition, damit Sie nach dem Zurückgehen an derselben Stelle weiterlesen können. Der Wert wird nicht an den Server übertragen, er verlässt Ihr Gerät nicht und wird gelöscht, sobald Sie den Tab schließen. Es werden keine Cookies gesetzt und nichts davon dient dem Tracking.',
+        'Die Startseite merkt sich im sessionStorage Ihres Browsers nur die Scrollposition, damit Sie nach dem Zurückgehen an derselben Stelle weiterlesen können. Der Wert wird nicht an den Server übertragen, er verlässt Ihr Gerät nicht und wird gelöscht, wenn die Browser-Sitzung des Tabs endet. Es werden keine Cookies gesetzt und nichts davon dient dem Tracking.',
       ],
     },
     {

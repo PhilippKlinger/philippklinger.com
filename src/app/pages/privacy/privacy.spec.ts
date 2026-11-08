@@ -39,7 +39,7 @@ describe('Privacy', () => {
   it('tells that only the scroll position is kept in sessionStorage', () => {
     expect(headings()).toContain('Scrollposition im Browser');
     expect(page.textContent).toContain('sessionStorage');
-    expect(page.textContent).toContain('Tab schließen');
+    expect(page.textContent).toContain('Browser-Sitzung des Tabs endet');
   });
 
   it('shows the date of the current version', () => {

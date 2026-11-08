@@ -231,7 +231,7 @@ jobs:
             set ssl:verify-certificate true;
             set net:max-retries 2;
             open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
-            get .deploy-target-production -o /dev/null
+            get .deploy-target-production -o \"$RUNNER_TEMP/deploy-target-production\"
           "; then
             echo "::error::Could not read the marker .deploy-target-production in the FTP root (missing marker, wrong user or no connection). Nothing was uploaded or deleted."
             exit 1
