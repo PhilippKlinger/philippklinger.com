@@ -17,14 +17,18 @@ import {
   isTooSlow,
   pointerEnergy,
 } from './haze-motion';
-import { createPainter, type Painter, type Point } from './haze-shader';
+import { startPainter, type Painter, type PendingPainter, type Point } from './haze-shader';
 import { MotionPause } from '../motion-pause';
 
 const EASING = 0.07;
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+// Every call into WebGL that returns something, from getContext on, waits until the GPU process
+// has done all work before it. Right after loading it rasters the page, so an early start blocks
+// the main thread for as long (TBT). The static layer looks the same until then.
+const GPU_BUSY_MS = 1000;
 
-// Compiling the shader blocks the main thread, so it waits until the page is idle (LCP, TBT).
+// Starting WebGL takes main thread time, so it waits until the page is idle (LCP, TBT).
 function whenIdle(start: () => void): void {
   if ('requestIdleCallback' in window) requestIdleCallback(start);
   else setTimeout(start, 200);
@@ -57,7 +61,7 @@ export class Haze {
     // Only in the browser: the prerender also destroys this component, in Node.
     afterNextRender(() => {
       destroyRef.onDestroy(() => this.stop());
-      whenIdle(() => this.start());
+      setTimeout(() => whenIdle(() => this.start()), GPU_BUSY_MS);
     });
     // The pause asks for no frames, so playing again has to request them.
     effect(() => {
@@ -73,10 +77,23 @@ export class Haze {
   private start(): void {
     if (this.lifetime.signal.aborted) return;
     const canvas = this.canvas().nativeElement;
-    this.paint = createPainter(canvas);
-    if (!this.paint) return;
-    const { signal } = this.lifetime;
-    canvas.addEventListener('webglcontextlost', () => this.halt('off'), { signal });
+    const pending = startPainter(canvas);
+    if (!pending) return;
+    canvas.addEventListener('webglcontextlost', () => this.halt('off'), {
+      signal: this.lifetime.signal,
+    });
+    // The GPU compiles meanwhile; the result is read in a later task, not in this one.
+    whenIdle(() => this.whenCompiled(pending));
+  }
+
+  private whenCompiled(pending: PendingPainter): void {
+    if (this.lifetime.signal.aborted) return;
+    if (!pending.done()) return whenIdle(() => this.whenCompiled(pending));
+    this.paint = pending.finish();
+    if (this.paint) this.begin();
+  }
+
+  private begin(): void {
     this.target = { x: innerWidth * 0.72, y: innerHeight * 0.32 };
     this.light = { ...this.target };
     if (matchMedia(REDUCED_MOTION).matches) this.drawStill();
