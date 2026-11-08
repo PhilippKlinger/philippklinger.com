@@ -1,6 +1,7 @@
 // The delivery chain of this website for the hero. Pure: the status decides every state and every
 // value, so the animation can never show a fact the status does not hold.
 import { ProjectSnapshot } from './software-delivery';
+import { repositoryUrl } from './site';
 import { LinkKind, ProjectStatus, StatusLink, WorkflowSignal } from './status';
 
 /** done: proven. failed: disproven. open: not reached. held: stands apart from the run. */
@@ -27,7 +28,6 @@ export interface HeroPipeline {
   still: boolean;
 }
 
-const REPO_URL = 'https://github.com/PhilippKlinger/philippklinger.com';
 const NOT_AVAILABLE = 'Dieser Stand ist gerade nicht abrufbar.';
 const SEPARATOR: HeroValuePart = { text: ' · ' };
 const DASH: HeroValuePart[] = [{ text: '—' }];
@@ -158,107 +158,118 @@ function monitoringValue(status: ProjectStatus): { up: boolean | null; value: He
   return { up: true, value: [{ text, href: link }] };
 }
 
+const station = (name: string, state: HeroStationState, value: HeroValuePart[]): HeroStation => ({
+  name,
+  state,
+  value,
+});
+
+const STILL_STATIONS: HeroStation[] = [
+  station('Code', 'held', [{ text: 'Repository', href: repositoryUrl }]),
+  // DRAFT: "Workflows" links the runs while no result can be read.
+  station('Tests & Security', 'held', [{ text: 'Workflows', href: `${repositoryUrl}/actions` }]),
+  station('Signed Build', 'held', [
+    { text: 'Attestation', href: `${repositoryUrl}/attestations` },
+    SEPARATOR,
+    { text: 'SBOM', href: `${repositoryUrl}/network/dependencies` },
+  ]),
+  station('Preview', 'held', DASH),
+  station('Production', 'held', DASH),
+  station('Monitoring', 'held', DASH),
+];
+
+/** No status at all: the stations only link where the proofs live. */
 function stillPipeline(): HeroPipeline {
-  const held = (name: string, value: HeroValuePart[]): HeroStation => ({
-    name,
-    state: 'held',
-    value,
-  });
+  return { stations: STILL_STATIONS, reached: -1, note: NOT_AVAILABLE, still: true };
+}
+
+/** Everything the status says about the six stations, read once. */
+interface Facts {
+  status: ProjectStatus;
+  chain: ChainStation[];
+  production: ReturnType<typeof productionValue>;
+  monitoring: ReturnType<typeof monitoringValue>;
+}
+
+function readFacts(status: ProjectStatus): Facts {
+  const chain = [codeStation(status), checksStation(status), buildStation(status)];
   return {
-    stations: [
-      held('Code', [{ text: 'Repository', href: REPO_URL }]),
-      held('Tests & Security', [{ text: 'Workflows', href: `${REPO_URL}/actions` }]),
-      held('Signed Build', [
-        { text: 'Attestation', href: `${REPO_URL}/attestations` },
-        SEPARATOR,
-        { text: 'SBOM', href: `${REPO_URL}/network/dependencies` },
-      ]),
-      held('Preview', DASH),
-      held('Production', DASH),
-      held('Monitoring', DASH),
-    ],
-    reached: -1,
-    note: NOT_AVAILABLE,
-    still: true,
+    status,
+    chain: [...chain, previewStation(status)],
+    production: productionValue(status),
+    monitoring: monitoringValue(status),
   };
+}
+
+/** Production and Monitoring stand apart from the run until it reaches them. */
+const heldTail = ({ production, monitoring }: Facts): HeroStation[] => [
+  station('Production', 'held', production.value),
+  station('Monitoring', 'held', monitoring.value),
+];
+
+const doneChain = ({ chain }: Facts): HeroStation[] =>
+  chain.map((item) => station(item.name, 'done', item.value));
+
+function stoppedStation(item: ChainStation, index: number, stop: number): HeroStation {
+  if (index < stop) return station(item.name, 'done', item.value);
+  if (index === stop && item.verdict === 'failed') return station(item.name, 'failed', item.value);
+  return station(item.name, 'open', DASH);
+}
+
+function stopNote(stopped: ChainStation, sha: string | null): string {
+  if (stopped.verdict !== 'failed') return NOT_AVAILABLE;
+  if (sha) return `Gestoppt bei ${stopped.name}, Production bleibt auf ${shortSha(sha)}.`;
+  // DRAFT: the stop without a version that can be read online.
+  return `Gestoppt bei ${stopped.name}.`;
+}
+
+/** A station is red or cannot be read: the run stops there, the rest is not reached. */
+function stoppedPipeline(facts: Facts, stop: number): HeroPipeline {
+  const stopped = facts.chain[stop];
+  const chain = facts.chain.map((item, index) => stoppedStation(item, index, stop));
+  return {
+    stations: [...chain, ...heldTail(facts)],
+    reached: stopped.verdict === 'failed' ? stop : stop - 1,
+    note: stopNote(stopped, facts.production.sha),
+    still: false,
+  };
+}
+
+/** Preview is proven, Production does not run its commit yet. Nothing is red. */
+function waitingPipeline(facts: Facts): HeroPipeline {
+  const { sha } = facts.production;
+  return {
+    stations: [...doneChain(facts), ...heldTail(facts)],
+    reached: facts.chain.length - 1,
+    note: sha ? `Production wartet auf Freigabe, online ist ${shortSha(sha)}.` : NOT_AVAILABLE,
+    still: false,
+  };
+}
+
+const monitoringState = (up: boolean | null): HeroStationState =>
+  up === null ? 'held' : up ? 'done' : 'failed';
+
+/** Production runs the proven commit; Monitoring decides how the run ends. */
+function finishedPipeline(facts: Facts): HeroPipeline {
+  const { up, value } = facts.monitoring;
+  const production = station('Production', 'done', facts.production.value);
+  return {
+    stations: [...doneChain(facts), production, station('Monitoring', monitoringState(up), value)],
+    reached: facts.chain.length + (up === null ? 0 : 1),
+    note: up === false ? 'Monitoring meldet einen Ausfall.' : null,
+    still: false,
+  };
+}
+
+function runsPreview({ status, production }: Facts): boolean {
+  const previewSha = previewJob(status)?.headSha ?? null;
+  return Boolean(production.sha && previewSha?.startsWith(production.sha));
 }
 
 export function buildHeroPipeline(snapshot: ProjectSnapshot | null): HeroPipeline {
   if (!snapshot) return stillPipeline();
-  const { status } = snapshot;
-
-  const chain = [
-    codeStation(status),
-    checksStation(status),
-    buildStation(status),
-    previewStation(status),
-  ];
-  const production = productionValue(status);
-  const monitoring = monitoringValue(status);
-  const named = (name: string, state: HeroStationState, value: HeroValuePart[]): HeroStation => ({
-    name,
-    state,
-    value,
-  });
-  const held = [
-    named('Production', 'held', production.value),
-    named('Monitoring', 'held', monitoring.value),
-  ];
-
-  const stop = chain.findIndex((station) => station.verdict !== 'done');
-  if (stop >= 0) {
-    const failed = chain[stop].verdict === 'failed';
-    const stopped = chain[stop].name;
-    return {
-      stations: [
-        ...chain.map((station, index) => {
-          if (index < stop) return named(station.name, 'done', station.value);
-          if (index === stop && failed) return named(station.name, 'failed', station.value);
-          return named(station.name, 'open', DASH);
-        }),
-        ...held,
-      ],
-      reached: failed ? stop : stop - 1,
-      note: !failed
-        ? NOT_AVAILABLE
-        : production.sha
-          ? `Gestoppt bei ${stopped}, Production bleibt auf ${shortSha(production.sha)}.`
-          : `Gestoppt bei ${stopped}.`,
-      still: false,
-    };
-  }
-
-  const done = chain.map((station) => named(station.name, 'done', station.value));
-  const previewSha = previewJob(status)?.headSha ?? null;
-  const current = Boolean(production.sha && previewSha?.startsWith(production.sha));
-  if (!current) {
-    return {
-      stations: [...done, ...held],
-      reached: chain.length - 1,
-      note: production.sha
-        ? `Production wartet auf Freigabe, online ist ${shortSha(production.sha)}.`
-        : NOT_AVAILABLE,
-      still: false,
-    };
-  }
-
-  const productionDone = named('Production', 'done', production.value);
-  if (monitoring.up === null) {
-    return {
-      stations: [...done, productionDone, held[1]],
-      reached: chain.length,
-      note: null,
-      still: false,
-    };
-  }
-  return {
-    stations: [
-      ...done,
-      productionDone,
-      named('Monitoring', monitoring.up ? 'done' : 'failed', monitoring.value),
-    ],
-    reached: chain.length + 1,
-    note: monitoring.up ? null : 'Monitoring meldet einen Ausfall.',
-    still: false,
-  };
+  const facts = readFacts(snapshot.status);
+  const stop = facts.chain.findIndex((item) => item.verdict !== 'done');
+  if (stop >= 0) return stoppedPipeline(facts, stop);
+  return runsPreview(facts) ? finishedPipeline(facts) : waitingPipeline(facts);
 }
