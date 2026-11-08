@@ -1,7 +1,4 @@
-// Texts of /impressum and /datenschutz.
-// Written by Claude, no legal advice; wording approved by Philipp (2026-11-04).
-// Only verifiable facts; hosting wording as on neurocheckin.de (AVV with All-Inkl
-// of 2022-09-19 on file there, customer account of Philipp).
+// Texts of /impressum and /datenschutz; only verifiable facts.
 
 // Current postal address (Philipp, 2026-11-04).
 export const address = ['Philipp Klinger', 'Ostlandstraße 11', '49504 Lotte'];
@@ -42,6 +39,13 @@ export const privacy = {
       heading: 'Kontakt per E-Mail',
       paragraphs: [
         'Wenn Sie mir eine E-Mail schreiben, verarbeite ich Ihre Adresse und Ihre Nachricht, um Ihre Anfrage zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, wenn es um eine Anstellung oder einen Auftrag geht, sonst mein berechtigtes Interesse an der Antwort (Art. 6 Abs. 1 lit. f DSGVO). Das Postfach liegt ebenfalls bei ALL-INKL.COM. Ich lösche die Nachricht, wenn die Anfrage erledigt ist und keine gesetzliche Aufbewahrungspflicht besteht.',
+      ],
+    },
+    // DRAFT: wording of the sessionStorage paragraph, not yet approved.
+    {
+      heading: 'Scrollposition im Browser',
+      paragraphs: [
+        'Die Startseite merkt sich im sessionStorage Ihres Browsers nur die Scrollposition, damit Sie nach dem Zurückgehen an derselben Stelle weiterlesen können. Der Wert wird nicht an den Server übertragen, er verlässt Ihr Gerät nicht und wird gelöscht, sobald Sie den Tab schließen. Es werden keine Cookies gesetzt und nichts davon dient dem Tracking.',
       ],
     },
     {

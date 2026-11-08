@@ -36,6 +36,12 @@ describe('Privacy', () => {
     expect(mail?.getAttribute('href')).toBe(`mailto:${profile.email}`);
   });
 
+  it('tells that only the scroll position is kept in sessionStorage', () => {
+    expect(headings()).toContain('Scrollposition im Browser');
+    expect(page.textContent).toContain('sessionStorage');
+    expect(page.textContent).toContain('Tab schließen');
+  });
+
   it('shows the date of the current version', () => {
     expect(page.textContent).toMatch(/Stand: \w+ \d{4}/);
   });
