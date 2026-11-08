@@ -71,6 +71,12 @@ test.describe('Hero', () => {
     );
   });
 
+  // Ran on every viewport before the pipeline; H6 in hero-pipeline.e2e.ts adds the exact height.
+  test('[Design] füllt den ersten Bildschirm', async ({ page }) => {
+    const hero = (await page.locator('.hero').boundingBox())!;
+    expect(hero.height).toBeGreaterThanOrEqual(page.viewportSize()!.height);
+  });
+
   test('[Design] linksbündig an derselben Kante wie das Logo', async ({ page }) => {
     await expect(page.locator('.hero .intro')).toHaveCSS('text-align', 'start');
     const logo = (await page.locator('header .logo').boundingBox())!;
