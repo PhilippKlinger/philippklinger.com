@@ -7,12 +7,17 @@
   --node: 1.375rem;
   --touch: var(--size-touch);
   --icon: 1rem;
-  // Lines the longest sentences above the chain take at this width (state and notice).
-  --title-lines: 3;
+  // Lines the longest sentences above the chain take next to the pause control at this width:
+  // a red station and a failed refresh. Counted in lines, so other font metrics change nothing.
+  --title-lines: 4;
   display: block;
 
   @include bp.from(tablet) {
     --title-lines: 2;
+  }
+
+  @include bp.from(desktop) {
+    --title-lines: 1;
   }
 }
 
@@ -309,10 +314,6 @@
 }
 
 @include bp.from(pipeline) {
-  :host {
-    --title-lines: 1;
-  }
-
   .pipe {
     padding-bottom: var(--space-lg);
   }

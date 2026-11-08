@@ -71,6 +71,12 @@ const hiddenValues = (page: Page) =>
   page
     .locator('.hero .value')
     .evaluateAll((values) => values.filter((v) => getComputedStyle(v).opacity !== '1').length);
+const titleHeight = (page: Page) =>
+  page.locator('.hero .title').evaluate((title) => title.getBoundingClientRect().height);
+// The longest pair the chain can show: a red station and a refresh that failed.
+const LONGEST_TITLE =
+  'How this site is built and run: Gestoppt bei Tests & Security, Production bleibt auf ' +
+  'abc1234. Der aktuelle Stand ist gerade nicht abrufbar.';
 const desktopOnly = (testInfo: TestInfo) =>
   test.skip(testInfo.project.name !== 'desktop', 'Breiten stellt der Test selbst ein');
 
@@ -407,7 +413,9 @@ test.describe('Aufbau', () => {
     });
   }
 
-  // The sentences above the chain take one to three lines; their space is kept from the start.
+  // The sentences above the chain take one to four lines; their space is kept from the start,
+  // counted in lines, so other font metrics change nothing. Values in the stations may still wrap
+  // with the state; the CLS test above keeps that in bounds.
   const longerSentences: [string, (route: Route) => Promise<void>, string][] = [
     ['Stand vom Server, älter als einen Tag', (route) => route.continue(), 'älter als einen Tag'],
     [
@@ -423,7 +431,7 @@ test.describe('Aufbau', () => {
   ];
 
   for (const [name, serve, sentence] of longerSentences) {
-    test(`[Spec 11] die Kette behält ihre Höhe, wenn der Stand nach dem Laden wechselt: ${name}`, async ({
+    test(`[Spec 11] der Satz über der Kette verschiebt nichts, wenn der Stand nach dem Laden wechselt: ${name}`, async ({
       page,
     }) => {
       let release = () => {};
@@ -432,17 +440,31 @@ test.describe('Aufbau', () => {
         await arrived;
         await serve(route);
       });
-      const height = () =>
-        page.locator('app-hero-pipeline').evaluate((el) => el.getBoundingClientRect().height);
       await page.goto('/');
       await expect(pause(page)).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
-      const before = await height();
+      const before = await titleHeight(page);
       release();
       await expect(page.locator('.hero .title')).toContainText(sentence);
-      expect(await height(), 'Höhe der Kette').toBe(before);
+      expect(await titleHeight(page), 'Platz der Sätze').toBe(before);
     });
   }
+
+  test('[Spec 11] der längste Satz passt in den reservierten Platz', async ({ page }, testInfo) => {
+    // 1100 px is the narrowest width with the stations side by side.
+    const widths =
+      testInfo.project.name === 'desktop' ? [1440, 1100] : [page.viewportSize()!.width];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await openWith(page);
+      await expect(pause(page)).toBeVisible();
+      const reserved = await titleHeight(page);
+      await page
+        .locator('.hero .title')
+        .evaluate((title, text) => (title.textContent = text), LONGEST_TITLE);
+      expect(await titleHeight(page), `längster Satz bei ${width} px`).toBe(reserved);
+    }
+  });
 
   test('[H6] der Pause-Knopf verschiebt nichts, wenn er nach der Hydration erscheint', async ({
     page,
