@@ -1,0 +1,159 @@
+import { readFileSync } from 'node:fs';
+import { expect, test, type Page } from '@playwright/test';
+import { pages } from './support/site';
+
+// Responsive pass over cards, steps and footer (spec 4, 11, AK15). Runs in every project; on the
+// phone it also checks 320 px, the narrowest width a page has to reflow to (WCAG 1.4.10).
+const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
+const projectPages = pages.filter((path) => path.startsWith('/projekte/'));
+const cardBreakpoint = 960; // 60rem
+const narrowest = 320;
+const boxes = '.card, .flow, .flow-step, .report, .step, .block, .part, footer .footer';
+
+/** Real snapshot with a fresh time, so every step shows its longest real label. */
+async function serveStatus(page: Page): Promise<void> {
+  const document = JSON.parse(fixtureText) as { generatedAt: string };
+  document.generatedAt = new Date().toISOString();
+  await page.route('**/status.json', (route) => route.fulfill({ json: document }));
+}
+
+async function open(page: Page, path: string): Promise<void> {
+  await serveStatus(page);
+  await page.goto(path);
+  await page.evaluate(() => document.fonts.ready);
+}
+
+/** The project width, and on the phone the narrowest width as well. */
+function widths(page: Page): number[] {
+  const width = page.viewportSize()!.width;
+  return width < 768 ? [width, narrowest] : [width];
+}
+
+async function atEachWidth(page: Page, check: (width: number) => Promise<void>): Promise<void> {
+  const { height } = page.viewportSize()!;
+  for (const width of widths(page)) {
+    await page.setViewportSize({ width, height });
+    await check(width);
+  }
+}
+
+/** Elements that leave the content box of their nearest card, panel or step, or clip their text. */
+function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
+  return page.evaluate((boxSelector) => {
+    const name = (el: Element) =>
+      `${el.tagName.toLowerCase()}.${[...el.classList].join('.')} "${(el.textContent ?? '').trim().slice(0, 30)}"`;
+    const offenders: string[] = [];
+    for (const el of document.querySelectorAll(`:is(${boxSelector}) *`)) {
+      const box = el.parentElement!.closest(boxSelector)!;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      const frame = box.getBoundingClientRect();
+      const style = getComputedStyle(box);
+      const right =
+        frame.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
+      const left = frame.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+      const clips = el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1;
+      if (rect.right > right + 1 || rect.left < left - 1 || clips) offenders.push(name(el));
+    }
+    return offenders;
+  }, selector);
+}
+
+test.describe('Responsive', () => {
+  test('[AK15] Karte stapelt sich unter 60 rem, ab 60 rem Text links, Panel rechts', async ({
+    page,
+  }) => {
+    await open(page, '/');
+    const width = page.viewportSize()!.width;
+    const cards = page.locator('#projekte .cards > li article.card');
+    await expect(cards).toHaveCount(5);
+    for (const card of await cards.all()) {
+      const main = (await card.locator('.card-main').boundingBox())!;
+      const panel = (await card.locator('.flow').boundingBox())!;
+      if (width < cardBreakpoint) {
+        expect(panel.y, 'panel below the text').toBeGreaterThanOrEqual(main.y + main.height);
+        expect(Math.abs(panel.x - main.x), 'same left edge').toBeLessThanOrEqual(1);
+      } else {
+        expect(panel.x, 'panel right of the text').toBeGreaterThanOrEqual(main.x + main.width);
+        expect(main.width / panel.width, 'text 1.15 fr, panel 1 fr').toBeCloseTo(1.15, 1);
+      }
+    }
+  });
+
+  for (const path of ['/', ...projectPages]) {
+    test(`[AK15] kein horizontaler Überlauf bei langen Bezeichnungen: ${path}`, async ({
+      page,
+    }) => {
+      await open(page, path);
+      await atEachWidth(page, async (width) => {
+        const offenders = await outsideTheirBox(page, boxes);
+        expect(offenders, `bei ${width} px`).toEqual([]);
+        const scrolls = await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        );
+        expect(scrolls, `bei ${width} px breiter als der Viewport`).toBe(false);
+      });
+    });
+
+    test(`[AK15] alle Links in Karten und Schritten ab 44 px: ${path}`, async ({ page }) => {
+      await open(page, path);
+      const links = page.locator(
+        '#projekte .card a, app-delivery-steps a, .project .back, .project .links a',
+      );
+      expect(await links.count()).toBeGreaterThan(0);
+      await atEachWidth(page, async (width) => {
+        for (const link of await links.all()) {
+          const box = (await link.boundingBox())!;
+          const label = `${await link.innerText()} bei ${width} px`;
+          expect(box.height, label).toBeGreaterThanOrEqual(44);
+          expect(box.width, label).toBeGreaterThanOrEqual(44);
+        }
+      });
+    });
+
+    test(`[AK15] Schrittzustand bleibt in einer Zeile oder bricht sauber um: ${path}`, async ({
+      page,
+    }) => {
+      await open(page, path);
+      const states = page.locator(':is(.flow-step, .step-head) .state');
+      expect(await states.count()).toBeGreaterThan(0);
+      await atEachWidth(page, async (width) => {
+        const offenders = await outsideTheirBox(page, '.flow-step, .step');
+        const stateOffenders = offenders.filter((entry) => /\.state\b|^svg/.test(entry));
+        expect(stateOffenders, `bei ${width} px`).toEqual([]);
+      });
+    });
+  }
+
+  test('[AK15] Footer-Zeile bleibt lesbar', async ({ page }) => {
+    await open(page, '/');
+    const line = page.locator('footer .built');
+    await atEachWidth(page, async (width) => {
+      expect(await outsideTheirBox(page, 'footer .footer'), `bei ${width} px`).toEqual([]);
+      const size = await line.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      expect(size, 'no smaller than 14 px').toBeGreaterThanOrEqual(14);
+      for (const link of await line.locator('a').all()) {
+        const box = (await link.boundingBox())!;
+        expect(box.height, `${await link.innerText()} bei ${width} px`).toBeGreaterThanOrEqual(44);
+      }
+    });
+  });
+
+  test('[Spec 11] Footer-Links sind Touch-Ziele ab 44 px, © bricht nicht um', async ({ page }) => {
+    await open(page, '/');
+    const copyright = page.locator('footer .copyright');
+    await atEachWidth(page, async (width) => {
+      for (const link of await page.locator('footer a').all()) {
+        const box = (await link.boundingBox())!;
+        const label = `${await link.innerText()} bei ${width} px`;
+        expect(box.height, label).toBeGreaterThanOrEqual(44);
+        expect(box.width, label).toBeGreaterThanOrEqual(44);
+      }
+      const lines = await copyright.evaluate((el) => {
+        const { height } = el.getBoundingClientRect();
+        return Math.round(height / parseFloat(getComputedStyle(el).lineHeight));
+      });
+      expect(lines, `© in einer Zeile bei ${width} px`).toBe(1);
+    });
+  });
+});
