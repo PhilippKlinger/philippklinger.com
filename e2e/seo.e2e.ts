@@ -123,3 +123,40 @@ test.describe('Open Graph', () => {
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
   });
 });
+
+test.describe('Favicon und Tab-Titel', () => {
+  // The Angular scaffold ships a favicon.ico of exactly this size.
+  const scaffoldFaviconBytes = 15086;
+
+  test('[SEO · Go-live] Startseite verlinkt SVG-Favicon und Apple-Touch-Icon, beide liefern ein Bild', async ({
+    page,
+    request,
+  }) => {
+    await page.goto('/');
+    for (const selector of [
+      'link[rel="icon"][type="image/svg+xml"]',
+      'link[rel="apple-touch-icon"]',
+    ]) {
+      const href = await page.locator(selector).getAttribute('href');
+      expect(href, selector).toBeTruthy();
+      const response = await request.get(new URL(href ?? '', page.url()).toString());
+      expect(response.status(), selector).toBe(200);
+      expect(response.headers()['content-type'], selector).toContain('image/');
+    }
+  });
+
+  test('[SEO · Go-live] favicon.ico ist nicht mehr das Angular-Standardicon', async ({
+    request,
+  }) => {
+    const response = await request.get('/favicon.ico');
+    expect(response.status()).toBe(200);
+    expect((await response.body()).length).not.toBe(scaffoldFaviconBytes);
+  });
+
+  test('[SEO · Go-live] Titel der Startseite folgt aus Name und Rolle im Profil', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page).toHaveTitle(`${profile.name} – ${profile.role}`);
+  });
+});
