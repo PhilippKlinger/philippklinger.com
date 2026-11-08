@@ -149,6 +149,17 @@ describe('buildHeroPipeline', () => {
       );
     });
 
+    it('keeps a known red check red when the other check has no result', () => {
+      const view = pipeline((draft) => {
+        run(draft, 'CI').conclusion = 'failure';
+        run(draft, 'CodeQL').conclusion = null;
+      });
+      expect(states(view)).toEqual(['done', 'failed', 'open', 'open', 'held', 'held']);
+      expect(view.reached).toBe(1);
+      expect(texts(view)[1]).toBe('CI failing · CodeQL');
+      expect(view.note).toContain('Gestoppt bei Tests & Security');
+    });
+
     it('stops at Signed Build when the live files have no attestation', () => {
       const view = pipeline((draft) => {
         draft.supplyChain.signals.repos[0].attestation!.provenanceCount = 0;

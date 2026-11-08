@@ -31,6 +31,7 @@ const REPO_URL = 'https://github.com/PhilippKlinger/philippklinger.com';
 const NOT_AVAILABLE = 'Dieser Stand ist gerade nicht abrufbar.';
 const SEPARATOR: HeroValuePart = { text: ' · ' };
 const DASH: HeroValuePart[] = [{ text: '—' }];
+const PASSING: HeroValuePart = { text: ' passing' };
 
 type Verdict = 'done' | 'failed' | 'unknown';
 interface ChainStation {
@@ -66,23 +67,32 @@ function codeStation(status: ProjectStatus): ChainStation {
       };
 }
 
-function checksStation(status: ProjectStatus): ChainStation {
-  const name = 'Tests & Security';
-  const runs = status.checks.signals.workflows;
-  const ci = runs.find((run) => run.kind === 'tests');
-  const codeql = runs.find((run) => run.kind === 'scan');
-  if (!ci?.conclusion || !codeql?.conclusion) return { name, verdict: 'unknown', value: DASH };
-
-  const part = (run: WorkflowSignal): HeroValuePart[] => [
+/** A run with its state word only when it is red; passing is said once for both. */
+function checkPart(status: ProjectStatus, run: WorkflowSignal): HeroValuePart[] {
+  return [
     { text: run.workflow, href: href(status, 'workflow-run', run.workflow) },
     ...(failing(run.conclusion) ? [{ text: ' failing', failed: true }] : []),
   ];
-  const red = failing(ci.conclusion) || failing(codeql.conclusion);
-  return {
-    name,
-    verdict: red ? 'failed' : 'done',
-    value: [...part(ci), SEPARATOR, ...part(codeql), ...(red ? [] : [{ text: ' passing' }])],
-  };
+}
+
+const joined = (groups: HeroValuePart[][]): HeroValuePart[] =>
+  groups.flatMap((group, index) => (index ? [SEPARATOR, ...group] : group));
+
+const checkRuns = (status: ProjectStatus): (WorkflowSignal | undefined)[] =>
+  (['tests', 'scan'] as const).map((kind) =>
+    status.checks.signals.workflows.find((run) => run.kind === kind),
+  );
+
+// A known red stays visible even when the other check has no result.
+function checksStation(status: ProjectStatus): ChainStation {
+  const name = 'Tests & Security';
+  const runs = checkRuns(status);
+  const known = runs.filter((run): run is WorkflowSignal => !!run);
+  const red = known.some((run) => failing(run.conclusion));
+  const unknown = !red && runs.some((run) => !run?.conclusion);
+  if (unknown) return { name, verdict: 'unknown', value: DASH };
+  const value = joined(known.map((run) => checkPart(status, run)));
+  return { name, verdict: red ? 'failed' : 'done', value: red ? value : [...value, PASSING] };
 }
 
 // Same rule as the cards: an SBOM is only named when the collector could read one.
