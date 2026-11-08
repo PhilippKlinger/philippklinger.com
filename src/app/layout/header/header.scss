@@ -10,10 +10,12 @@
   padding: var(--space-md) var(--page-gutter);
 }
 
+// Two letters are far narrower than a touch target; the text edge stays on the left.
 .logo {
   display: flex;
   align-items: center;
-  min-height: 2.75rem;
+  min-width: var(--size-touch);
+  min-height: var(--size-touch);
   font-weight: var(--weight-bold);
   color: var(--color-text);
   text-decoration: none;
@@ -23,8 +25,8 @@
 .menu-button {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--size-touch);
+  height: var(--size-touch);
   padding: 0;
   border: 0;
   background: none;

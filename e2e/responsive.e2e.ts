@@ -139,6 +139,16 @@ test.describe('Responsive', () => {
     });
   });
 
+  test('[Spec 11] Header-Logo ist ein Touch-Ziel ab 44 px', async ({ page }) => {
+    await open(page, '/');
+    const logo = page.locator('header .logo');
+    await atEachWidth(page, async (width) => {
+      const box = (await logo.boundingBox())!;
+      expect(box.height, `Logo bei ${width} px`).toBeGreaterThanOrEqual(44);
+      expect(box.width, `Logo bei ${width} px`).toBeGreaterThanOrEqual(44);
+    });
+  });
+
   test('[Spec 11] Footer-Links sind Touch-Ziele ab 44 px, © bricht nicht um', async ({ page }) => {
     await open(page, '/');
     const copyright = page.locator('footer .copyright');
