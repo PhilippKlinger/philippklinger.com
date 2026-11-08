@@ -44,14 +44,16 @@ export interface PendingPainter {
   finish(): Painter | null;
 }
 
+const CONTEXT_OPTIONS: WebGLContextAttributes = {
+  antialias: false,
+  alpha: false,
+  powerPreference: 'low-power',
+  failIfMajorPerformanceCaveat: true,
+};
+
 /** Returns null if this browser cannot even start the shader. */
 export function startPainter(canvas: HTMLCanvasElement): PendingPainter | null {
-  const gl = canvas.getContext('webgl', {
-    antialias: false,
-    alpha: false,
-    powerPreference: 'low-power',
-    failIfMajorPerformanceCaveat: true,
-  });
+  const gl = canvas.getContext('webgl', CONTEXT_OPTIONS);
   const program = gl && linkProgram(gl);
   if (!gl || !program) return null;
   // Without the extension nothing tells when the GPU is done; reading later still waits less.
