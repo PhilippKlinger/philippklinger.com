@@ -263,6 +263,15 @@ test.describe('Frames', () => {
     await expect(pause(page)).toBeVisible();
     await expectNoFrames(page);
   });
+
+  test('[H1] steht schon bei Code: die Kette steht ohne Frames', async ({ page }) => {
+    await openWith(page, (status) => {
+      status.code.signals.repos[0].mergedPullRequests = null;
+    });
+    await expect(pause(page)).toBeVisible();
+    await expect(station(page).first().locator('.value')).toHaveText('—');
+    await expectNoFrames(page);
+  });
 });
 
 test.describe('Ohne Bewegung', () => {
