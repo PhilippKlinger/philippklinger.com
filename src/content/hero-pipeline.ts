@@ -139,6 +139,10 @@ function productionValue(status: ProjectStatus): { sha: string | null; value: He
     : { sha: null, value: DASH };
 }
 
+// Rounded down: an outage within the day must never read as a full 100 %. The inner rounding
+// only removes the float error, so 0.29 stays 29 and does not become 28.99.
+const uptimePercent = (share: number): number => Math.floor(Math.round(share * 1e6) / 100) / 100;
+
 function monitoringValue(status: ProjectStatus): { up: boolean | null; value: HeroValuePart[] } {
   const { monitorsTotal, monitorsUp, uptime24h } = status.stability.signals;
   // No monitor counted is no measurement, as in stabilityProofs of the cards.
@@ -149,11 +153,9 @@ function monitoringValue(status: ProjectStatus): { up: boolean | null; value: He
   if (monitorsUp < monitorsTotal) {
     return { up: false, value: [{ text: 'down', href: link, failed: true }] };
   }
-  const percent = uptime24h === null ? null : Number((uptime24h * 100).toFixed(2));
-  return {
-    up: true,
-    value: [{ text: percent === null ? 'up' : `Uptime ${percent} %`, href: link }],
-  };
+  // DRAFT: "up" stands where Kuma has no uptime yet.
+  const text = uptime24h === null ? 'up' : `Uptime ${uptimePercent(uptime24h)} %`;
+  return { up: true, value: [{ text, href: link }] };
 }
 
 function stillPipeline(): HeroPipeline {

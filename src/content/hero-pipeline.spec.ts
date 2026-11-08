@@ -213,6 +213,21 @@ describe('buildHeroPipeline', () => {
       expect(view.note).toBe('Monitoring meldet einen Ausfall.');
     });
 
+    it('rounds the uptime down, never up to a full 100 %', () => {
+      const view = pipeline((draft) => {
+        draft.stability.signals.uptime24h = 0.99996;
+      });
+      expect(texts(view)[5]).toBe('Uptime 99.99 %');
+    });
+
+    it('says only up when Kuma has no uptime yet', () => {
+      const view = pipeline((draft) => {
+        draft.stability.signals.uptime24h = null;
+      });
+      expect(states(view)[5]).toBe('done');
+      expect(texts(view)[5]).toBe('up');
+    });
+
     it('claims nothing when Kuma counts no monitor', () => {
       const view = pipeline((draft) => {
         draft.stability.signals.monitorsTotal = 0;
