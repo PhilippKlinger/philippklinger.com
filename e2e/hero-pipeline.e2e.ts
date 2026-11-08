@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type Route, type TestInfo } from '@playwright/test';
 import type { ProjectStatus, StatusDocument } from '../src/content/status';
 import { countFrames, expectFramesRunning, expectNoFrames, holdHero } from './support/motion';
 
@@ -13,6 +13,18 @@ const ONE_RUN_MS = 16_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Change = (status: ProjectStatus) => void;
+
+declare global {
+  interface Window {
+    layoutShift: number;
+  }
+}
+
+/** Not in the DOM types of TypeScript yet. */
+interface LayoutShift extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
 
 function statusDocument(change: Change = () => undefined): StatusDocument {
   const document = JSON.parse(fixtureText) as StatusDocument;
@@ -357,6 +369,78 @@ test.describe('Aufbau', () => {
           expect(Math.abs(last - view.edge), `${width}: Linie endet am Rand`).toBeLessThan(1);
         }
       }
+    });
+  }
+
+  // The prerender here has no snapshot, so the chain always changes its state after loading, and
+  // the fonts arrive late as on a slow line: both must not move the page (spec 11, CLS ≤ 0.1).
+  const lateStates: [string, (page: Page) => Promise<unknown>][] = [
+    ['Stand vom Server, älter als einen Tag', async () => undefined],
+    [
+      'Abruf scheitert',
+      (page) => page.route('**/status.json', (route) => route.fulfill({ status: 500 })),
+    ],
+  ];
+
+  for (const [name, serve] of lateStates) {
+    test(`[Spec 11] späte Schriften und neuer Stand verschieben nichts: ${name}`, async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        window.layoutShift = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as LayoutShift[]) {
+            if (!entry.hadRecentInput) window.layoutShift += entry.value;
+          }
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
+      await page.route('**/*.woff2', async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await route.continue();
+      });
+      await serve(page);
+      await page.goto('/');
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator('app-project-list [role="status"]')).not.toBeEmpty();
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => window.layoutShift)).toBeLessThanOrEqual(0.1);
+    });
+  }
+
+  // The sentences above the chain take one to three lines; their space is kept from the start.
+  const longerSentences: [string, (route: Route) => Promise<void>, string][] = [
+    ['Stand vom Server, älter als einen Tag', (route) => route.continue(), 'älter als einen Tag'],
+    [
+      'Station rot',
+      (route) =>
+        route.fulfill({
+          json: statusDocument((status) => {
+            status.checks.signals.workflows[0].conclusion = 'failure';
+          }),
+        }),
+      'Gestoppt bei Tests & Security',
+    ],
+  ];
+
+  for (const [name, serve, sentence] of longerSentences) {
+    test(`[Spec 11] die Kette behält ihre Höhe, wenn der Stand nach dem Laden wechselt: ${name}`, async ({
+      page,
+    }) => {
+      let release = () => {};
+      const arrived = new Promise<void>((resolve) => (release = resolve));
+      await page.route('**/status.json', async (route) => {
+        await arrived;
+        await serve(route);
+      });
+      const height = () =>
+        page.locator('app-hero-pipeline').evaluate((el) => el.getBoundingClientRect().height);
+      await page.goto('/');
+      await expect(pause(page)).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      const before = await height();
+      release();
+      await expect(page.locator('.hero .title')).toContainText(sentence);
+      expect(await height(), 'Höhe der Kette').toBe(before);
     });
   }
 

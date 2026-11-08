@@ -7,7 +7,13 @@
   --node: 1.375rem;
   --touch: var(--size-touch);
   --icon: 1rem;
+  // Lines the longest sentences above the chain take at this width (state and notice).
+  --title-lines: 3;
   display: block;
+
+  @include bp.from(tablet) {
+    --title-lines: 2;
+  }
 }
 
 .pipe {
@@ -25,7 +31,9 @@
   color: var(--color-text-muted);
 }
 
+// Their space is kept from the prerender on: a state that arrives later moves nothing (CLS).
 .title {
+  min-height: calc(var(--title-lines) * 1lh);
   margin: 0;
 }
 
@@ -301,6 +309,10 @@
 }
 
 @include bp.from(pipeline) {
+  :host {
+    --title-lines: 1;
+  }
+
   .pipe {
     padding-bottom: var(--space-lg);
   }
