@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { profile } from '../content/profile';
 import { Home } from './pages/home/home';
 import { Imprint } from './pages/imprint/imprint';
 import { NotFound } from './pages/not-found/not-found';
@@ -24,7 +25,7 @@ export const routes: Routes = [
   {
     path: '',
     component: Home,
-    title: 'Philipp Klinger – DevSecOps & Fullstack',
+    title: `${profile.name} – ${profile.role}`,
     data: {
       description:
         'Philipp Klinger, Software Engineer für Fullstack und DevSecOps: Projekte mit automatisierten Tests, CI/CD, Security-Checks und Operations.',
