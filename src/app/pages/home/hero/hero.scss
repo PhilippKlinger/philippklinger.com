@@ -66,7 +66,7 @@
   --roll: 2em;
   display: inline-flex;
   align-items: center;
-  min-height: 2.75rem;
+  min-height: var(--size-touch);
   overflow: hidden;
   padding: var(--space-xs) var(--space-md);
   border: var(--border-width) solid var(--color-text);

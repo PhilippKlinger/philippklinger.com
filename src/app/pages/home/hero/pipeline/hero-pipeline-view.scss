@@ -1,6 +1,7 @@
+@use 'breakpoints' as bp;
+
 // Everything stays readable without the run: the end state is the default state, the run only
 // draws the line, sets the checks and fades the values in.
-$wide: 1100px;
 
 :host {
   --node: 1.375rem;
@@ -299,8 +300,7 @@ $wide: 1100px;
   }
 }
 
-// Below this width the values do not fit next to each other.
-@media (min-width: $wide) {
+@include bp.from(pipeline) {
   .pipe {
     padding-bottom: var(--space-lg);
   }
