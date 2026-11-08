@@ -62,12 +62,17 @@ const hiddenValues = (page: Page) =>
 const desktopOnly = (testInfo: TestInfo) =>
   test.skip(testInfo.project.name !== 'desktop', 'Breiten stellt der Test selbst ein');
 
+// Longer than any phase in which the run stands by itself (hold 3.5 s, then the fade of 0.4 s
+// keeps the line): a run that goes on changes the line or a station within this time.
+const HELD_MS = 4_200;
+const runState = async (page: Page) => ({ line: await progress(page), states: await states(page) });
+
 const expectHeld = async (page: Page) => {
   await expect.poll(() => hiddenValues(page)).toBe(0);
-  const held = await progress(page);
-  await page.waitForTimeout(500);
-  expect(await progress(page), 'die Linie steht').toBe(held);
-  return held;
+  const held = await runState(page);
+  await page.waitForTimeout(HELD_MS);
+  expect(await runState(page), 'Linie und Stationen stehen').toEqual(held);
+  return held.line;
 };
 
 test.describe('Zustände', () => {
@@ -186,9 +191,12 @@ test.describe('Schleife', () => {
     await expect(running.locator('.value')).toHaveCSS('opacity', '0');
 
     await expect.poll(() => states(page), { timeout: ONE_RUN_MS }).toEqual(ALL_DONE);
-    await expect
-      .poll(async () => (await states(page))[0], { timeout: ONE_RUN_MS })
-      .not.toBe('done');
+    // After hold and fade the first station checks again and is done again. The ring spins for
+    // 0.9 s, so the poll looks often enough not to miss it.
+    const first = async () => (await states(page))[0];
+    const often = { timeout: ONE_RUN_MS, intervals: [100] };
+    await expect.poll(first, often).toBe('running');
+    await expect.poll(first, often).toBe('done');
   });
 
   test('[H3 · WCAG 2.2.2] Pause hält an, zeigt alle Werte und setzt fort', async ({ page }) => {
