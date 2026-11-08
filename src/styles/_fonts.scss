@@ -1,12 +1,12 @@
 // Self-hosted variable fonts from Fontsource (SIL OFL). Only the latin subset,
-// one woff2 file per family covers every weight the design uses.
+// one woff2 file per family covers every weight the design uses. angular.json copies them to a
+// fixed path, so index.html can preload them and the first layout already uses them.
 @font-face {
   font-family: 'Fira Code Variable';
   font-style: normal;
   font-display: swap;
   font-weight: 300 700;
-  src: url('@fontsource-variable/fira-code/files/fira-code-latin-wght-normal.woff2')
-    format('woff2-variations');
+  src: url('/fonts/fira-code-latin-wght-normal.woff2') format('woff2-variations');
 }
 
 @font-face {
@@ -14,8 +14,7 @@
   font-style: normal;
   font-display: swap;
   font-weight: 200 800;
-  src: url('@fontsource-variable/karla/files/karla-latin-wght-normal.woff2')
-    format('woff2-variations');
+  src: url('/fonts/karla-latin-wght-normal.woff2') format('woff2-variations');
 }
 
 // Fallbacks with the metrics of the fonts above, so the swap after loading reflows as little as
