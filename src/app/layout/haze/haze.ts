@@ -16,6 +16,7 @@ import {
   frameTime,
   isTooSlow,
   pointerEnergy,
+  pollUntil,
 } from './haze-motion';
 import { startPainter, type Painter, type PendingPainter, type Point } from './haze-shader';
 import { MotionPause } from '../motion-pause';
@@ -27,6 +28,8 @@ const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 // has done all work before it. Right after loading it rasters the page, so an early start blocks
 // the main thread for as long (TBT). The static layer looks the same until then.
 const GPU_BUSY_MS = 1000;
+// Two seconds and more of idle periods; then the result is read even if that makes us wait.
+const COMPILE_POLLS = 120;
 
 // Starting WebGL takes main thread time, so it waits until the page is idle (LCP, TBT).
 function whenIdle(start: () => void): void {
@@ -79,16 +82,20 @@ export class Haze {
     const canvas = this.canvas().nativeElement;
     const pending = startPainter(canvas);
     if (!pending) return;
-    canvas.addEventListener('webglcontextlost', () => this.halt('off'), {
-      signal: this.lifetime.signal,
-    });
+    const { signal } = this.lifetime;
+    canvas.addEventListener('webglcontextlost', () => this.halt('off'), { signal });
     // The GPU compiles meanwhile; the result is read in a later task, not in this one.
-    whenIdle(() => this.whenCompiled(pending));
+    whenIdle(() => this.awaitCompile(pending));
+  }
+
+  private awaitCompile(pending: PendingPainter): void {
+    const { signal } = this.lifetime;
+    const settled = () => signal.aborted || pending.done();
+    pollUntil(settled, whenIdle, COMPILE_POLLS, () => this.whenCompiled(pending));
   }
 
   private whenCompiled(pending: PendingPainter): void {
     if (this.lifetime.signal.aborted) return;
-    if (!pending.done()) return whenIdle(() => this.whenCompiled(pending));
     this.paint = pending.finish();
     if (this.paint) this.begin();
   }
