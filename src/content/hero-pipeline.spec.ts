@@ -157,6 +157,15 @@ describe('buildHeroPipeline', () => {
       expect(texts(view)[2]).toBe('Attestation failing · SBOM');
     });
 
+    it('claims no SBOM when the collector could not read one', () => {
+      const view = pipeline((draft) => {
+        draft.supplyChain.signals.repos[0].sbom.reachable = false;
+        draft.supplyChain.links = draft.supplyChain.links.filter((link) => link.kind !== 'sbom');
+      });
+      expect(states(view)[2]).toBe('done');
+      expect(texts(view)[2]).toBe('Attestation');
+    });
+
     it('stops at Preview when the job fails, the job does not tell which step', () => {
       const view = pipeline((draft) => {
         run(draft, 'Deploy preview').conclusion = 'failure';
@@ -191,6 +200,16 @@ describe('buildHeroPipeline', () => {
       expect(view.reached).toBe(5);
       expect(texts(view)[5]).toBe('down');
       expect(view.note).toBe('Monitoring meldet einen Ausfall.');
+    });
+
+    it('claims nothing when Kuma counts no monitor', () => {
+      const view = pipeline((draft) => {
+        draft.stability.signals.monitorsTotal = 0;
+        draft.stability.signals.monitorsUp = 0;
+      });
+      expect(states(view)[5]).toBe('held');
+      expect(texts(view)[5]).toBe('—');
+      expect(view.note).toBeNull();
     });
 
     it('stands open with a dash and no note while Kuma delivers nothing', () => {

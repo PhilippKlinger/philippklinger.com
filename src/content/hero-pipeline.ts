@@ -85,6 +85,13 @@ function checksStation(status: ProjectStatus): ChainStation {
   };
 }
 
+// Same rule as the cards: an SBOM is only named when the collector could read one.
+function sbomPart(status: ProjectStatus): HeroValuePart[] {
+  const link = href(status, 'sbom');
+  const readable = status.supplyChain.signals.repos[0]?.sbom.reachable && link;
+  return readable ? [SEPARATOR, { text: 'SBOM', href: link }] : [];
+}
+
 function buildStation(status: ProjectStatus): ChainStation {
   const name = 'Signed Build';
   const count = status.supplyChain.signals.repos[0]?.attestation?.provenanceCount ?? null;
@@ -95,8 +102,7 @@ function buildStation(status: ProjectStatus): ChainStation {
     value: [
       { text: 'Attestation', href: href(status, 'attestations') },
       ...(count > 0 ? [] : [{ text: ' failing', failed: true }]),
-      SEPARATOR,
-      { text: 'SBOM', href: href(status, 'sbom') },
+      ...sbomPart(status),
     ],
   };
 }
@@ -125,7 +131,8 @@ function productionValue(status: ProjectStatus): { sha: string | null; value: He
 
 function monitoringValue(status: ProjectStatus): { up: boolean | null; value: HeroValuePart[] } {
   const { monitorsTotal, monitorsUp, uptime24h } = status.stability.signals;
-  if (!status.stability.reachable || monitorsTotal === null || monitorsUp === null) {
+  // No monitor counted is no measurement, as in stabilityProofs of the cards.
+  if (!status.stability.reachable || !monitorsTotal || monitorsUp === null) {
     return { up: null, value: DASH };
   }
   const link = href(status, 'status-page');
