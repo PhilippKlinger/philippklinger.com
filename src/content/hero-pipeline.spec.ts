@@ -271,6 +271,57 @@ describe('buildHeroPipeline', () => {
       expect(view.note).toBe('Dieser Stand ist gerade nicht abrufbar.');
     });
 
+    it('starts nowhere when the merged pull requests cannot be read', () => {
+      const view = pipeline((draft) => {
+        draft.code.signals.repos[0].mergedPullRequests = null;
+      });
+      expect(states(view)).toEqual(['open', 'open', 'open', 'open', 'held', 'held']);
+      expect(view.reached).toBe(-1);
+      expect(texts(view)[0]).toBe('—');
+      expect(view.note).toBe('Dieser Stand ist gerade nicht abrufbar.');
+      expect(view.still).toBe(false);
+    });
+
+    it('stops before Signed Build without an attestation signal, without red', () => {
+      const view = pipeline((draft) => {
+        draft.supplyChain.signals.repos[0].attestation = null;
+      });
+      expect(states(view)).toEqual(['done', 'done', 'open', 'open', 'held', 'held']);
+      expect(view.reached).toBe(1);
+      expect(texts(view)[2]).toBe('—');
+      expect(view.note).toBe('Dieser Stand ist gerade nicht abrufbar.');
+    });
+
+    it('stays readable for an older file without the deploy job', () => {
+      const view = pipeline((draft) => {
+        draft.checks.signals.workflows = draft.checks.signals.workflows.filter(
+          (item) => item.kind !== 'deploy',
+        );
+      });
+      expect(states(view)).toEqual(['done', 'done', 'done', 'open', 'held', 'held']);
+      expect(view.reached).toBe(2);
+      expect(texts(view)[3]).toBe('—');
+      expect(texts(view)[4]).toBe(LIVE_SHA.slice(0, 7));
+    });
+
+    it('names only the station when no version is online', () => {
+      const view = pipeline((draft) => {
+        run(draft, 'CI').conclusion = 'failure';
+        draft.live.signals.components[0].deployedSha = null;
+      });
+      expect(view.note).toBe('Gestoppt bei Tests & Security.');
+    });
+
+    it('stands open with a dash when Kuma counts no monitors at all', () => {
+      const view = pipeline((draft) => {
+        draft.stability.signals.monitorsTotal = null;
+      });
+      expect(states(view)[5]).toBe('held');
+      expect(texts(view)[5]).toBe('—');
+      expect(view.reached).toBe(4);
+      expect(view.note).toBeNull();
+    });
+
     it('keeps a dash on Production when no version can be read', () => {
       const view = pipeline((draft) => {
         draft.live.signals.components[0].deployedSha = null;

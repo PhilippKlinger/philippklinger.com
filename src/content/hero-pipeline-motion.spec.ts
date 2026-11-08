@@ -36,6 +36,13 @@ describe('heroFrame', () => {
     expect(frame.dot).toBeCloseTo(1);
   });
 
+  it('eases the line in with a sine, slower than linear at the start', () => {
+    // A quarter of the way the sine has drawn 0.146 of the segment, linear would be 0.25.
+    const frame = heroFrame(allDone, 900 + 200);
+    expect(frame.progress).toBeCloseTo((0.5 - 0.5 * Math.cos(Math.PI / 4)) / 5, 5);
+    expect(frame.dot).toBeCloseTo(Math.sin(Math.PI / 4), 5);
+  });
+
   it('starts the next spinner when the line has arrived', () => {
     const frame = heroFrame(allDone, 900 + 800);
     expect(frame.states).toEqual(['done', 'running', 'idle', 'idle', 'idle', 'idle']);
