@@ -137,6 +137,8 @@ test.describe('Karten', () => {
     page,
   }) => {
     await page.goto('/');
+    // Fonts change the page height; a reader scrolls on the final layout.
+    await page.evaluate(() => document.fonts.ready);
     const target = card(page, 'Videoflix');
     await target.scrollIntoViewIfNeeded();
     const before = await page.evaluate(() => window.scrollY);
