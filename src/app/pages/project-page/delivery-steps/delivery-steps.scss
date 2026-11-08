@@ -104,6 +104,7 @@ h3 {
   a {
     display: inline-grid;
     align-items: center;
+    min-width: var(--size-touch);
     min-height: var(--size-touch);
   }
 }
