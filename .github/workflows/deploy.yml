@@ -214,7 +214,9 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
       # Same rules as the preview upload. This FTP user must only see the
-      # production folder: --delete removes everything else it can reach.
+      # production folder: --delete removes everything else it can reach. A marker
+      # file, placed once by hand in that folder, proves the user stands where it
+      # should; without it nothing is uploaded or deleted.
       - name: Upload via FTPS
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
@@ -222,6 +224,18 @@ jobs:
           LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           set -Eeuo pipefail
+          if ! lftp -c "
+            set cmd:fail-exit yes;
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate true;
+            set net:max-retries 2;
+            open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
+            get .deploy-target-production -o /dev/null
+          "; then
+            echo "::error::Could not read the marker .deploy-target-production in the FTP root (missing marker, wrong user or no connection). Nothing was uploaded or deleted."
+            exit 1
+          fi
           lftp -c "
             set ftp:ssl-force true;
             set ftp:ssl-protect-data true;
@@ -230,6 +244,7 @@ jobs:
             open --env-password -u \"$FTP_USERNAME\" \"$FTP_SERVER\";
             mirror --reverse --delete --verbose --parallel=4 \
               --exclude-glob index.csr.html \
+              --exclude-glob '.deploy-target-*' \
               --exclude '^\.well-known/' \
               --exclude '^status\.json$' \
               site/ .
