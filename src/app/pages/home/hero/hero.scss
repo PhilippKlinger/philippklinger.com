@@ -43,7 +43,10 @@
 }
 
 .claim {
-  max-width: 38rem;
+  // Line length of the approved hero design (mockup hero-a). --reading-width is 60rem, the
+  // measure of the legal pages, and would set the claim in much longer lines.
+  --claim-width: 38rem;
+  max-width: var(--claim-width);
   margin-top: var(--space-md);
   font-size: var(--text-lg);
   color: var(--color-text-muted);
