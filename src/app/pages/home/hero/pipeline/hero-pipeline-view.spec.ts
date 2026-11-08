@@ -1,7 +1,10 @@
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { MotionPause } from '../../../../layout/motion-pause';
+import { DeliveryStatus } from '../../../../delivery/delivery-status';
 import { STATUS_SNAPSHOT } from '../../../../delivery/status-snapshot';
+import { deliveryTexts } from '../../../../../content/software-delivery';
 import { healthyStatus } from '../../../../../content/status.fixture';
 import { ProjectStatus } from '../../../../../content/status';
 import { HeroPipelineView } from './hero-pipeline-view';
@@ -21,6 +24,10 @@ function proven(): ProjectStatus {
 }
 
 function render(status: ProjectStatus | null): HTMLElement {
+  return mount(status).nativeElement as HTMLElement;
+}
+
+function mount(status: ProjectStatus | null) {
   TestBed.configureTestingModule({
     providers: [
       {
@@ -34,6 +41,35 @@ function render(status: ProjectStatus | null): HTMLElement {
     ],
   });
   const fixture = TestBed.createComponent(HeroPipelineView);
+  fixture.detectChanges();
+  return fixture;
+}
+
+/** Without a server behind it the real request for /status.json fails, no mock involved. */
+async function afterFailedRefresh(status: ProjectStatus | null): Promise<HTMLElement> {
+  const fixture = mount(status);
+  TestBed.tick();
+  await vi.waitFor(() => expect(TestBed.inject(DeliveryStatus).notice()).not.toBeNull());
+  fixture.detectChanges();
+  return fixture.nativeElement as HTMLElement;
+}
+
+// jsdom has neither API. Motion is allowed, the hero is never reported in view, so no frame runs.
+function allowMotion(): void {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => undefined }));
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      observe = () => undefined;
+      disconnect = () => undefined;
+    },
+  );
+}
+
+async function moving(status: ProjectStatus | null): Promise<HTMLElement> {
+  allowMotion();
+  const fixture = mount(status);
+  await fixture.whenStable();
   fixture.detectChanges();
   return fixture.nativeElement as HTMLElement;
 }
@@ -79,11 +115,65 @@ describe('HeroPipelineView', () => {
     expect(host.querySelector('.note')?.textContent).toBe(
       'Dieser Stand ist gerade nicht abrufbar.',
     );
-    expect(host.querySelector('.pipe')?.classList.contains('loop')).toBe(false);
+  });
+
+  it('says only once that nothing can be read when the refresh fails too', async () => {
+    const host = await afterFailedRefresh(null);
+    expect(host.querySelector('.title')?.textContent?.trim()).toBe(
+      'How this site is built and run: Dieser Stand ist gerade nicht abrufbar.',
+    );
+  });
+
+  it('keeps the notice of a failed refresh next to the chain of the build', async () => {
+    const host = await afterFailedRefresh(proven());
+    expect(host.querySelector('.title')?.textContent).toContain(deliveryTexts.refreshFailed);
+  });
+
+  it('says so when the data is older than a day', () => {
+    TestBed.overrideProvider(DeliveryStatus, {
+      useValue: {
+        snapshot: () => signal({ generatedAt: '2026-11-01T00:00:00Z', status: proven() }),
+        notice: signal(deliveryTexts.stale),
+      },
+    });
+    const host = render(proven());
+    expect(host.querySelector('.title')?.textContent).toContain(
+      'Dieser Stand ist älter als einen Tag.',
+    );
+  });
+
+  it('draws the line to the end state for the prerender and reduced motion', () => {
+    const status = proven();
+    status.checks.signals.workflows[0].conclusion = 'failure';
+    const pipe = render(status).querySelector<HTMLElement>('.pipe')!;
+    expect(pipe.style.getPropertyValue('--final')).toBe('0.2');
   });
 
   it('offers no pause control when nothing moves', () => {
     expect(render(proven()).querySelector('.pause')).toBeNull();
+  });
+
+  describe('with motion', () => {
+    it('loops a chain from the status', async () => {
+      const host = await moving(proven());
+      expect(host.querySelector('.pipe')?.classList.contains('loop')).toBe(true);
+    });
+
+    it('does not loop without data', async () => {
+      const host = await moving(null);
+      expect(host.querySelector('.pipe')?.classList.contains('loop')).toBe(false);
+    });
+
+    it('keeps the name of the pause control and only presses it (WAI-ARIA APG)', async () => {
+      const host = await moving(proven());
+      const pause = host.querySelector<HTMLButtonElement>('.pause')!;
+      expect(pause.getAttribute('aria-label')).toBe('Bewegung anhalten');
+      expect(pause.getAttribute('aria-pressed')).toBe('false');
+      pause.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(pause.getAttribute('aria-label')).toBe('Bewegung anhalten');
+      expect(pause.getAttribute('aria-pressed')).toBe('true');
+    });
   });
 
   it('only links what has a source', () => {

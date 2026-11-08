@@ -156,8 +156,10 @@ test.describe('Zustände', () => {
   test('[H1] keine Daten: keine Häkchen, freundlicher Satz, Links bleiben', async ({ page }) => {
     await page.route('**/status.json', (route) => route.fulfill({ status: 500, body: 'error' }));
     await page.goto('/');
-    await expect(page.locator('.hero .title')).toContainText(
-      'Dieser Stand ist gerade nicht abrufbar.',
+    // Wait for the failed refresh: its own notice must not add a second sentence.
+    await expect(page.locator('app-project-list [role="status"]')).not.toBeEmpty();
+    await expect(page.locator('.hero .title')).toHaveText(
+      'How this site is built and run: Dieser Stand ist gerade nicht abrufbar.',
     );
     await expect(page.locator('.hero [data-state="done"]')).toHaveCount(0);
     await expect(page.locator('.hero .value a')).toHaveText([
@@ -195,7 +197,8 @@ test.describe('Schleife', () => {
     await expect(pause(page)).toHaveAttribute('aria-pressed', 'false');
     await pause(page).click();
     await expect(pause(page)).toHaveAttribute('aria-pressed', 'true');
-    await expect(pause(page)).toHaveAccessibleName('Bewegung fortsetzen');
+    // A toggle keeps its name, only the pressed state changes (WAI-ARIA APG).
+    await expect(pause(page)).toHaveAccessibleName('Bewegung anhalten');
     const held = await expectHeld(page);
 
     // Pointer and focus stay on the control, as after any click: the run must continue anyway.

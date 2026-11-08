@@ -16,11 +16,13 @@
       }
     </p>
     @if (moving()) {
+      <!-- DRAFT: label of the control, it also stops the haze. A toggle keeps its name (WAI-ARIA APG). -->
       <button
         class="pause"
         type="button"
         [attr.aria-pressed]="paused()"
-        [attr.aria-label]="paused() ? 'Bewegung fortsetzen' : 'Bewegung anhalten'"
+        i18n-aria-label
+        aria-label="Bewegung anhalten"
         (click)="togglePause()"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">

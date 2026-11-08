@@ -38,7 +38,8 @@ export class HeroPipelineView {
     buildHeroPipeline(this.status.snapshot('portfolio', this.destroyRef)()),
   );
   protected readonly final = computed(() => heroFinalFrame(this.pipeline()));
-  protected readonly stale = this.status.notice;
+  // Without any data the chain already says it cannot be read; a second sentence adds nothing.
+  protected readonly stale = computed(() => (this.pipeline().still ? null : this.status.notice()));
   protected readonly failed = computed(() =>
     this.pipeline().stations.some((station) => station.state === 'failed'),
   );
