@@ -51,7 +51,7 @@ export const projects: Project[] = [
   {
     slug: 'neuro-check-in',
     title: 'Neuro Check-in',
-    // Wording of the final CV, without health topics (DECISIONS 2026-11-04).
+    // Wording of the final CV.
     summary:
       'Eigene Android-App zur Selbstreflexion im Google Play Store mit React Native und TypeScript; Offline-Datenspeicherung mit SQLite, PDF-Export sowie automatisierte Unit- und E2E-Tests.',
     // DRAFT: meta description, shortened from the summary.

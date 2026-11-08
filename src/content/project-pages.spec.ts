@@ -1,5 +1,6 @@
 import { projectPageContent, ProjectPageContent } from './project-pages';
 import { projects } from './projects';
+import { TOPIC_A, TOPIC_B, TOPIC_C, findForbiddenTerm } from './testing/forbidden-terms';
 
 const pages = Object.entries(projectPageContent) as [string, ProjectPageContent][];
 const allText = JSON.stringify(projectPageContent);
@@ -40,8 +41,8 @@ describe('projectPageContent', () => {
     );
   });
 
-  it('has no health topics', () => {
-    expect(allText).not.toMatch(/neurodiv|gesund|therap/i);
+  it('has no private topics', async () => {
+    expect(await findForbiddenTerm(allText, [TOPIC_A, TOPIC_B, TOPIC_C])).toBe(false);
   });
 
   it('does not suggest a foreign review', () => {
