@@ -351,6 +351,19 @@ test.describe('Aufbau', () => {
     });
   }
 
+  test('[H6] der Pause-Knopf verschiebt nichts, wenn er nach der Hydration erscheint', async ({
+    page,
+  }) => {
+    const top = () =>
+      page.locator('.hero .intro').evaluate((intro) => intro.getBoundingClientRect().top);
+    await openWith(page);
+    await expect(pause(page)).toBeVisible();
+    const withControl = await top();
+    // As in the prerender, before the control exists.
+    await page.addStyleTag({ content: '.hero .pause { display: none; }' });
+    expect(await top(), 'Text rutscht').toBeCloseTo(withControl, 0);
+  });
+
   for (const size of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },

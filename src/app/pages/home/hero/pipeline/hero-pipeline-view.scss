@@ -12,7 +12,9 @@ $wide: 1100px;
   padding-bottom: var(--space-md);
 }
 
+// The pause control appears only after hydration; the line keeps its height, so nothing moves.
 .head {
+  min-height: var(--touch);
   display: flex;
   align-items: center;
   justify-content: space-between;
