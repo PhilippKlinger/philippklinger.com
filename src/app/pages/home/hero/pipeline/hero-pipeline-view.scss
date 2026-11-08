@@ -234,7 +234,8 @@ $wide: 1100px;
 // Values appear when their station is done. Hover, focus and pause show all of them, so no link
 // is ever out of reach, and screen readers read them either way.
 .loop {
-  .spin {
+  // Only the visible ring turns; the others would spend frames at opacity 0.
+  [data-state='running'] .spin {
     animation: spin 1s linear infinite;
   }
 
