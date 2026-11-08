@@ -15,14 +15,6 @@ export const profile = {
     'KI nutze ich als Werkzeug mit Leitplanken: Ich gebe die Richtung vor und prüfe, teste und sichere ab, was entsteht.',
 };
 
-// DRAFT: availability line below the hero, wording to be approved.
-export const availability = [
-  'Offen für Festanstellung',
-  'DevSecOps & Fullstack',
-  'Remote oder hybrid',
-  'Verfügbar ab sofort',
-];
-
 export const navigation = [
   { label: 'Über mich', fragment: 'ueber-mich' },
   { label: 'Skills', fragment: 'skills' },

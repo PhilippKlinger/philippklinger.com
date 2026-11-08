@@ -71,118 +71,42 @@ test.describe('Hero', () => {
     );
   });
 
-  test('[Design] füllt den ersten Bildschirm, Band unten noch sichtbar', async ({ page }) => {
-    const viewport = page.viewportSize()!;
-    const hero = await page.locator('.hero').boundingBox();
-    const band = await page.locator('.band').boundingBox();
-    expect(hero!.height).toBeGreaterThanOrEqual(viewport.height * 0.9);
-    expect(
-      band!.y + band!.height / 2,
-      'Band liegt unter dem ersten Bildschirm',
-    ).toBeLessThanOrEqual(viewport.height);
+  // Ran on every viewport before the pipeline; H6 in hero-pipeline.e2e.ts adds the exact height.
+  test('[Design] füllt den ersten Bildschirm', async ({ page }) => {
+    const hero = (await page.locator('.hero').boundingBox())!;
+    expect(hero.height).toBeGreaterThanOrEqual(page.viewportSize()!.height);
   });
 
-  test('[Design] E-Mail und Social-Links senkrecht am rechten Rand', async ({ page }) => {
-    const social = await page.locator('.social').boundingBox();
-    expect(social!.x, 'Social-Leiste steht nicht rechts').toBeGreaterThan(width(page) * 0.75);
-    if (!isMobile(page)) {
-      await expect(page.locator('.social .email')).toHaveCSS('writing-mode', 'vertical-rl');
-    }
+  test('[Design] linksbündig an derselben Kante wie das Logo', async ({ page }) => {
+    await expect(page.locator('.hero .intro')).toHaveCSS('text-align', 'start');
+    const logo = (await page.locator('header .logo').boundingBox())!;
+    const role = (await page.locator('.hero .role').boundingBox())!;
+    expect(Math.abs(role.x - logo.x), 'Textkante').toBeLessThan(1);
   });
 
-  test('[Design] Pfeil, E-Mail und Social-Links sind sichtbar und nicht vom Band verdeckt', async ({
-    page,
-  }) => {
-    const targets = [
-      // The visible arrow; its line runs behind the band on purpose.
-      page.getByRole('link', { name: 'Weiter zu Über mich' }).locator('span'),
-      page.locator('.social a'),
+  test('[Design] Hero hat kein Band, keinen Pfeil und keine Socials mehr', async ({ page }) => {
+    await expect(page.locator('.hero .band, .hero .scroll-down, .hero .social')).toHaveCount(0);
+  });
+
+  test('[Design] Jobtitel und Navigation in Fira Code, Logo in Karla', async ({ page }) => {
+    await expect(page.locator('.hero .role')).toHaveCSS('font-family', /Fira Code/);
+    await expect(page.locator('header .logo')).toHaveCSS('font-family', /Karla/);
+    await expect(page.locator('header .logo')).toHaveText('PK');
+    test.skip(isMobile(page), 'Navigation liegt im Menü');
+    const link = page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link');
+    await expect(link.first()).toHaveCSS('font-family', /Fira Code/);
+    await expect(link.first()).toHaveCSS('font-size', '16px');
+    const [logo, nav] = [
+      await page.locator('header .logo').boundingBox(),
+      await link.first().boundingBox(),
     ];
-    for (const target of targets) {
-      for (const link of await target.all()) {
-        await expect(link).toBeVisible();
-        const hidden = await link.evaluate((el) => {
-          const box = el.getBoundingClientRect();
-          const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-          return !(hit && (el === hit || el.contains(hit)));
-        });
-        expect(
-          hidden,
-          `${(await link.getAttribute('aria-label')) ?? (await link.innerText())} ist verdeckt`,
-        ).toBe(false);
-      }
-    }
-  });
-
-  test('[Design] Seitenleisten überlappen Text und Buttons des Hero nicht', async ({ page }) => {
-    // Line boxes of the texts plus the buttons: the real content, not the wide containers.
-    const content = await page.locator('.hero .intro').evaluate((intro) => {
-      const rects: { left: number; right: number; top: number; bottom: number }[] = [];
-      for (const text of intro.querySelectorAll('p, h1')) {
-        const range = document.createRange();
-        range.selectNodeContents(text);
-        rects.push(...range.getClientRects());
-      }
-      for (const button of intro.querySelectorAll('.button'))
-        rects.push(button.getBoundingClientRect());
-      return rects.map(({ left, right, top, bottom }) => ({ left, right, top, bottom }));
-    });
-    const sides = [page.locator('.scroll-down span'), ...(await page.locator('.social a').all())];
-    for (const side of sides) {
-      const b = (await side.boundingBox())!;
-      const hit = content.some(
-        (c) => b.x < c.right && b.x + b.width > c.left && b.y < c.bottom && b.y + b.height > c.top,
-      );
-      const name = (await side.getAttribute('aria-label')) ?? (await side.innerText());
-      expect(hit, `${name} liegt über dem Hero-Text`).toBe(false);
-    }
-  });
-
-  test('[Design] Band-Einträge stehen einzeilig in einer Reihe', async ({ page }) => {
-    // Visible copy of the marquee; the screen-reader list is 1px and not measured.
-    const items = await page.locator('.band-track li').evaluateAll((lis) =>
-      lis.map((li) => {
-        const style = getComputedStyle(li);
-        return {
-          text: li.textContent?.trim(),
-          lines: Math.round(li.getBoundingClientRect().height / parseFloat(style.lineHeight)),
-          top: li.getBoundingClientRect().top,
-        };
-      }),
-    );
-    for (const item of items) expect(item.lines, `„${item.text}“ bricht um`).toBeLessThanOrEqual(1);
-    // One row: a second row would move items by a whole line.
-    const tops = items.map((item) => item.top);
-    expect(Math.max(...tops) - Math.min(...tops), 'Einträge stehen untereinander').toBeLessThan(80);
-  });
-
-  test('[Design] Pfeil führt zu Über mich', async ({ page }) => {
-    await expect(page.getByRole('link', { name: 'Weiter zu Über mich' })).toHaveAttribute(
-      'href',
-      /#ueber-mich$/,
-    );
-  });
-
-  test('[Spec 3.4] Verfügbarkeitszeile ist statisch oder hat einen Pause-Knopf', async ({
-    page,
-  }) => {
-    const running = await page
-      .locator('.band')
-      .evaluate(
-        (band) =>
-          band.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
-      );
-    const pause = await page
-      .locator('.band')
-      .getByRole('button', { name: /pause|anhalten/i })
-      .count();
-    expect(running === 0 || pause === 1).toBe(true);
-  });
-
-  test('[Design Widescreen] Band läuft über die volle Breite', async ({ page }) => {
-    const band = await page.locator('.band').boundingBox();
-    expect(band!.x).toBeLessThanOrEqual(1);
-    expect(band!.x + band!.width).toBeGreaterThanOrEqual(width(page) - 1);
+    const last = (await link.last().boundingBox())!;
+    expect(nav!.x, 'Navigation steht rechts vom Logo').toBeGreaterThan(logo!.x + logo!.width);
+    // The header is centred, so the right edge mirrors the left one on every width.
+    expect(
+      Math.abs(last.x + last.width - (width(page) - logo!.x)),
+      'Navigation endet am rechten Inhaltsrand',
+    ).toBeLessThanOrEqual(1);
   });
 });
 
@@ -223,7 +147,7 @@ test.describe('Abschnitte', () => {
     await expect(contact.locator('a[href^="mailto:"]')).toBeVisible();
     await expect(contact.locator('a[href*="linkedin.com"]')).toBeVisible();
     await expect(contact.locator('a[href*="github.com/PhilippKlinger"]')).toBeVisible();
-    await expect(contact.locator('.availability')).not.toBeEmpty();
+    await expect(contact.locator('.availability')).toHaveText('Open to Work · remote oder hybrid');
   });
 });
 
@@ -319,108 +243,7 @@ test.describe('Zustände und Bewegung', () => {
   });
 });
 
-test.describe('Band (PK-21)', () => {
-  const runningIn = (page: Page) =>
-    page
-      .locator('.band-track')
-      .evaluate(
-        (track) =>
-          track.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
-      );
-
-  test('[PK-21] gerade, ohne Hintergrundblock, mit Haarlinien oben und unten', async ({ page }) => {
-    const band = page.locator('.band');
-    await expect(band).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(band).toHaveCSS('transform', 'none');
-    await expect(band).toHaveCSS('border-top-width', '1px');
-    await expect(band).toHaveCSS('border-bottom-width', '1px');
-    await expect(band).toHaveCSS('mask-image', /gradient/);
-    await expect(page.locator('.band-track li').first()).toHaveCSS('font-family', /Fira Code/);
-  });
-
-  test('[PK-21] läuft von rechts nach links', async ({ page }) => {
-    const x = () =>
-      page
-        .locator('.band-items')
-        .first()
-        .evaluate((el) => el.getBoundingClientRect().x);
-    const before = await x();
-    await page.waitForTimeout(600);
-    expect(await x(), 'Band bewegt sich nicht nach links').toBeLessThan(before);
-  });
-
-  test('[PK-21 · WCAG 2.2.2] Pause-Knopf hält an und setzt fort', async ({ page }) => {
-    expect(await runningIn(page)).toBeGreaterThan(0);
-    const pause = page.locator('.band').getByRole('button', { name: 'Laufband anhalten' });
-    await expect(pause).toHaveAttribute('aria-pressed', 'false');
-    await pause.click();
-    await expect(pause).toHaveAttribute('aria-pressed', 'true');
-    await page.mouse.move(0, 0);
-    await expect.poll(() => runningIn(page)).toBe(0);
-    await pause.click();
-    // Focus inside the band pauses too, so leave it for the resume check.
-    await pause.blur();
-    await page.mouse.move(0, 0);
-    await expect.poll(() => runningIn(page)).toBeGreaterThan(0);
-  });
-
-  test('[PK-21] Hover und Tastaturfokus pausieren', async ({ page }) => {
-    test.skip(isMobile(page), 'kein Hover auf Touch');
-    await page.locator('.band').hover();
-    await expect.poll(() => runningIn(page)).toBe(0);
-    await page.mouse.move(0, 0);
-    await expect.poll(() => runningIn(page)).toBeGreaterThan(0);
-    await page.locator('.band').getByRole('button').focus();
-    await expect.poll(() => runningIn(page)).toBe(0);
-  });
-
-  test('[PK-21] Text einmal für Screenreader, die Laufschrift ist dekorativ', async ({ page }) => {
-    await expect(page.locator('.band-track')).toHaveAttribute('aria-hidden', 'true');
-    const read = page.locator('.band > ul li');
-    await expect(read).toHaveText([
-      'Offen für Festanstellung',
-      'DevSecOps & Fullstack',
-      'Remote oder hybrid',
-      'Verfügbar ab sofort',
-    ]);
-  });
-
-  test('[PK-21] Reduced Motion: Band steht, kein Pause-Knopf nötig', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    expect(await runningIn(page)).toBe(0);
-    await expect(page.locator('.band').getByRole('button')).toBeHidden();
-  });
-});
-
 test.describe('Mikro-Interaktionen (PK-28)', () => {
-  const dot = (link: ReturnType<Page['locator']>) =>
-    link.evaluate((el) => getComputedStyle(el, '::before').opacity);
-
-  test('[PK-28] Scroll-Pfeil schwebt, höchstens 5 Sekunden (WCAG 2.2.2)', async ({ page }) => {
-    const timing = await page
-      .locator('.scroll-down span')
-      .evaluate((el) => el.getAnimations().map((a) => a.effect?.getComputedTiming()));
-    expect(timing.length, 'Pfeil ist nicht animiert').toBeGreaterThan(0);
-    for (const t of timing) expect(Number(t?.endTime)).toBeLessThanOrEqual(5000);
-  });
-
-  test('[PK-28] Punkt neben Social-Icons bei Hover und gleich bei Fokus', async ({ page }) => {
-    for (const link of await page.locator('.social a').all()) {
-      expect(await dot(link)).toBe('0');
-      await link.focus();
-      await page.keyboard.press('Shift+Tab');
-      await page.keyboard.press('Tab');
-      await expect.poll(() => dot(link)).toBe('1');
-      if (!isMobile(page)) {
-        await page.locator('body').click({ position: { x: 1, y: 1 } });
-        await link.hover();
-        await expect.poll(() => dot(link)).toBe('1');
-        await page.mouse.move(0, 0);
-      }
-    }
-  });
-
   test('[PK-28] Button-Text läuft bei Hover und Fokus durch', async ({ page }) => {
     const button = page.locator('.hero .button').first();
     const label = button.locator('.button-label');
@@ -431,15 +254,6 @@ test.describe('Mikro-Interaktionen (PK-28)', () => {
     await page.keyboard.press('Tab');
     await expect.poll(offset).not.toBe(rest);
     await expect(button).toHaveAccessibleName('Projekte ansehen');
-  });
-
-  test('[PK-28] Reduced Motion: Pfeil steht still', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    const count = await page
-      .locator('.scroll-down span')
-      .evaluate((el) => el.getAnimations().length);
-    expect(count).toBe(0);
   });
 });
 

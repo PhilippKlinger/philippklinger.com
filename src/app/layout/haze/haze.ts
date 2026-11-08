@@ -2,9 +2,11 @@ import {
   afterNextRender,
   Component,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import {
@@ -16,6 +18,7 @@ import {
   pointerEnergy,
 } from './haze-motion';
 import { createPainter, type Painter, type Point } from './haze-shader';
+import { MotionPause } from '../motion-pause';
 
 const EASING = 0.07;
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
@@ -35,6 +38,7 @@ function whenIdle(start: () => void): void {
 })
 export class Haze {
   protected readonly state = signal<'off' | 'still' | 'running' | 'slow'>('off');
+  private readonly motion = inject(MotionPause);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   // Ends the listeners and an idle start that has not happened yet.
   private readonly lifetime = new AbortController();
@@ -55,6 +59,15 @@ export class Haze {
       destroyRef.onDestroy(() => this.stop());
       whenIdle(() => this.start());
     });
+    // The pause asks for no frames, so playing again has to request them.
+    effect(() => {
+      if (!this.motion.paused()) untracked(() => this.resume());
+    });
+  }
+
+  private resume(): void {
+    if (this.lifetime.signal.aborted || this.state() !== 'running' || this.frameId) return;
+    this.frameId = requestAnimationFrame(this.frame);
   }
 
   private start(): void {
@@ -105,6 +118,12 @@ export class Haze {
 
   // Only a change of state goes into a signal; nothing here may render per frame.
   private readonly frame = (now: number): void => {
+    this.frameId = 0;
+    if (this.motion.paused()) {
+      // The time of the pause is no slow frame.
+      this.lastFrame = 0;
+      return;
+    }
     this.frameId = requestAnimationFrame(this.frame);
     if (document.hidden) return;
     this.moveLight(now);

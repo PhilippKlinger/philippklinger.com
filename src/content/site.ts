@@ -19,6 +19,5 @@ export const shareImage = {
 export const contact = {
   intro:
     'Sie suchen Verstärkung für Development, CI/CD oder Operations? Schreiben Sie mir, ich freue mich auf das Gespräch.',
-  // DRAFT: availability line, Philipp delivers the final wording.
-  availability: 'Offen für eine Festanstellung, remote oder hybrid, ab sofort.',
+  availability: 'Open to Work · remote oder hybrid',
 };

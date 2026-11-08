@@ -1,0 +1,65 @@
+<div
+  class="pipe"
+  [class.loop]="looping()"
+  [class.paused]="paused()"
+  [class.resetting]="frame()?.resetting"
+  [style.--final]="final().progress"
+>
+  <div class="head">
+    <p class="title">
+      <span lang="en">How this site is built and run:</span>
+      @if (pipeline().note; as note) {
+        &ngsp;<span class="note" [class.alert]="failed()">{{ note }}</span>
+      }
+      @if (stale(); as notice) {
+        &ngsp;<span class="note">{{ notice }}</span>
+      }
+    </p>
+    @if (moving()) {
+      <!-- DRAFT: label of the control, it also stops the haze. A toggle keeps its name (WAI-ARIA APG). -->
+      <button
+        class="pause"
+        type="button"
+        [attr.aria-pressed]="paused()"
+        i18n-aria-label
+        aria-label="Bewegung anhalten"
+        (click)="togglePause()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path [attr.d]="paused() ? 'M8 5v14l11-7z' : 'M7 5h3v14H7zm7 0h3v14h-3z'" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <div class="box">
+    <span class="track" aria-hidden="true"></span>
+    <span class="fill" aria-hidden="true"></span>
+    <span class="pulse-track" aria-hidden="true"><span class="pulse"></span></span>
+    <ol class="stations" lang="en">
+      @for (station of pipeline().stations; track station.name; let index = $index) {
+        <li class="station" [attr.data-state]="frame()?.states?.[index] ?? station.state">
+          <span class="node" aria-hidden="true">
+            <span class="spin"></span>
+            <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
+            <svg class="cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </span>
+          <div class="cell">
+            <span class="label">{{ station.name }}</span>
+            <span class="value">
+              @for (part of station.value; track $index) {
+                @if (part.href; as href) {
+                  <a [href]="href" target="_blank" rel="noopener" [class.fail]="part.failed">{{
+                    part.text
+                  }}</a>
+                } @else {
+                  <span [class.fail]="part.failed">{{ part.text }}</span>
+                }
+              }
+            </span>
+          </div>
+        </li>
+      }
+    </ol>
+  </div>
+</div>

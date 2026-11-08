@@ -133,6 +133,28 @@ test.describe('Karten', () => {
     await expect(page.locator('h1')).toHaveText('Conduit');
   });
 
+  test('[Spec 11] Browser-Zurück stellt die Scroll-Position der Startseite wieder her', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    // Fonts change the page height; a reader scrolls on the final layout.
+    await page.evaluate(() => document.fonts.ready);
+    const target = card(page, 'Videoflix');
+    await target.scrollIntoViewIfNeeded();
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before, 'the card must sit below the top').toBeGreaterThan(0);
+
+    await target.locator('a[data-card-cta]').click();
+    await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
+    await page.goBack();
+
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await expect
+      .poll(() => page.evaluate((y) => Math.abs(window.scrollY - y), before))
+      .toBeLessThan(3);
+    await expect(target).toBeInViewport();
+  });
+
   test('[AK2] Klick auf die Fläche der Berichtskarte führt zu allen Berichten', async ({
     page,
   }) => {

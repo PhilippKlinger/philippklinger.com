@@ -405,14 +405,15 @@ test.describe('eigener Zeiger', () => {
   });
 
   test('[PK-36] über einem Knopf wird der Punkt zum Kreis', async ({ page }) => {
-    await hoverCenter(page, page.locator('.band-pause'));
+    await hoverCenter(page, page.locator('.hero .pause'));
     await expectDotOn(page);
     await expectDotSize(page, '20px');
   });
 
   test('[PK-36] über einem gefüllten Knopf bleibt der Kreis sichtbar', async ({ page }) => {
     const accent = await accentColor(page);
-    const button = page.getByRole('link', { name: 'Projekte ansehen', exact: true });
+    // The primary button is filled at rest and turns white; this one fills on hover.
+    const button = page.locator('.hero').getByRole('link', { name: 'Kontakt', exact: true });
     const box = await button.boundingBox();
     // The label starts 25 px into the button, the circle with its edge is 22 px wide: the
     // label stays out of the picture, or its dark text would count as a visible circle.

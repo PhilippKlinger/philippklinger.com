@@ -7,6 +7,7 @@ import {
 } from '@angular/router';
 import { routes } from './app.routes';
 import { PageTitleStrategy } from './page-title-strategy';
+import { provideHomeScrollRestore } from './home-scroll-restore';
 import {
   provideClientHydration,
   withI18nSupport,
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
     // The default incremental hydration adds event replay, whose inline scripts the CSP
     // (script-src 'self') blocks. No template uses @defer, so nothing depends on it.
     provideClientHydration(withI18nSupport(), withNoIncrementalHydration()),
+    provideHomeScrollRestore(),
     { provide: TitleStrategy, useClass: PageTitleStrategy },
   ],
 };
