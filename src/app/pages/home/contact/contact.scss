@@ -29,7 +29,7 @@
   // Touch targets of at least 44 px (web-quality rule).
   a {
     display: inline-block;
-    min-height: 2.75rem;
+    min-height: var(--size-touch);
     padding-block: var(--space-xs);
   }
 }
