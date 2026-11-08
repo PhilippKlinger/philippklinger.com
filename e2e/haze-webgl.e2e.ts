@@ -1,5 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { expectBehindContent, expectOneDecorativeLayer } from './support/haze';
+import { countFrames, expectFramesRunning, expectNoFrames } from './support/motion';
 
 // The only tests with WebGL: a software GPU gives a real context even with
 // failIfMajorPerformanceCaveat. Reaching the "slow" state takes 120 frames, so about
@@ -225,6 +226,21 @@ test('[WCAG 2.2.2] der Pause-Knopf des Hero hält auch den Haze an', async ({ pa
   await pause.click();
   await waitForFrames(page, 30);
   expect(still.equals(await picture(page)), 'läuft weiter').toBe(false);
+});
+
+test('[WCAG 2.2.2] in der Pause fragt der Haze keine Frames an', async ({ page }, testInfo) => {
+  desktopOnly(testInfo);
+  await countFrames(page);
+  await page.setViewportSize({ width: 600, height: 400 });
+  await page.goto('/');
+  await expect(haze(page)).toHaveAttribute('data-haze-state', 'running');
+
+  const pause = page.locator('.hero .pause');
+  await pause.click();
+  await expectNoFrames(page);
+  await pause.click();
+  await expectFramesRunning(page);
+  await expectStillRunning(page, 'nach der Pause');
 });
 
 test('[AK9] nach Kontextverlust bleibt die statische Ebene', async ({ page }, testInfo) => {

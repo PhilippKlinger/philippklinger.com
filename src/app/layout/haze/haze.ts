@@ -2,9 +2,11 @@ import {
   afterNextRender,
   Component,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import {
@@ -57,6 +59,15 @@ export class Haze {
       destroyRef.onDestroy(() => this.stop());
       whenIdle(() => this.start());
     });
+    // The pause asks for no frames, so playing again has to request them.
+    effect(() => {
+      if (!this.motion.paused()) untracked(() => this.resume());
+    });
+  }
+
+  private resume(): void {
+    if (this.lifetime.signal.aborted || this.state() !== 'running' || this.frameId) return;
+    this.frameId = requestAnimationFrame(this.frame);
   }
 
   private start(): void {
@@ -107,13 +118,14 @@ export class Haze {
 
   // Only a change of state goes into a signal; nothing here may render per frame.
   private readonly frame = (now: number): void => {
-    this.frameId = requestAnimationFrame(this.frame);
-    if (document.hidden) return;
+    this.frameId = 0;
     if (this.motion.paused()) {
       // The time of the pause is no slow frame.
       this.lastFrame = 0;
       return;
     }
+    this.frameId = requestAnimationFrame(this.frame);
+    if (document.hidden) return;
     this.moveLight(now);
     this.energy = pointerEnergy(this.energy, 0, this.lastFrame ? now - this.lastFrame : 0);
     this.paint?.(now, this.light, this.energy);
