@@ -1,4 +1,5 @@
 import { portfolioProject, projects } from './projects';
+import { TOPIC_A, findForbiddenTerm } from './testing/forbidden-terms';
 
 describe('projects', () => {
   it('lists the four projects of phase 1 in order', () => {
@@ -15,10 +16,10 @@ describe('projects', () => {
     expect(project.summary).toBeTruthy();
   });
 
-  it('keeps health topics out of the project texts (DECISIONS 2026-11-04)', () => {
+  it('keeps private topics out of the project texts', async () => {
     for (const project of projects) {
-      expect(project.summary).not.toMatch(/neurodiv/i);
-      expect(project.description).not.toMatch(/neurodiv/i);
+      expect(await findForbiddenTerm(project.summary, [TOPIC_A])).toBe(false);
+      expect(await findForbiddenTerm(project.description, [TOPIC_A])).toBe(false);
     }
   });
 

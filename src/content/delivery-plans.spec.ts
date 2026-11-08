@@ -1,4 +1,5 @@
 import { deliveryPlans } from './delivery-plans';
+import { TOPIC_A, TOPIC_B, findForbiddenTerm } from './testing/forbidden-terms';
 import { portfolioProject, projects } from './projects';
 import {
   buildDeliveryView,
@@ -128,8 +129,8 @@ describe('deliveryPlans', () => {
     }
   });
 
-  it('has no health topics', () => {
-    expect(JSON.stringify(deliveryPlans)).not.toMatch(/neurodiv|gesund/i);
+  it('has no private topics', async () => {
+    expect(await findForbiddenTerm(JSON.stringify(deliveryPlans), [TOPIC_A, TOPIC_B])).toBe(false);
   });
 
   it('conduit starts its deployment as not set up', () => {
