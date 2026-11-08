@@ -1,4 +1,12 @@
-import { driftTarget, ease, frameTime, isTooSlow, pointerEnergy, renderSize } from './haze-motion';
+import {
+  driftTarget,
+  ease,
+  frameTime,
+  isTooSlow,
+  pointerEnergy,
+  pollUntil,
+  renderSize,
+} from './haze-motion';
 
 const samples = (count: number, ms: number) => new Array<number>(count).fill(ms);
 
@@ -123,5 +131,40 @@ describe('isTooSlow', () => {
 
   it('is too slow at 41 ms', () => {
     expect(isTooSlow(samples(120, 41))).toBe(true);
+  });
+});
+
+describe('pollUntil', () => {
+  // Runs the next try at once, so the whole wait happens inside the test.
+  const atOnce = (tries: number[]) => (next: () => void) => {
+    tries.push(tries.length);
+    next();
+  };
+
+  it('goes on as soon as the answer is yes', () => {
+    const answers = [false, false, true];
+    const tries: number[] = [];
+    let wentOn = 0;
+    pollUntil(
+      () => answers.shift()!,
+      atOnce(tries),
+      10,
+      () => wentOn++,
+    );
+    expect(tries).toHaveLength(2);
+    expect(wentOn).toBe(1);
+  });
+
+  it('goes on after the last try when the answer never comes', () => {
+    const tries: number[] = [];
+    let wentOn = 0;
+    pollUntil(
+      () => false,
+      atOnce(tries),
+      5,
+      () => wentOn++,
+    );
+    expect(tries).toHaveLength(5);
+    expect(wentOn).toBe(1);
   });
 });

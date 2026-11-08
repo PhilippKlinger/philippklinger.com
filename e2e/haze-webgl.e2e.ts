@@ -16,6 +16,7 @@ test.use({
 declare global {
   interface Window {
     hazeEnergy: number;
+    linkReadsWhileLinking: boolean[];
   }
 }
 
@@ -156,6 +157,34 @@ test('[PK-36] schnelle Bewegung gibt dem Haze einen Impuls, der abklingt', async
   await waitForFrames(page, 45);
   expect(await hazeEnergy(page), 'klingt von allein ab').toBeLessThan(after * 0.5);
   await expectStillRunning(page, 'beim letzten Bild');
+});
+
+// Only records and still calls the original. Reading the result of the link waits for the GPU
+// to compile; in the task that links, the main thread would stand still for it.
+const recordLinkReads = (page: Page) =>
+  page.addInitScript(() => {
+    const { linkProgram, getProgramParameter } = WebGLRenderingContext.prototype;
+    let linking = false;
+    window.linkReadsWhileLinking = [];
+    WebGLRenderingContext.prototype.linkProgram = function (program) {
+      linking = true;
+      setTimeout(() => (linking = false));
+      linkProgram.call(this, program);
+    };
+    WebGLRenderingContext.prototype.getProgramParameter = function (program, name) {
+      if (name === this.LINK_STATUS) window.linkReadsWhileLinking.push(linking);
+      return getProgramParameter.call(this, program, name);
+    };
+  });
+
+test('[Spec 11 · TBT] liest das Ergebnis des Shaders erst nach dem Kompilieren', async ({
+  page,
+}, testInfo) => {
+  desktopOnly(testInfo);
+  await recordLinkReads(page);
+  await page.goto('/');
+  await expect(haze(page)).toHaveAttribute('data-haze-state', 'running');
+  expect(await page.evaluate(() => window.linkReadsWhileLinking)).toEqual([false]);
 });
 
 test('[AK9] liegt auch im Lauf als eine Ebene hinter dem Inhalt', async ({ page }, testInfo) => {

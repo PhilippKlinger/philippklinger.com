@@ -6,6 +6,8 @@ $breakpoints: (
   tablet: 768px,
   // Delivery cards split into text and panel (60rem).
   card: 960px,
+  // The hero pipeline puts its stations side by side; below this the values do not fit.
+  pipeline: 1100px,
   desktop: 1440px,
 );
 

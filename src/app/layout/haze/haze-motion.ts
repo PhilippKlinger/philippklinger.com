@@ -48,3 +48,20 @@ export function isTooSlow(frameTimesMs: number[]): boolean {
   const total = frameTimesMs.reduce((sum, ms) => sum + ms, 0);
   return total / frameTimesMs.length > SLOW_FRAME_MS;
 }
+
+/**
+ * Asks until `done` says yes, at most `tries` more times, then goes on anyway: an answer that
+ * never comes must not keep scheduling work for the life of the page.
+ */
+export function pollUntil(
+  done: () => boolean,
+  later: (next: () => void) => void,
+  tries: number,
+  then: () => void,
+): void {
+  if (done() || tries <= 0) {
+    then();
+    return;
+  }
+  later(() => pollUntil(done, later, tries - 1, then));
+}

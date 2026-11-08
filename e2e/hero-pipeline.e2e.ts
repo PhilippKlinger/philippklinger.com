@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type Route, type TestInfo } from '@playwright/test';
 import type { ProjectStatus, StatusDocument } from '../src/content/status';
 import { countFrames, expectFramesRunning, expectNoFrames, holdHero } from './support/motion';
 
@@ -13,6 +13,18 @@ const ONE_RUN_MS = 16_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Change = (status: ProjectStatus) => void;
+
+declare global {
+  interface Window {
+    layoutShift: number;
+  }
+}
+
+/** Not in the DOM types of TypeScript yet. */
+interface LayoutShift extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
 
 function statusDocument(change: Change = () => undefined): StatusDocument {
   const document = JSON.parse(fixtureText) as StatusDocument;
@@ -59,6 +71,12 @@ const hiddenValues = (page: Page) =>
   page
     .locator('.hero .value')
     .evaluateAll((values) => values.filter((v) => getComputedStyle(v).opacity !== '1').length);
+const titleHeight = (page: Page) =>
+  page.locator('.hero .title').evaluate((title) => title.getBoundingClientRect().height);
+// The longest pair the chain can show: a red station and a refresh that failed.
+const LONGEST_TITLE =
+  'How this site is built and run: Gestoppt bei Tests & Security, Production bleibt auf ' +
+  'abc1234. Der aktuelle Stand ist gerade nicht abrufbar.';
 const desktopOnly = (testInfo: TestInfo) =>
   test.skip(testInfo.project.name !== 'desktop', 'Breiten stellt der Test selbst ein');
 
@@ -263,6 +281,15 @@ test.describe('Frames', () => {
     await expect(pause(page)).toBeVisible();
     await expectNoFrames(page);
   });
+
+  test('[H1] steht schon bei Code: die Kette steht ohne Frames', async ({ page }) => {
+    await openWith(page, (status) => {
+      status.code.signals.repos[0].mergedPullRequests = null;
+    });
+    await expect(pause(page)).toBeVisible();
+    await expect(station(page).first().locator('.value')).toHaveText('—');
+    await expectNoFrames(page);
+  });
 });
 
 test.describe('Ohne Bewegung', () => {
@@ -350,6 +377,94 @@ test.describe('Aufbau', () => {
       }
     });
   }
+
+  // The prerender here has no snapshot, so the chain always changes its state after loading, and
+  // the fonts arrive late as on a slow line: both must not move the page (spec 11, CLS ≤ 0.1).
+  const lateStates: [string, (page: Page) => Promise<unknown>][] = [
+    ['Stand vom Server, älter als einen Tag', async () => undefined],
+    [
+      'Abruf scheitert',
+      (page) => page.route('**/status.json', (route) => route.fulfill({ status: 500 })),
+    ],
+  ];
+
+  for (const [name, serve] of lateStates) {
+    test(`[Spec 11] späte Schriften und neuer Stand verschieben nichts: ${name}`, async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        window.layoutShift = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as LayoutShift[]) {
+            if (!entry.hadRecentInput) window.layoutShift += entry.value;
+          }
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
+      await page.route('**/*.woff2', async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await route.continue();
+      });
+      await serve(page);
+      await page.goto('/');
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator('app-project-list [role="status"]')).not.toBeEmpty();
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => window.layoutShift)).toBeLessThanOrEqual(0.1);
+    });
+  }
+
+  // The sentences above the chain take one to four lines; their space is kept from the start,
+  // counted in lines, so other font metrics change nothing. Values in the stations may still wrap
+  // with the state; the CLS test above keeps that in bounds.
+  const longerSentences: [string, (route: Route) => Promise<void>, string][] = [
+    ['Stand vom Server, älter als einen Tag', (route) => route.continue(), 'älter als einen Tag'],
+    [
+      'Station rot',
+      (route) =>
+        route.fulfill({
+          json: statusDocument((status) => {
+            status.checks.signals.workflows[0].conclusion = 'failure';
+          }),
+        }),
+      'Gestoppt bei Tests & Security',
+    ],
+  ];
+
+  for (const [name, serve, sentence] of longerSentences) {
+    test(`[Spec 11] der Satz über der Kette verschiebt nichts, wenn der Stand nach dem Laden wechselt: ${name}`, async ({
+      page,
+    }) => {
+      let release = () => {};
+      const arrived = new Promise<void>((resolve) => (release = resolve));
+      await page.route('**/status.json', async (route) => {
+        await arrived;
+        await serve(route);
+      });
+      await page.goto('/');
+      await expect(pause(page)).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      const before = await titleHeight(page);
+      release();
+      await expect(page.locator('.hero .title')).toContainText(sentence);
+      expect(await titleHeight(page), 'Platz der Sätze').toBe(before);
+    });
+  }
+
+  test('[Spec 11] der längste Satz passt in den reservierten Platz', async ({ page }, testInfo) => {
+    // 1100 px is the narrowest width with the stations side by side.
+    const widths =
+      testInfo.project.name === 'desktop' ? [1440, 1100] : [page.viewportSize()!.width];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await openWith(page);
+      await expect(pause(page)).toBeVisible();
+      const reserved = await titleHeight(page);
+      await page
+        .locator('.hero .title')
+        .evaluate((title, text) => (title.textContent = text), LONGEST_TITLE);
+      expect(await titleHeight(page), `längster Satz bei ${width} px`).toBe(reserved);
+    }
+  });
 
   test('[H6] der Pause-Knopf verschiebt nichts, wenn er nach der Hydration erscheint', async ({
     page,

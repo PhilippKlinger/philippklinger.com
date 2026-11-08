@@ -28,6 +28,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "karla-latin-wght-normal.woff2",
+                "input": "node_modules/@fontsource-variable/karla/files",
+                "output": "fonts"
+              },
+              {
+                "glob": "fira-code-latin-wght-normal.woff2",
+                "input": "node_modules/@fontsource-variable/fira-code/files",
+                "output": "fonts"
               }
             ],
             "styles": ["src/styles.scss"],

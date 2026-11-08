@@ -33,16 +33,40 @@ interface Uniforms {
   energy: WebGLUniformLocation | null;
 }
 
-/** Returns null if this browser or GPU cannot run the shader; the static layer stays then. */
-export function createPainter(canvas: HTMLCanvasElement): Painter | null {
-  const gl = canvas.getContext('webgl', {
-    antialias: false,
-    alpha: false,
-    powerPreference: 'low-power',
-    failIfMajorPerformanceCaveat: true,
-  });
+/**
+ * A shader the GPU compiles while the page goes on. Reading its result before the GPU is done
+ * makes the main thread wait for the compile, a long task of a quarter second in Lighthouse (TBT).
+ */
+export interface PendingPainter {
+  /** True once the result can be read without waiting for the compile, as far as the GPU tells. */
+  done(): boolean;
+  /** Null if this GPU cannot run the shader; the static layer stays then. */
+  finish(): Painter | null;
+}
+
+const CONTEXT_OPTIONS: WebGLContextAttributes = {
+  antialias: false,
+  alpha: false,
+  powerPreference: 'low-power',
+  failIfMajorPerformanceCaveat: true,
+};
+
+/** Returns null if this browser cannot even start the shader. */
+export function startPainter(canvas: HTMLCanvasElement): PendingPainter | null {
+  const gl = canvas.getContext('webgl', CONTEXT_OPTIONS);
   const program = gl && linkProgram(gl);
   if (!gl || !program) return null;
+  // Without the extension nothing tells when the GPU is done; reading later still waits less.
+  const parallel = gl.getExtension('KHR_parallel_shader_compile');
+  return {
+    done: () =>
+      !parallel || gl.getProgramParameter(program, parallel.COMPLETION_STATUS_KHR) === true,
+    finish: () => finishPainter(gl, program),
+  };
+}
+
+function finishPainter(gl: WebGLRenderingContext, program: WebGLProgram): Painter | null {
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
   gl.useProgram(program);
   coverScreen(gl, program);
   const uniforms = readUniforms(gl, program);
@@ -57,7 +81,9 @@ function linkProgram(gl: WebGLRenderingContext): WebGLProgram | null {
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
   gl.linkProgram(program);
-  return gl.getProgramParameter(program, gl.LINK_STATUS) ? program : null;
+  // Hands the commands to the GPU now, so it compiles while the main thread goes on.
+  gl.flush();
+  return program;
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {

@@ -31,15 +31,16 @@ RewriteRule ^index\.csr\.html$ - [R=404,L]
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Bundles and fonts carry a content hash in their name, so they never change.
-  <FilesMatch "-[A-Z0-9]{8}\.(js|css|woff2)$">
+  # Bundles carry a content hash in their name, so they never change.
+  <FilesMatch "-[A-Z0-9]{8}\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   <FilesMatch "\.(html|json)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
-  # Images keep their name when they change, so they are cached for 30 days only.
-  <FilesMatch "\.(webp|png|svg|ico)$">
+  # Images and the preloaded fonts (fixed path for <link rel="preload">) keep their name when
+  # they change, so they are cached for 30 days only.
+  <FilesMatch "\.(webp|png|svg|ico|woff2)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
 

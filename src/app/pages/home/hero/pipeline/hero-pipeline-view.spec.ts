@@ -164,6 +164,13 @@ describe('HeroPipelineView', () => {
       expect(host.querySelector('.pipe')?.classList.contains('loop')).toBe(false);
     });
 
+    it('does not loop when the run starts nowhere', async () => {
+      const status = proven();
+      status.code.signals.repos[0].mergedPullRequests = null;
+      const host = await moving(status);
+      expect(host.querySelector('.pipe')?.classList.contains('loop')).toBe(false);
+    });
+
     it('keeps the name of the pause control and only presses it (WAI-ARIA APG)', async () => {
       const host = await moving(proven());
       const pause = host.querySelector<HTMLButtonElement>('.pause')!;

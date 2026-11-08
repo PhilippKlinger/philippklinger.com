@@ -22,8 +22,8 @@
   --color-line-faint: color-mix(in srgb, var(--color-text-muted) 30%, transparent);
   --color-surface-faint: color-mix(in srgb, var(--color-text) 3%, transparent);
 
-  --font-code: 'Fira Code Variable', ui-monospace, monospace;
-  --font-text: 'Karla Variable', system-ui, sans-serif;
+  --font-code: 'Fira Code Variable', 'Fira Code Fallback', ui-monospace, monospace;
+  --font-text: 'Karla Variable', 'Karla Fallback', system-ui, sans-serif;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-bold: 700;

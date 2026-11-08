@@ -6,6 +6,9 @@ import { about } from '../src/content/profile';
 
 const width = (page: Page) => page.viewportSize()?.width ?? 0;
 const isMobile = (page: Page) => width(page) < 768;
+// The web font comes first; the metric-matched fallbacks after it must not satisfy the check.
+const FIRA_CODE = /^"Fira Code Variable",/;
+const KARLA = /^"Karla Variable",/;
 
 /** Design colours as computed by the browser (spec 3.4). */
 const colors = {
@@ -89,12 +92,12 @@ test.describe('Hero', () => {
   });
 
   test('[Design] Jobtitel und Navigation in Fira Code, Logo in Karla', async ({ page }) => {
-    await expect(page.locator('.hero .role')).toHaveCSS('font-family', /Fira Code/);
-    await expect(page.locator('header .logo')).toHaveCSS('font-family', /Karla/);
+    await expect(page.locator('.hero .role')).toHaveCSS('font-family', FIRA_CODE);
+    await expect(page.locator('header .logo')).toHaveCSS('font-family', KARLA);
     await expect(page.locator('header .logo')).toHaveText('PK');
     test.skip(isMobile(page), 'Navigation liegt im Menü');
     const link = page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link');
-    await expect(link.first()).toHaveCSS('font-family', /Fira Code/);
+    await expect(link.first()).toHaveCSS('font-family', FIRA_CODE);
     await expect(link.first()).toHaveCSS('font-size', '16px');
     const [logo, nav] = [
       await page.locator('header .logo').boundingBox(),
@@ -156,12 +159,12 @@ test.describe('Design-Tokens', () => {
     await expect(page.locator('body')).toHaveCSS('background-color', colors.bg);
     for (const heading of await page.locator('main section h2').all()) {
       await expect(heading).toHaveCSS('color', colors.accent);
-      await expect(heading).toHaveCSS('font-family', /Fira Code/);
+      await expect(heading).toHaveCSS('font-family', FIRA_CODE);
     }
   });
 
   test('[Spec 3.4] Fließtext in Karla, beide Schriften geladen', async ({ page }) => {
-    await expect(page.locator('#ueber-mich .intro')).toHaveCSS('font-family', /Karla/);
+    await expect(page.locator('#ueber-mich .intro')).toHaveCSS('font-family', KARLA);
     const loaded = await page.evaluate(() => [
       document.fonts.check('16px "Fira Code Variable"'),
       document.fonts.check('16px "Karla Variable"'),

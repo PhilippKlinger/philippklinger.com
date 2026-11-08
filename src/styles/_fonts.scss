@@ -1,12 +1,12 @@
 // Self-hosted variable fonts from Fontsource (SIL OFL). Only the latin subset,
-// one woff2 file per family covers every weight the design uses.
+// one woff2 file per family covers every weight the design uses. angular.json copies them to a
+// fixed path, so index.html can preload them and the first layout already uses them.
 @font-face {
   font-family: 'Fira Code Variable';
   font-style: normal;
   font-display: swap;
   font-weight: 300 700;
-  src: url('@fontsource-variable/fira-code/files/fira-code-latin-wght-normal.woff2')
-    format('woff2-variations');
+  src: url('/fonts/fira-code-latin-wght-normal.woff2') format('woff2-variations');
 }
 
 @font-face {
@@ -14,6 +14,56 @@
   font-style: normal;
   font-display: swap;
   font-weight: 200 800;
-  src: url('@fontsource-variable/karla/files/karla-latin-wght-normal.woff2')
-    format('woff2-variations');
+  src: url('/fonts/karla-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+// Fallbacks with the metrics of the fonts above, so the swap after loading reflows as little as
+// possible (CLS). Measured in Chromium against the visible text of the start page: average
+// advance for size-adjust, ascent and descent of the web font divided by it. Arial and Courier
+// New ship with Windows, macOS and iOS; Liberation and Menlo are their metric twins on Linux and
+// macOS. Where none exists the face is skipped and the next font in the stack applies.
+@font-face {
+  font-family: 'Karla Fallback';
+  font-weight: 200 599;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans');
+  size-adjust: 101%;
+  ascent-override: 91.1%;
+  descent-override: 24.8%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Karla Fallback';
+  font-weight: 600 800;
+  src:
+    local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'),
+    local('LiberationSans-Bold');
+  size-adjust: 98.8%;
+  ascent-override: 93.1%;
+  descent-override: 25.3%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Fira Code Fallback';
+  font-weight: 300 599;
+  src:
+    local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'),
+    local('LiberationMono'), local('Menlo Regular'), local('Menlo-Regular');
+  size-adjust: 100%;
+  ascent-override: 99%;
+  descent-override: 32%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Fira Code Fallback';
+  font-weight: 600 700;
+  src:
+    local('Courier New Bold'), local('CourierNewPS-BoldMT'), local('Liberation Mono Bold'),
+    local('LiberationMono-Bold'), local('Menlo Bold'), local('Menlo-Bold');
+  size-adjust: 100%;
+  ascent-override: 99%;
+  descent-override: 32%;
+  line-gap-override: 0%;
 }

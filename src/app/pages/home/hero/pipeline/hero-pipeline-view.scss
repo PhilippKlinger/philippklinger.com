@@ -1,12 +1,24 @@
+@use 'breakpoints' as bp;
+
 // Everything stays readable without the run: the end state is the default state, the run only
 // draws the line, sets the checks and fades the values in.
-$wide: 1100px;
 
 :host {
   --node: 1.375rem;
   --touch: var(--size-touch);
   --icon: 1rem;
+  // Lines the longest sentences above the chain take next to the pause control at this width:
+  // a red station and a failed refresh. Counted in lines, so other font metrics change nothing.
+  --title-lines: 4;
   display: block;
+
+  @include bp.from(tablet) {
+    --title-lines: 2;
+  }
+
+  @include bp.from(desktop) {
+    --title-lines: 1;
+  }
 }
 
 .pipe {
@@ -24,7 +36,9 @@ $wide: 1100px;
   color: var(--color-text-muted);
 }
 
+// Their space is kept from the prerender on: a state that arrives later moves nothing (CLS).
 .title {
+  min-height: calc(var(--title-lines) * 1lh);
   margin: 0;
 }
 
@@ -299,8 +313,7 @@ $wide: 1100px;
   }
 }
 
-// Below this width the values do not fit next to each other.
-@media (min-width: $wide) {
+@include bp.from(pipeline) {
   .pipe {
     padding-bottom: var(--space-lg);
   }

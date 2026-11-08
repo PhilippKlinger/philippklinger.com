@@ -23,6 +23,8 @@ const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 const CAN_HOVER = '(hover: hover)';
 // A hidden tab or a long task must not make the run jump.
 const MAX_STEP_MS = 100;
+// Without data, or when not even the first station is reached, nothing changes from frame to frame.
+const runs = (pipeline: HeroPipeline) => !pipeline.still && pipeline.reached >= 0;
 
 @Component({
   selector: 'app-hero-pipeline',
@@ -48,7 +50,7 @@ export class HeroPipelineView {
   // Stays false in the prerender and without JavaScript: both show the end state.
   // The pause control follows this, not the run: the haze also moves when the run stands still.
   protected readonly moving = signal(false);
-  protected readonly looping = computed(() => this.moving() && !this.pipeline().still);
+  protected readonly looping = computed(() => this.moving() && runs(this.pipeline()));
   // Only a change of state goes into the signal; nothing here may render per frame.
   protected readonly frame = signal<HeroFrame | null>(null);
 
@@ -154,7 +156,7 @@ export class HeroPipelineView {
   private advance(step: number): boolean {
     const pipeline = this.pipeline();
     if (!this.takeNew(pipeline) && this.isHeld()) return false;
-    if (pipeline.still) {
+    if (!runs(pipeline)) {
       this.showEndState();
       return false;
     }
