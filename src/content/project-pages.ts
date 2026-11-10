@@ -3,7 +3,7 @@
 
 export interface ProjectPageContent {
   architecture: { summary: string; parts: { name: string; role: string }[] };
-  /** 2 to 3. */
+  /** 2 to 3; exactly one in the cut of Block C (DECISIONS 2026-11-10). */
   decisions: { title: string; reason: string; price: string }[];
   failure: { title: string; what: string; found: string; changed: string };
 }
@@ -136,68 +136,44 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
         'Die Navigation liegt in openCheckInFromNotification und übergibt withAnchor: true. Ein Verhaltenstest mit dem echten expo-router deckt Kalt- und Warmstart ab und war vor dem Fix rot. Neue Regel: Ein Regressionstest muss den Bug vor dem Fix rot reproduzieren und Verhalten statt Quelltext prüfen. Der E2E-Flow S4 prüft den Einstieg heute im Release-Build mit echtem Kaltstart.',
     },
   },
-  // Depends on the rework EV-13, re-read in task 15 and X2 before DRAFT falls.
-  conduit: {
+  // DRAFT: written in the cut of Block C. Sources: compose files, CI workflows, rulesets and
+  // .trivyignore.yaml of vps-edge, vps-monitoring and videoflix-deploy; PRs vps-edge #5,
+  // videoflix-deploy #32 and vps-monitoring #1 with their first CI runs of 10.11.
+  'vps-plattform': {
     architecture: {
       summary:
-        'Docker Compose führt das Angular-Frontend, das Django-Backend und die PostgreSQL-Datenbank in einem Stack zusammen. GitHub Actions baut daraus die Images für das Deployment.',
+        'Projekt-Stacks wie videoflix-deploy bleiben eigenständig und öffnen selbst keine Ports.',
       parts: [
         {
-          name: 'Frontend (Angular, Nginx)',
-          role: 'Multi-Stage-Build. Nginx liefert nur das kompilierte Frontend aus, Node.js und node_modules bleiben aus dem Runtime-Image heraus.',
+          name: 'Edge-Proxy (Caddy)',
+          role: 'Einziger Container mit offenen Ports: TLS, Sicherheits-Header, eine Datei je Projekt. Von Kuma nur die öffentliche Statusseite.',
         },
         {
-          name: 'Backend (Django REST, Gunicorn)',
-          role: 'Multi-Stage-Image, läuft als unprivilegierter appuser. Der Entrypoint wartet auf die Datenbank, führt die Migrationen aus und startet Gunicorn als PID 1.',
+          name: 'Monitoring (Uptime Kuma)',
+          role: 'Ohne Root und Docker-Socket, Dashboard nur per SSH-Tunnel. Im internen Netz sieht Kuma nur Caddy.',
         },
         {
-          name: 'PostgreSQL',
-          role: 'Nur im Compose-Netzwerk erreichbar, Daten im Named Volume. Der pg_isready-Healthcheck steuert den Start des Backends.',
-        },
-        {
-          name: 'Git-Submodule',
-          role: 'Das Elternrepo pinnt die Commits von Frontend und Backend, damit lokale Builds und CI einen definierten Quellstand nutzen.',
-        },
-        {
-          name: 'CI und GHCR',
-          role: 'Baut die Images auf GitHub-Runnern und veröffentlicht sie mit Commit-SHA als Tag und unveränderlichem Digest.',
-        },
-        {
-          name: 'Deployment-Workflow und docker-compose.prod.yaml',
-          role: 'Das Manifest enthält nur Image-Referenzen, auf dem Zielserver wird nichts gebaut. Der Workflow ist darauf ausgelegt, Readiness und Image-Identität der laufenden Container zu prüfen.',
+          name: 'CI-Gates',
+          role: 'Startet jeden Stack, prüft diese Zusagen und scannt die Images mit Trivy. Rulesets machen die Checks zur Pflicht.',
         },
       ],
     },
     decisions: [
       {
-        title: 'Images in der CI bauen, nicht auf dem Server',
+        title: 'Kritische Funde in Kuma befristet angenommen',
         reason:
-          'Ein Build auf dem Server macht Releases schwer auf einen Quellstand zurückführbar. Commit-Tags und Digests verbinden die Container mit ihrer Source-Revision.',
+          'Uptime Kuma 2.5.9 ist das neueste Release, sein Image bringt fünf kritische CVEs in gebündelten Komponenten mit, für die es noch kein Image mit Fix gibt. Jeder Eintrag in .trivyignore.yaml begründet, warum die Lücke hier nicht erreichbar ist.',
         price:
-          'API_URL wird in das Frontend-Bundle kompiliert, jede Änderung braucht einen neuen Build. Private GHCR-Pakete bräuchten ein eigenes Registry-Authentication-Design. Die eigene Workflow-Logik erzeugt Wartungsaufwand.',
-      },
-      {
-        title: 'Frontend und Backend als gepinnte Git-Submodule',
-        reason:
-          'Beide Anwendungen bleiben eigene Repos, das Elternrepo legt den Quellstand für Build und CI fest.',
-        price:
-          'Klonen nur mit --recurse-submodules. Der Pin zeigt auf den Feature-Commit statt auf den Merge-Commit in master, der Inhalt ist identisch. Die Submodul-Repos haben keine eigene Build-CI.',
-      },
-      {
-        title: 'PostgreSQL nur intern, Daten im Named Volume',
-        reason:
-          'Die Datenbank hat keinen veröffentlichten Host-Port, die Daten überstehen das Neuerstellen der Container.',
-        price:
-          'docker compose down -v löscht das Volume samt Inhalt. Neue Datenbank-Credentials brauchen nach der Initialisierung eine bewusste Migration. Es gibt keine Datensicherung des Volumes.',
+          'Bis zum 10.12.2026 bleiben bekannte Funde offen. Danach wird die CI wieder rot und erzwingt eine neue Prüfung.',
       },
     ],
     failure: {
-      title: 'CI auf main scheitert am persönlichen Token',
-      what: 'Der Merge von PR #2 am 11.10. löste den ersten CI-Lauf auf main aus. Er scheiterte beim Submodul-Checkout mit „could not read Username“, die Folge-Jobs liefen nicht, kein Lauf baute mehr Images. Wahrscheinliche Ursache: Das Secret für den Submodul-Checkout vom 05.08. war abgelaufen.',
+      title: 'Der erste Trivy-Lauf fand eine kritische CVE im Proxy',
+      what: 'CVE-2026-111497, ein Out-of-Bounds-Write im Brotli-Decoder, steckte im gepinnten Caddy 2.11.7 und im Postgres-Image von Videoflix.',
       found:
-        'Die Bestandsaufnahme vom 31.10. las den Lauf und das Datum des Secrets aus, main war da seit 20 Tagen rot. Dieselbe Prüfung ergab, dass beide Submodule öffentlich sind und der Token vermeidbar ist.',
+        'Am 10.11. im ersten Lauf der neuen CI: Der Trivy-Schritt brach beide Pull Requests ab.',
       changed:
-        'Der Fix entfernt token: aus allen vier Checkouts in ci.yml, der nächste Lauf auf main war grün. Den Token zu erneuern wurde verworfen, weil das Problem damit nur verschoben wäre. Preis: Das funktioniert nur, solange die Repos öffentlich sind.',
+        'Caddy 2.11.9 und ein neuer Postgres-Digest, noch vor dem Merge. Funde ohne Image mit Fix stehen befristet in .trivyignore.yaml.',
     },
   },
   // Depends on the rework KPF-08, re-read in task 15 and X2 before DRAFT falls.

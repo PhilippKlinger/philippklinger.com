@@ -15,11 +15,12 @@ const checkSentences: Sentences = {
   partial: 'Ein Teil der Prüfungen ist nicht abrufbar.',
   deviation: 'Mindestens eine Prüfung lief zuletzt nicht erfolgreich.',
 };
-// The CI of conduit-container builds and validates, it has neither tests nor a scan.
-const buildCheckSentences: Sentences = {
-  verified: 'Jede Änderung wird automatisch gebaut und validiert.',
-  partial: 'Ein Teil der Läufe ist nicht abrufbar.',
-  deviation: 'Der letzte Lauf war nicht erfolgreich.',
+// The CI of the VPS platform starts the real stack and scans it, it runs no tests.
+const platformCheckSentences: Sentences = {
+  // DRAFT
+  verified: 'Jede Änderung startet die echte Konfiguration und wird auf Schwachstellen geprüft.',
+  partial: checkSentences.partial,
+  deviation: checkSentences.deviation,
 };
 const signedBuildSentences: Sentences = {
   verified: 'Das Release ist signiert, seine Bestandteile sind aufgelistet.',
@@ -27,10 +28,6 @@ const signedBuildSentences: Sentences = {
   unsigned: 'Die Bestandteile sind aufgelistet, die Signatur fehlt noch.',
   deviation: 'Für den gebauten Stand fehlt ein Herkunftsnachweis.',
   notSetUp: 'Hier steht künftig, dass das Release signiert ist.',
-};
-const imageSentences: Sentences = {
-  verified: 'Jeder grüne Stand ergibt ein Image mit dem Commit als Tag.',
-  notSetUp: 'Hier steht künftig das Image zum letzten grünen Stand.',
 };
 const deploymentSentences: Sentences = {
   verified: 'Live läuft genau der geprüfte Stand.',
@@ -131,9 +128,17 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
       },
     ],
   },
-  conduit: {
-    statusKey: 'conduit',
-    runningLabel: 'Läuft auf Staging',
+  // No signed build and no deployment step: the repositories build no images and the platform
+  // has no version endpoint (plan VPS platform, E4).
+  'vps-plattform': {
+    statusKey: 'vps-plattform',
+    // DRAFT
+    runningLabel: 'Läuft in Produktion',
+    // DRAFT
+    repoLabels: {
+      'PhilippKlinger/vps-edge': 'Edge-Proxy',
+      'PhilippKlinger/vps-monitoring': 'Monitoring',
+    },
     steps: [
       {
         name: 'Code',
@@ -143,26 +148,14 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         sentences: codeSentences,
       },
       {
-        name: 'CI',
-        arrowToNext: 'Image',
+        name: 'CI & Security-Checks',
+        arrowToNext: 'Betrieb',
         sources: ['checks'],
         setUp: true,
-        sentences: buildCheckSentences,
+        sentences: platformCheckSentences,
       },
-      {
-        name: 'Image in GHCR',
-        arrowToNext: 'Deploy',
-        sources: ['image'],
-        setUp: true,
-        sentences: imageSentences,
-      },
-      // The deployment does not run on main yet (EV-13); rises by itself once the data proves it.
-      {
-        name: 'Staging-Deployment',
-        sources: ['deployRun', 'live'],
-        setUp: false,
-        sentences: deploymentSentences,
-      },
+      // No status page slug of its own yet (E5); rises by itself once the data proves it.
+      { name: 'Betrieb', sources: ['stability'], setUp: false, sentences: monitoringSentences },
     ],
   },
   'developer-workspace-kit': {

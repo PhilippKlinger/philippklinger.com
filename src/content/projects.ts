@@ -70,24 +70,23 @@ export const projects: Project[] = [
     preview: { src: 'images/projects/neuro-check-in.webp', width: 640, height: 336 },
   },
   {
-    slug: 'conduit',
-    title: 'Conduit',
+    slug: 'vps-plattform',
+    title: 'VPS-Plattform',
+    // DRAFT: card text after the proposal of the handover, without claims the repositories lack.
     summary:
-      'Bestehende Fullstack-Anwendung mit Docker Compose containerisiert; GitHub Actions für Image-Builds, GHCR-Publishing und automatisiertes Staging-Deployment mit Healthchecks.',
+      'Gemeinsame Infrastruktur für die Projekte auf einem VPS, als Code beschrieben: Edge-Proxy mit TLS und Sicherheits-Headern, Monitoring mit öffentlicher Statusseite und eine CI, die bei jeder Änderung die echte Konfiguration startet und auf Sicherheitszusagen prüft.',
     // DRAFT: meta description, shortened from the summary.
     description:
-      'Conduit: bestehende Fullstack-Anwendung mit Docker Compose, GitHub Actions für Image-Builds und GHCR-Publishing sowie Staging-Deployment mit Healthchecks.',
-    stack: ['Angular', 'Django', 'Docker', 'GitHub Actions'],
-    chips: ['Docker Compose', 'GitHub Actions', 'GHCR', 'Healthchecks'],
+      'VPS-Plattform als Code: Edge-Proxy mit Caddy, Monitoring mit Uptime Kuma und öffentlicher Statusseite, CI mit Smoke-Tests und Trivy-Scans.',
+    stack: ['Docker Compose', 'Caddy', 'Uptime Kuma', 'GitHub Actions', 'Trivy'],
+    chips: ['Docker Compose', 'Caddy', 'Uptime Kuma', 'GitHub Actions', 'Trivy'],
     // DRAFT: link labels.
     links: [
-      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/conduit-container' },
-      {
-        label: 'Bericht lesen',
-        url: 'https://philippklinger.github.io/my-dso-blog/docs/projects/conduit-deployment',
-      },
+      { label: 'Statusseite', url: 'https://status.philipp-klinger.com' },
+      { label: 'Edge-Proxy auf GitHub', url: 'https://github.com/PhilippKlinger/vps-edge' },
+      { label: 'Monitoring auf GitHub', url: 'https://github.com/PhilippKlinger/vps-monitoring' },
     ],
-    preview: { src: 'images/projects/conduit.webp', width: 640, height: 336 },
+    // No preview until Philipp confirms the screenshot of the status page (plan E7).
   },
   {
     slug: 'developer-workspace-kit',
