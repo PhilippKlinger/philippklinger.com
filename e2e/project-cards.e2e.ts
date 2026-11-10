@@ -12,6 +12,7 @@ interface Workflow {
 }
 interface ProjectEntry {
   checks: { signals: { workflows: Workflow[] } };
+  stability: unknown;
 }
 interface StatusFile {
   schemaVersion: number;
@@ -40,6 +41,24 @@ async function serveStatus(page: Page, document: StatusFile = statusFile()): Pro
     return route.fulfill({ json: document });
   });
   return requests;
+}
+
+/** The fixture predates the Neuro Check-in website, so a proven uptime is added per test. */
+function withNeuroUptime(document: StatusFile): void {
+  const neuro = structuredClone(document.projects['vps-plattform']);
+  neuro.stability = {
+    reachable: true,
+    signals: {
+      monitorsTotal: 1,
+      monitorsUp: 1,
+      uptime24h: 1,
+      uptime30d: 1,
+      lastHeartbeatAt: new Date().toISOString(),
+      oldestVisibleHeartbeatAt: '2026-11-05T12:00:00Z',
+    },
+    links: [{ kind: 'status-page', source: 'site', url: 'https://status.example.com/neuro' }],
+  };
+  document.projects['neuro-check-in'] = neuro;
 }
 
 function failChecks(document: StatusFile): void {
@@ -309,7 +328,7 @@ test.describe('Karten', () => {
   });
 
   test('[AK3] Fußzeile und Signal folgen den Daten', async ({ page }) => {
-    await serveStatus(page);
+    await serveStatus(page, statusFile(withNeuroUptime));
     await page.goto('/');
     const videoflix = card(page, 'Videoflix');
     await expect(videoflix.locator('.signal .state')).toHaveText('CI grün');
@@ -325,12 +344,12 @@ test.describe('Karten', () => {
       'Noch nicht eingerichtet',
     ]);
     const neuro = card(page, 'Neuro Check-in');
-    await expect(neuro.locator('.signal .state')).toHaveText('Live im Play Store');
-    await expect(neuro.locator('.signal-when')).toHaveText('Version 1.11.2');
-    await expect(neuro.locator('.flow-foot')).toHaveText('1 von 3 öffentlich belegt, Code privat');
+    await expect(neuro.locator('.signal .state')).toHaveText('Website erreichbar');
+    await expect(neuro.locator('.signal-when')).toHaveText('100 % (24 h)');
+    await expect(neuro.locator('.flow-foot')).toHaveText('2 von 4 öffentlich belegt, Code privat');
     const kit = card(page, 'Developer Workspace Kit');
     await expect(kit.locator('.signal .state')).toHaveText('Code privat');
-    await expect(kit.locator('.signal-when')).toHaveText('Version 0.5.0');
+    await expect(kit.locator('.signal-when')).toHaveCount(0);
     await expect(kit.locator('.flow-foot')).toHaveText('Öffentliches Repo folgt');
   });
 
@@ -468,7 +487,7 @@ test.describe('Status im Browser', () => {
     await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
     await expect(card(page, 'Videoflix').locator('.flow-foot')).toHaveText('2 von 6 belegt');
     await expect(card(page, 'Neuro Check-in').locator('.signal .state')).toHaveText(
-      'Live im Play Store',
+      'Stand nicht abrufbar',
     );
     await expect(card(page, 'Developer Workspace Kit').locator('.signal .state')).toHaveText(
       'Code privat',
@@ -504,12 +523,12 @@ test.describe('Status im Browser', () => {
       await expect(page.locator('#projekte [role="status"]')).toHaveCount(1);
       await expect(cards(page)).toHaveCount(5);
       await expect(page.locator('#projekte a[data-card-cta]')).toHaveCount(5);
-      await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 3 + 3);
+      await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 4 + 3);
       await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
       await expect(card(page, 'Neuro Check-in').locator('.signal .state')).toHaveText(
-        'Live im Play Store',
+        'Stand nicht abrufbar',
       );
       await expect(page.locator('#projekte')).not.toContainText(/undefined|null|NaN|Error/);
       expect(errors).toEqual([]);
@@ -594,7 +613,7 @@ test.describe('Ohne JavaScript', () => {
     for (const heading of await cards(page).locator('h3').all()) {
       await expect(heading).toBeVisible();
     }
-    await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 3 + 3);
+    await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 4 + 3);
     await expect(page.locator('#projekte .flow-foot')).toHaveCount(4);
     const hrefs = await page
       .locator('#projekte a[data-card-cta]')

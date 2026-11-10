@@ -2,7 +2,6 @@ import { ComponentRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Project, projects } from '../../../../../content/projects';
 import { healthyStatus } from '../../../../../content/status.fixture';
-import { DeliveryStatus } from '../../../../delivery/delivery-status';
 import { STATUS_SNAPSHOT } from '../../../../delivery/status-snapshot';
 import { ProjectCard } from './project-card';
 
@@ -63,12 +62,26 @@ describe('ProjectCard', () => {
     ]);
   });
 
-  it('shows the fixed signal of Neuro Check-in without a status request', () => {
-    const snapshot = vi.spyOn(TestBed.inject(DeliveryStatus), 'snapshot');
+  it('shows the website uptime as the signal of Neuro Check-in', () => {
+    const status = healthyStatus();
+    status.stability.links = [
+      { kind: 'status-page', source: 'site', url: 'https://example.com/s' },
+    ];
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: STATUS_SNAPSHOT,
+          useValue: {
+            schemaVersion: 1,
+            generatedAt: '2026-11-06T00:58:11.069Z',
+            projects: { videoflix: healthyStatus(), 'neuro-check-in': status },
+          },
+        },
+      ],
+    });
     const host = render('neuro-check-in');
-    expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Live im Play Store');
-    expect(host.querySelector('.signal-when')?.textContent).toBe('Version 1.11.2');
-    expect(snapshot).not.toHaveBeenCalled();
+    expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Website erreichbar');
+    expect(host.querySelector('.signal-when')?.textContent).toBe('100 % (24 h)');
   });
 
   it('shows no empty time without data', () => {

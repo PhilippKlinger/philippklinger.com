@@ -422,16 +422,14 @@ test.describe('Abruf von /status.json', () => {
     });
   });
 
-  for (const slug of ['neuro-check-in', 'developer-workspace-kit']) {
-    test(`[Spec 6.1] fester Inhalt fragt nichts ab: ${slug}`, async ({ page }) => {
-      const requests = await serveStatus(page);
-      await page.goto(`/projekte/${slug}/`);
-      await expect(steps(page)).toHaveCount(3);
-      await page.waitForLoadState('networkidle');
-      expect(requests()).toBe(0);
-      await expect(notice(page)).toBeEmpty();
-    });
-  }
+  test('[Spec 6.1] fester Inhalt fragt nichts ab: developer-workspace-kit', async ({ page }) => {
+    const requests = await serveStatus(page);
+    await page.goto('/projekte/developer-workspace-kit/');
+    await expect(steps(page)).toHaveCount(3);
+    await page.waitForLoadState('networkidle');
+    expect(requests()).toBe(0);
+    await expect(notice(page)).toBeEmpty();
+  });
 });
 
 test.describe('Vorschaubild', () => {
@@ -468,12 +466,11 @@ test.describe('Vorschaubild', () => {
 test.describe('Fester Inhalt', () => {
   test('[AK3] Neuro Check-in: Release mit Link, der Rest Code privat', async ({ page }) => {
     await page.goto('/projekte/neuro-check-in/');
-    await expect(signal(page)).toContainText('1 von 3 öffentlich belegt, Code privat');
-    await expect(signal(page)).toContainText('Version 1.11.2');
+    await expect(signal(page)).toContainText('1 von 4 öffentlich belegt, Code privat');
     await expect(step(page, 'Code').locator('.state-private')).toHaveText('Code privat');
     const release = step(page, 'Release im Play Store');
     await expect(release.locator('.state-verified')).toHaveText('Belegt');
-    await expect(release.locator('.step-event')).toHaveText('Version 1.11.2');
+    await expect(release.locator('.step-event')).toHaveCount(0);
     await expect(release.locator('.step-links a')).toHaveAttribute(
       'href',
       /^https:\/\/play\.google\.com\//,
@@ -483,7 +480,6 @@ test.describe('Fester Inhalt', () => {
   test('[AK3] Kit: alles Code privat, ohne leeren Link-Block', async ({ page }) => {
     await page.goto('/projekte/developer-workspace-kit/');
     await expect(signal(page)).toContainText('Öffentliches Repo folgt');
-    await expect(signal(page)).toContainText('Version 0.5.0');
     await expect(delivery(page).locator('.state-private')).toHaveCount(3);
     await expect(page.locator('main .links')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Links', exact: true })).toHaveCount(0);

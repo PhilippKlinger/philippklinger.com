@@ -77,6 +77,7 @@ describe('deliveryPlans', () => {
         ['Code', 'CI'],
         ['Unit- & E2E-Tests', 'Release'],
         ['Release im Play Store', undefined],
+        ['Website', undefined],
       ],
     ],
     [
@@ -116,6 +117,7 @@ describe('deliveryPlans', () => {
       [['code'], ['checks'], ['supplyChain'], ['live', 'deployRun'], ['stability'], ['restore']],
     ],
     ['vps-plattform', [['code'], ['checks'], ['stability']]],
+    ['neuro-check-in', [['stability']]],
     ['portfolio', [['code'], ['checks'], ['supplyChain'], ['live'], ['stability']]],
   ])('"%s" reads each step from the sources of the spec', (slug, expected) => {
     const steps = deliveryPlans[slug].steps.filter(isMeasured);
@@ -266,7 +268,7 @@ describe('deliveryPlans', () => {
     expect(deliveryPlans['videoflix'].statusKey).toBe('videoflix');
     expect(deliveryPlans['vps-plattform'].statusKey).toBe('vps-plattform');
     expect(deliveryPlans['portfolio'].statusKey).toBe('portfolio');
-    expect(deliveryPlans['neuro-check-in'].statusKey).toBeUndefined();
+    expect(deliveryPlans['neuro-check-in'].statusKey).toBe('neuro-check-in');
     expect(deliveryPlans['developer-workspace-kit'].statusKey).toBeUndefined();
   });
 
@@ -285,20 +287,41 @@ describe('deliveryPlans', () => {
     });
   });
 
-  it('fixes signal and event of Neuro Check-in', () => {
-    const plan = deliveryPlans['neuro-check-in'];
-    expect(plan.fixedSignal).toEqual({
-      state: 'verified',
-      status: 'Live im Play Store',
-      when: 'Version 1.11.2',
-    });
-    const release = plan.steps.at(-1) as FixedStep;
+  it('keeps the Play Store link of Neuro Check-in without a fixed event', () => {
+    const release = deliveryPlans['neuro-check-in'].steps.find(
+      (step) => step.name === 'Release im Play Store',
+    ) as FixedStep;
     expect(release.state).toBe('verified');
     expect(release.sentence).toBe('Die App ist öffentlich im Play Store verfügbar.');
-    expect(release.event).toBe('Version 1.11.2');
+    expect(release.event).toBeUndefined();
     expect(release.links?.[0].url).toBe(
       'https://play.google.com/store/apps/details?id=com.philippklinger.neurocheckin',
     );
+  });
+
+  it('shows the website uptime as the signal of neuro check-in', () => {
+    const status = healthyStatus();
+    status.stability.links = [
+      { kind: 'status-page', source: 'site', url: 'https://example.com/s' },
+    ];
+    const view = buildDeliveryView(deliveryPlans['neuro-check-in'], {
+      generatedAt: '2026-11-06T00:58:11.069Z',
+      status,
+    });
+    expect(view.signal).toEqual({
+      state: 'verified',
+      status: 'Website erreichbar',
+      when: '100 % (24 h)',
+    });
+  });
+
+  it('shows a neutral signal for neuro without its key in status.json', () => {
+    const view = buildDeliveryView(deliveryPlans['neuro-check-in'], null);
+    expect(view.signal.status).toBe('Stand nicht abrufbar');
+  });
+
+  it('keeps no fixed version in the plans', () => {
+    expect(JSON.stringify(deliveryPlans)).not.toMatch(/Version \d/);
   });
 
   it('keeps the code of Neuro Check-in and the Kit private', () => {
@@ -317,7 +340,7 @@ describe('deliveryPlans', () => {
     expect(plan.fixedSignal).toEqual({
       state: 'private',
       status: 'Code privat',
-      when: 'Version 0.5.0',
+      when: '',
     });
     expect(plan.footnote).toBe('Öffentliches Repo folgt');
   });

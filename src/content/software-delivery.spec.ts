@@ -872,12 +872,19 @@ describe('buildDeliveryView', () => {
       expect(signalOf()).toEqual({
         state: 'verified',
         status: 'Läuft in Produktion',
-        when: 'Stand 06.11., 01:58',
+        when: '100 % (24 h)',
       });
       const notMonitored = signalOf((status) => {
         status.stability.reachable = false;
       });
       expect(notMonitored.status).not.toBe('Läuft in Produktion');
+    });
+
+    it('falls back to the time of the data without a 24 h uptime', () => {
+      const signal = signalOf((status) => {
+        status.stability.signals.uptime24h = null;
+      });
+      expect(signal.when).toBe('Stand 06.11., 01:58');
     });
 
     it('shows no running label without a step that proves it', () => {
