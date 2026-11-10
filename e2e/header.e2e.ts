@@ -61,6 +61,7 @@ test.describe('Header erreichbar (FB-13)', () => {
     await expectShown(page);
   });
 
+  // Guards the new behaviour: the old header scrolled away and could not cover anything.
   test('[FB-13] Mobil: ein Sprung nach oben verdeckt die Überschrift nicht', async ({ page }) => {
     test.skip(!isMobile(page), 'nur mobil');
     await page.goto('/#kontakt');
@@ -78,7 +79,8 @@ test.describe('Header erreichbar (FB-13)', () => {
     test.skip(!isMobile(page), 'nur mobil');
     await scrollInSteps(page, 1200);
     await expectGone(page);
-    await menuButton(page).focus();
+    // Without scrolling: a plain focus() would scroll the page to the button by itself.
+    await menuButton(page).evaluate((el) => el.focus({ preventScroll: true }));
     await expectShown(page);
   });
 
