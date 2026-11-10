@@ -1,0 +1,464 @@
+@use 'breakpoints' as bp;
+
+// The chain looks like the hero pipeline: nodes on one line, name and value per station.
+// Below the pipeline breakpoint it stands upright, as the hero does on the phone.
+
+:host {
+  --node: 1.375rem;
+  display: block;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+h2 {
+  font-size: var(--text-heading);
+  line-height: var(--leading-tight);
+}
+
+.stand {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+}
+
+.notice {
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+
+  // Stays in the accessibility tree: a live region must exist before its text arrives.
+  &:empty {
+    margin-top: 0;
+  }
+}
+
+.rail {
+  position: relative;
+  display: grid;
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+
+  // The line from the first node to the last one.
+  &::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--size-touch) / 2);
+    bottom: calc(var(--size-touch) / 2);
+    left: calc(var(--node) / 2 - var(--border-width) / 2);
+    width: var(--border-width);
+    background: var(--color-accent);
+  }
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--size-touch);
+  padding-block: var(--space-2xs);
+  color: var(--color-text-muted);
+}
+
+[role='tab'] {
+  cursor: pointer;
+
+  &:hover .name {
+    color: var(--color-text);
+  }
+}
+
+[aria-selected='true'] {
+  color: var(--color-text);
+
+  .name {
+    font-weight: var(--weight-bold);
+  }
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-sm);
+}
+
+.value {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+.via {
+  display: none;
+}
+
+.node {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-accent);
+
+  svg {
+    width: var(--space-snug);
+    height: var(--space-snug);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .body {
+    fill: currentColor;
+    stroke: none;
+  }
+}
+
+// States. A state is never told by color alone: tick, cross, dashed ring or the word in the value.
+[aria-selected='true'][data-state='verified'] .node {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+[data-state='partial'] {
+  .node {
+    border-color: var(--color-partial);
+    background: linear-gradient(to right, var(--color-partial) 50%, var(--color-bg) 50%);
+  }
+
+  .value {
+    color: var(--color-partial);
+  }
+}
+
+[data-state='deviation'] {
+  .node {
+    border-color: var(--color-error);
+  }
+
+  .node,
+  .value {
+    color: var(--color-error);
+  }
+}
+
+[data-state='unavailable'],
+[data-state='notSetUp'] {
+  .node {
+    border-color: var(--color-line-muted);
+  }
+
+  .value {
+    color: var(--color-text-muted);
+  }
+}
+
+[data-state='notSetUp'] .node {
+  border-style: dashed;
+}
+
+[data-state='private'] {
+  .node {
+    border-color: var(--color-text-subtle);
+    color: var(--color-text-subtle);
+  }
+
+  .value {
+    color: var(--color-text-muted);
+  }
+}
+
+.panels {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.panel {
+  min-width: 0;
+  padding: var(--space-lg) var(--space-md);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.kicker {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-text-subtle);
+
+  b {
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+  }
+}
+
+.what {
+  max-width: var(--lead-width);
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+}
+
+// On the phone every row stacks, each value behind its column name.
+.facts {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-md);
+  border-collapse: collapse;
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: var(--leading-text);
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: block;
+  }
+
+  tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-snug);
+    padding-block: var(--space-xs);
+    border-top: var(--border-width) solid var(--color-line-faint);
+  }
+
+  td {
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+
+    &:first-child {
+      flex-basis: 100%;
+      color: var(--color-text);
+    }
+
+    &[data-label]::before {
+      content: attr(data-label) ' ';
+      color: var(--color-text-subtle);
+    }
+  }
+
+  // Touch targets of at least 44 px (web-quality rule).
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-width: var(--size-touch);
+    min-height: var(--size-touch);
+  }
+}
+
+.mark {
+  margin-right: var(--space-2xs);
+  color: var(--color-accent);
+
+  &.fail {
+    color: var(--color-error);
+  }
+}
+
+.sha {
+  padding-inline: var(--space-2xs);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-small);
+  color: var(--color-accent);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &[data-match] {
+    border-color: var(--color-accent);
+    background: var(--color-surface-strong);
+    color: var(--color-text);
+  }
+}
+
+.verify {
+  margin-top: var(--space-sm);
+
+  summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-touch);
+    cursor: pointer;
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+
+    &:hover {
+      color: var(--color-text);
+    }
+  }
+
+  // Wraps instead of scrolling: the command stays readable at 320 px, a copy keeps its lines.
+  pre {
+    margin: 0;
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--color-line-faint);
+    border-radius: var(--radius-small);
+    background: var(--color-panel);
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+    line-height: var(--leading-text);
+    color: var(--color-text-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+.private {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--size-touch);
+  margin-top: var(--space-lg);
+  font-family: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+// From the tablet on the table has room for its columns.
+@include bp.from(tablet) {
+  .facts {
+    display: table;
+
+    thead {
+      display: table-header-group;
+    }
+
+    tbody {
+      display: table-row-group;
+    }
+
+    tr {
+      display: table-row;
+      padding: 0;
+      border: 0;
+    }
+
+    th {
+      padding: 0 var(--space-md) var(--space-xs) 0;
+      text-align: left;
+      font-weight: var(--weight-medium);
+      color: var(--color-text-subtle);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: var(--space-2xs) var(--space-md) var(--space-2xs) 0;
+      border-top: var(--border-width) solid var(--color-line-faint);
+      vertical-align: middle;
+
+      &[data-label]::before {
+        content: none;
+      }
+
+      &:last-child {
+        padding-right: 0;
+        text-align: right;
+      }
+    }
+  }
+}
+
+@include bp.from(pipeline) {
+  .rail {
+    // The tabs measure their segment against the width of the rail.
+    container-type: inline-size;
+    // As in the hero: the last station sits on the right content edge.
+    grid-template-columns: repeat(var(--gaps), minmax(0, 1fr)) var(--node);
+
+    &::before {
+      inset: calc(var(--space-sm) + var(--node) / 2 - var(--border-width) / 2) calc(var(--node) / 2)
+        auto;
+      width: auto;
+      height: var(--border-width);
+    }
+  }
+
+  .tab {
+    // Distance from one node to the next.
+    --segment: calc((100cqi - var(--node)) / var(--gaps));
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-sm) var(--space-md) 0;
+  }
+
+  .cell {
+    flex: none;
+    flex-direction: column;
+  }
+
+  // The last two stations share the last segment, so their texts never run into each other.
+  .tab:nth-last-child(2) {
+    margin-right: calc(var(--segment) / 2 - var(--node));
+  }
+
+  .tab:last-child {
+    width: calc(var(--segment) / 2);
+    margin-left: calc(var(--node) - var(--segment) / 2);
+    align-items: flex-end;
+    padding-right: 0;
+
+    .cell {
+      align-items: flex-end;
+      text-align: right;
+    }
+  }
+
+  // Each transition sits in the middle of the segment from this node to the next one.
+  .via {
+    display: block;
+    position: absolute;
+    top: calc(var(--space-sm) - var(--space-md));
+    left: calc(var(--segment) / 2 + var(--node) / 2);
+    transform: translateX(-50%);
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+  }
+
+  // Points from the chosen station into its field.
+  [aria-selected='true']::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    bottom: calc(-1 * var(--space-md) - var(--border-width));
+    left: calc(var(--node) / 2 - var(--space-xs));
+    width: var(--space-sm);
+    height: var(--space-sm);
+    border: solid var(--color-line);
+    border-width: var(--border-width) 0 0 var(--border-width);
+    background: var(--color-bg);
+    transform: rotate(45deg);
+  }
+
+  .tab:last-child::after {
+    left: auto;
+    right: calc(var(--node) / 2 - var(--space-xs));
+  }
+
+  .panel {
+    padding: var(--space-lg);
+  }
+}

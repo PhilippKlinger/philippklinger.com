@@ -72,11 +72,20 @@ describe('ProjectPage', () => {
     expect(texts(page.querySelectorAll('h2'))).not.toContain('Links');
   });
 
-  it.each(projects)('shows the software delivery steps of "$title"', async (project) => {
-    const page = await renderPage(project);
-    expect(texts(page.querySelectorAll('app-delivery-steps .step h3'))).toEqual(
-      deliveryPlans[project.slug].steps.map((step) => step.name),
-    );
+  it.each(projects.filter((project) => project.slug !== 'developer-workspace-kit'))(
+    'shows the software delivery chain of "$title"',
+    async (project) => {
+      const page = await renderPage(project);
+      expect(texts(page.querySelectorAll('app-delivery-chain .tab .name'))).toEqual(
+        deliveryPlans[project.slug].steps.map((step) => step.name),
+      );
+    },
+  );
+
+  it('shows the chain of the kit as one private line', async () => {
+    const page = await renderPage(bySlug('developer-workspace-kit'));
+    expect(page.querySelector('app-delivery-chain .private')).not.toBeNull();
+    expect(page.querySelector('app-delivery-chain .tab')).toBeNull();
   });
 
   it('shows neither label, proof nor stack any more', async () => {
@@ -139,7 +148,7 @@ describe('ProjectPage', () => {
   it('shows the portfolio page without the content blocks', async () => {
     const page = await renderPage(portfolioProject);
     expect(page.querySelector('.how-built')).toBeNull();
-    expect(page.querySelectorAll('app-delivery-steps .step')).toHaveLength(5);
+    expect(page.querySelectorAll('app-delivery-chain .tab')).toHaveLength(5);
   });
 
   it('shows the preview with its size when there is one', async () => {

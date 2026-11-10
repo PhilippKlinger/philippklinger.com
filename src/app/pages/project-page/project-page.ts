@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { projectPageContent } from '../../../content/project-pages';
 import { Project, projectPageTexts } from '../../../content/projects';
 import { deliveryTexts } from '../../../content/software-delivery';
-import { DeliverySteps } from './delivery-steps/delivery-steps';
+import { DeliveryChain } from './delivery-chain/delivery-chain';
 
 /** A token, not an input: the router would bind a query parameter of that name to an input. */
 export const PROJECT_PAGE_CONTENT = new InjectionToken('content of the project pages', {
@@ -21,7 +21,7 @@ const blockTexts = {
 
 @Component({
   selector: 'app-project-page',
-  imports: [DeliverySteps, RouterLink],
+  imports: [DeliveryChain, RouterLink],
   templateUrl: './project-page.html',
   styleUrl: './project-page.scss',
 })

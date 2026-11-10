@@ -8,7 +8,7 @@ const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
 const projectPages = pages.filter((path) => path.startsWith('/projekte/'));
 const cardBreakpoint = 960; // 60rem
 const narrowest = 320;
-const boxes = '.card, .flow, .flow-step, .report, .step, .block, .part, footer .footer';
+const boxes = '.card, .flow, .flow-step, .report, .panel, .block, .part, footer .footer';
 
 /** Real snapshot with a fresh time, so every step shows its longest real label. */
 async function serveStatus(page: Page): Promise<void> {
@@ -21,6 +21,8 @@ async function open(page: Page, path: string): Promise<void> {
   await serveStatus(page);
   await page.goto(path);
   await page.evaluate(() => document.fonts.ready);
+  // After hydration the chain shows one field, so its links stay where they were measured.
+  await page.waitForFunction(() => !document.querySelector('app-delivery-chain .tab:not([role])'));
 }
 
 /** The project width, and on the phone the narrowest width as well. */
@@ -98,7 +100,7 @@ test.describe('Responsive', () => {
     test(`[AK15] alle Links in Karten und Schritten ab 44 px: ${path}`, async ({ page }) => {
       await open(page, path);
       const links = page.locator(
-        '#projekte .card a, app-delivery-steps a, .project .back, .project .links a',
+        '#projekte .card a, app-delivery-chain .panel:not([hidden]) a, .project .back, .project .links a',
       );
       expect(await links.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
@@ -115,11 +117,12 @@ test.describe('Responsive', () => {
       page,
     }) => {
       await open(page, path);
-      const states = page.locator(':is(.flow-step, .step-head) .state');
+      // On a project page the value of a station carries its state, the kit has one private line.
+      const states = page.locator('.flow-step .state, .tab .value, app-delivery-chain .private');
       expect(await states.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
-        const offenders = await outsideTheirBox(page, '.flow-step, .step');
-        const stateOffenders = offenders.filter((entry) => /\.state\b|^svg/.test(entry));
+        const offenders = await outsideTheirBox(page, '.flow-step, .tab');
+        const stateOffenders = offenders.filter((entry) => /\.(state|value)\b|^svg/.test(entry));
         expect(stateOffenders, `bei ${width} px`).toEqual([]);
       });
     });

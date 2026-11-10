@@ -107,8 +107,6 @@ const OPERATING_SOURCES: StepSource[] = ['live', 'stability'];
 // DRAFT: all texts of Software Delivery, wording to be approved (PK-23).
 export const deliveryTexts = {
   title: 'Software Delivery',
-  intro:
-    'Vom Code bis in die Produktion, Schritt für Schritt, jeweils mit dem letzten Ereignis und dem Beleg.',
   refreshFailed: 'Der aktuelle Stand ist gerade nicht abrufbar.',
   stale: 'Dieser Stand ist älter als einen Tag.',
   howBuilt: 'Wie es gebaut ist',

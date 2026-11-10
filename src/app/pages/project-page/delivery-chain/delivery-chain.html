@@ -1,0 +1,144 @@
+<section class="delivery" aria-labelledby="delivery-title">
+  <div class="head">
+    <h2 id="delivery-title">{{ deliveryTexts.title }}</h2>
+    @if (stand(); as stand) {
+      <p class="stand">{{ stand }}</p>
+    }
+  </div>
+  <!-- Always in the DOM: a live region announces only changes inside an existing element. -->
+  <p class="notice" role="status">{{ notice() }}</p>
+
+  @if (isPrivate()) {
+    <p class="private" data-state="private">
+      <span class="node" aria-hidden="true">
+        <svg viewBox="0 0 16 16">
+          <rect class="body" x="4" y="7.5" width="8" height="5.5" rx="1" />
+          <path d="M5.8 7.5V6a2.2 2.2 0 0 1 4.4 0v1.5" />
+        </svg>
+      </span>
+      <!-- DRAFT -->
+      {{ texts.private }}
+    </p>
+  } @else {
+    <!-- Prerendered as a list; after hydration the same items become tabs (WAI-ARIA APG). -->
+    <ol
+      class="rail"
+      [attr.role]="enhanced() ? 'tablist' : null"
+      [attr.aria-label]="texts.stations"
+      [style.--gaps]="view().stations.length - 1"
+    >
+      @for (station of view().stations; track station.name; let index = $index) {
+        <li
+          #tab
+          class="tab"
+          [id]="tabId(index)"
+          [attr.data-state]="station.state"
+          [attr.role]="enhanced() ? 'tab' : null"
+          [attr.aria-selected]="enhanced() ? index === selected() : null"
+          [attr.aria-controls]="enhanced() ? panelId(index) : null"
+          [attr.tabindex]="enhanced() ? (index === selected() ? 0 : -1) : null"
+          (click)="select(index, true)"
+          (keydown)="choose($event, index)"
+        >
+          @if (station.toNext; as via) {
+            <span class="via" aria-hidden="true">→ {{ via }}</span>
+          }
+          <span class="node" aria-hidden="true">
+            @switch (station.state) {
+              @case ('verified') {
+                <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
+              }
+              @case ('deviation') {
+                <svg class="cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+              }
+              @case ('private') {
+                <svg class="lock" viewBox="0 0 16 16">
+                  <rect class="body" x="4" y="7.5" width="8" height="5.5" rx="1" />
+                  <path d="M5.8 7.5V6a2.2 2.2 0 0 1 4.4 0v1.5" />
+                </svg>
+              }
+            }
+          </span>
+          <span class="cell">
+            <span class="name">{{ station.name }}</span>
+            <span class="value">{{ station.value }}</span>
+            @if (spoken(station.state)) {
+              <span class="visually-hidden">, {{ deliveryTexts.stateLabels[station.state] }}</span>
+            }
+          </span>
+        </li>
+      }
+    </ol>
+
+    <div class="panels">
+      @for (station of view().stations; track station.name; let index = $index) {
+        <div
+          class="panel"
+          [id]="panelId(index)"
+          [attr.role]="enhanced() ? 'tabpanel' : null"
+          [attr.aria-labelledby]="enhanced() ? tabId(index) : null"
+          [attr.tabindex]="enhanced() ? 0 : null"
+          [hidden]="enhanced() && index !== selected()"
+        >
+          <p class="kicker">
+            {{ index + 1 }} / {{ view().stations.length }} · <b>{{ station.name }}</b>
+          </p>
+          <p class="what">{{ station.sentence }}</p>
+
+          @if (station.table; as table) {
+            <table class="facts">
+              <thead>
+                <tr>
+                  @for (head of table.head; track $index) {
+                    <th scope="col">{{ head }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of table.rows; track $index) {
+                  <tr>
+                    @for (cell of row; track $index; let column = $index) {
+                      <td [attr.data-label]="labelOf(table, column)">
+                        @if (cell.ok !== undefined) {
+                          <!-- DRAFT: spoken label of the sign -->
+                          <span
+                            class="mark"
+                            [class.fail]="!cell.ok"
+                            role="img"
+                            [attr.aria-label]="cell.ok ? texts.passing : texts.failed"
+                            >{{ cell.ok ? '✓' : '✗' }}</span
+                          >
+                        }
+                        @if (cell.url; as url) {
+                          <a [href]="url">{{ cell.text }}<span aria-hidden="true"> ↗</span></a>
+                        } @else if (cell.sha; as sha) {
+                          <!-- The red thread: one commit, highlighted wherever it appears. -->
+                          <span
+                            class="sha"
+                            [attr.data-sha]="sha"
+                            [attr.data-match]="sha === hoveredSha() ? '' : null"
+                            >{{ cell.text }}</span
+                          >
+                        } @else {
+                          {{ cell.text }}
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          @if (station.verify; as verify) {
+            <details class="verify">
+              <!-- DRAFT -->
+              <summary>{{ texts.verify }}&nbsp;<span aria-hidden="true">›</span></summary>
+              <pre>{{ verify }}</pre>
+            </details>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>
