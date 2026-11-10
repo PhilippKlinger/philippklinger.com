@@ -9,11 +9,12 @@ const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 const GAP = 32;
 const sections = ['ueber-mich', 'skills', 'projekte', 'kontakt'];
 
-/** Distance from the viewport top to the first content of the section (inside its padding). */
+/** Distance from the visible header (or the viewport top) to the first content of the section. */
 const contentTop = (page: Page, id: string) =>
   page.locator(`#${id}`).evaluate((el) => {
     const padding = parseFloat(getComputedStyle(el).paddingTop);
-    return Math.round(el.getBoundingClientRect().top + padding);
+    const cover = Math.max(0, document.querySelector('app-header')!.getBoundingClientRect().bottom);
+    return Math.round(el.getBoundingClientRect().top + padding - cover);
   });
 
 /** The last section may sit too low to reach the gap; it then ends at the bottom of the page. */
@@ -23,10 +24,15 @@ const atPageEnd = (page: Page) =>
   );
 
 async function expectLandedOn(page: Page, id: string) {
-  const landed = async () => (await contentTop(page, id)) <= GAP + 2 || (await atPageEnd(page));
+  // Waits for the resting state: on mobile the header slides out after a jump, so the gap is
+  // only final once that has finished.
+  const landed = async () =>
+    Math.abs((await contentTop(page, id)) - GAP) <= 2 || (await atPageEnd(page));
   await expect.poll(landed, `#${id}`).toBe(true);
   const top = await contentTop(page, id);
-  expect(top, `#${id} liegt über dem Bildschirmrand`).toBeGreaterThanOrEqual(0);
+  expect(top, `#${id} liegt unter dem Header oder über dem Bildschirmrand`).toBeGreaterThanOrEqual(
+    0,
+  );
   if (await atPageEnd(page)) {
     await expect(page.locator(`#${id} h2`), `#${id} am Seitenende`).toBeInViewport();
   } else {
@@ -58,8 +64,15 @@ test.describe('Sprungziele (FB-03)', () => {
 
   test('[FB-03] jeder Navigationseintrag landet am Inhalt seines Abschnitts', async ({ page }) => {
     const labels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
+    const menuButton = page.getByRole('button', { name: 'Menü' });
     for (const [index, label] of labels.entries()) {
-      if (isMobile(page)) await page.getByRole('button', { name: 'Menü' }).click();
+      if (isMobile(page)) {
+        // After a jump the mobile header has slid out (FB-13); a reader scrolls up a little to
+        // bring it back before opening the menu.
+        if (index > 0) await page.evaluate(() => window.scrollBy(0, -120));
+        await expect(menuButton).toBeInViewport({ ratio: 1 });
+        await menuButton.click();
+      }
       await page
         .getByRole('navigation', { name: 'Hauptnavigation' })
         .getByRole('link', { name: label, exact: true })
