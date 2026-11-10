@@ -26,6 +26,8 @@ export class ChainHint {
   }
 
   inView(visible: boolean): void {
+    // A repeated report must not cancel the running hide timer.
+    if (visible === this.visible) return;
     this.visible = visible;
     this.cancelTimers();
     if (!visible) {

@@ -99,4 +99,15 @@ describe('ChainHint', () => {
     expect(hint.shown()).toBe(false);
     hint.destroy();
   });
+
+  it('keeps the 6 s hide when the chain is reported in view again while shown', () => {
+    const hint = new ChainHint(memoryStorage());
+    hint.inView(true);
+    vi.advanceTimersByTime(2500);
+    expect(hint.shown()).toBe(true);
+    hint.inView(true);
+    vi.advanceTimersByTime(6000);
+    expect(hint.shown()).toBe(false);
+    hint.destroy();
+  });
 });
