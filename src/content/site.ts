@@ -18,6 +18,6 @@ export const shareImage = {
 // DRAFT: texts of "Kontakt", wording to be approved.
 export const contact = {
   intro:
-    'Sie suchen Verstärkung für Development, CI/CD oder Operations? Schreiben Sie mir, ich freue mich auf das Gespräch.',
+    'Du suchst Verstärkung für Development, CI/CD oder Operations? Schreib mir, ich freue mich auf das Gespräch.',
   availability: 'Open to Work · remote oder hybrid',
 };
