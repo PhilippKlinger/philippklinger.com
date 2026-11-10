@@ -65,14 +65,14 @@ describe('DeliveryStatus', () => {
 
   it('reads the snapshot from the transfer state in the browser', () => {
     const handedOver = { generatedAt, status: healthyStatus() };
-    TestBed.inject(TransferState).set(keyOf('conduit'), handedOver);
-    expect(TestBed.inject(DeliveryStatus).snapshot('conduit')()).toEqual(handedOver);
+    TestBed.inject(TransferState).set(keyOf('vps-plattform'), handedOver);
+    expect(TestBed.inject(DeliveryStatus).snapshot('vps-plattform')()).toEqual(handedOver);
   });
 
   it('stays empty for a project the document does not contain yet', () => {
     const status = serviceWithBuild();
-    expect(status.snapshot('conduit')()).toBeNull();
-    expect(TestBed.inject(TransferState).hasKey(keyOf('conduit'))).toBe(false);
+    expect(status.snapshot('vps-plattform')()).toBeNull();
+    expect(TestBed.inject(TransferState).hasKey(keyOf('vps-plattform'))).toBe(false);
   });
 
   it('stays empty without any data', () => {
@@ -114,14 +114,14 @@ describe('DeliveryStatus', () => {
     );
     page.destroy();
     expect(status.notice()).toBeNull();
-    status.snapshot('conduit');
+    status.snapshot('vps-plattform');
     expect(status.notice()).toBe(deliveryTexts.refreshFailed);
   });
 
   it('stops counting a project when the page showing it is gone', async () => {
     const status = TestBed.inject(DeliveryStatus);
     const page = showingPage();
-    const ask = () => status.snapshot('conduit', page.componentInstance.ref);
+    const ask = () => status.snapshot('vps-plattform', page.componentInstance.ref);
     await afterFailedRequest(status, ask);
     // Cards ask again whenever their view is recomputed; one leaving must release all of that.
     ask();
@@ -133,8 +133,8 @@ describe('DeliveryStatus', () => {
     const status = TestBed.inject(DeliveryStatus);
     const [first, second] = [showingPage(), showingPage()];
     await afterFailedRequest(status, () => {
-      status.snapshot('conduit', first.componentInstance.ref);
-      status.snapshot('conduit', second.componentInstance.ref);
+      status.snapshot('vps-plattform', first.componentInstance.ref);
+      status.snapshot('vps-plattform', second.componentInstance.ref);
     });
     first.destroy();
     expect(status.notice()).toBe(deliveryTexts.refreshFailed);

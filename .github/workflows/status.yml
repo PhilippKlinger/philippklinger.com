@@ -47,6 +47,8 @@ jobs:
         run: node scripts/collect-status.mjs status.json
 
       # Independent of the collector's own validation: never replace a good file with a broken one.
+      # The file comes from the collector of this commit, so it names the same projects as the
+      # sources here; the site still reads files without vps-plattform.
       - name: Check status.json before upload
         run: |
           set -Eeuo pipefail
@@ -55,7 +57,7 @@ jobs:
           jq -e '.schemaVersion == 1 and (.generatedAt | type == "string")
             and (.projects.videoflix.code.reachable | type == "boolean")
             and (.projects.portfolio.code.reachable | type == "boolean")
-            and (.projects.conduit.code.reachable | type == "boolean")' status.json > /dev/null \
+            and (.projects["vps-plattform"].code.reachable | type == "boolean")' status.json > /dev/null \
             || { echo "::error::status.json has an unexpected structure"; exit 1; }
 
       - name: Install lftp

@@ -89,11 +89,11 @@ describe('ProjectPage', () => {
   });
 
   it('shows "Wie es gebaut ist" only with content', async () => {
-    const without = await renderPage(bySlug('conduit'));
+    const without = await renderPage(bySlug('vps-plattform'));
     expect(without.textContent).not.toContain(deliveryTexts.howBuilt);
     expect(without.querySelector('.how-built')).toBeNull();
     TestBed.resetTestingModule();
-    const page = await renderPage(bySlug('conduit'), sampleContent);
+    const page = await renderPage(bySlug('vps-plattform'), sampleContent);
     expect(texts(page.querySelectorAll('h2'))).toEqual([
       deliveryTexts.title,
       deliveryTexts.howBuilt,
@@ -106,7 +106,7 @@ describe('ProjectPage', () => {
   });
 
   it('shows the architecture as parts with their role and the summary', async () => {
-    const page = await renderPage(bySlug('conduit'), sampleContent);
+    const page = await renderPage(bySlug('vps-plattform'), sampleContent);
     const block = page.querySelector('.block-architecture')!;
     expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.architecture);
     expect(texts(block.querySelectorAll('.part strong'))).toEqual(['Frontend', 'API']);
@@ -115,7 +115,7 @@ describe('ProjectPage', () => {
   });
 
   it('shows 2 to 3 decisions with reason and price', async () => {
-    const page = await renderPage(bySlug('conduit'), sampleContent);
+    const page = await renderPage(bySlug('vps-plattform'), sampleContent);
     const block = page.querySelector('.block-decisions')!;
     expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.decisions);
     const decisions = [...block.querySelectorAll('.decision')];
@@ -128,7 +128,7 @@ describe('ProjectPage', () => {
   });
 
   it('shows the failure with what, found and changed', async () => {
-    const page = await renderPage(bySlug('conduit'), sampleContent);
+    const page = await renderPage(bySlug('vps-plattform'), sampleContent);
     const block = page.querySelector('.block-failure')!;
     expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.failure);
     const { title, what, found, changed } = sampleContent.failure;
@@ -152,13 +152,13 @@ describe('ProjectPage', () => {
   });
 
   it('shows no image for a project without a preview', async () => {
-    const page = await renderPage({ ...bySlug('conduit'), preview: undefined });
+    const page = await renderPage({ ...bySlug('vps-plattform'), preview: undefined });
     expect(page.querySelector('img')).toBeNull();
     expect(page.querySelector('.media')).toBeNull();
   });
 
   it('leads back to the project list', async () => {
-    const back = (await renderPage(bySlug('conduit'))).querySelector('a.back');
+    const back = (await renderPage(bySlug('vps-plattform'))).querySelector('a.back');
     expect(back?.getAttribute('href')).toBe('/#projekte');
     expect(back?.textContent?.trim()).toBeTruthy();
   });

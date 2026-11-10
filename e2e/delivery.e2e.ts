@@ -7,6 +7,8 @@ import type { StatusDocument } from '../src/content/status';
 // preview, with a time set per test. The local build has no snapshot of its own, so what shows up
 // after loading came from the request these tests answer.
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
+// The file the server keeps after the deploy until status.yml runs again: conduit, no VPS.
+const beforeVpsText = readFileSync('e2e/fixtures/status-before-vps.json', 'utf8');
 const refreshFailed = 'Der aktuelle Stand ist gerade nicht abrufbar.';
 const stale = 'Dieser Stand ist älter als einen Tag.';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -73,7 +75,12 @@ const stepNames = {
     'Restore-Test',
   ],
   portfolio: ['Code', 'Tests & Security-Checks', 'Signed Build', 'Deployment', 'Monitoring'],
-  conduit: ['Code', 'CI', 'Image in GHCR', 'Staging-Deployment'],
+  'vps-plattform': ['Code', 'CI & Security-Checks', 'Betrieb'],
+};
+
+/** Keeps the fresh time, so only the projects are those of the old collector. */
+const beforeVps: Change = (document) => {
+  document.projects = (JSON.parse(beforeVpsText) as StatusDocument).projects;
 };
 
 test.describe('Software Delivery', () => {
@@ -118,17 +125,25 @@ test.describe('Software Delivery', () => {
     await expect(signal(page)).toContainText('3 von 5 belegt');
   });
 
-  test('[Spec 6.4] Conduit behauptet weder Tests noch Scan', async ({ page }) => {
+  test('[Plan VPS E4] VPS-Plattform: Code, CI & Security-Checks, Betrieb', async ({ page }) => {
     await serveStatus(page);
-    await page.goto('/projekte/conduit/');
-    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.conduit);
-    await expect(step(page, 'CI')).toContainText(
-      'Jede Änderung wird automatisch gebaut und validiert.',
+    await page.goto('/projekte/vps-plattform/');
+    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames['vps-plattform']);
+    await expect(delivery(page).locator('.step-arrow')).toHaveText(['CI', 'Betrieb']);
+    await expect(signal(page)).toContainText('2 von 3 belegt');
+    await expect(step(page, 'Code').locator('.state')).toHaveText('Belegt');
+    const ci = step(page, 'CI & Security-Checks');
+    await expect(ci.locator('.state')).toHaveText('Belegt');
+    await expect(ci).toContainText(
+      'Jede Änderung startet die echte Konfiguration und wird auf Schwachstellen geprüft.',
     );
-    await expect(delivery(page)).not.toContainText(/getestet|Schwachstellen/);
-    await expect(step(page, 'Staging-Deployment').locator('.state')).toHaveText(
-      'Noch nicht eingerichtet',
-    );
+    await expect(ci.locator('.step-links a')).toHaveText(['Lauf Edge-Proxy', 'Lauf Monitoring']);
+    for (const link of await ci.locator('.step-links a').all()) {
+      await expect(link).toHaveAttribute('href', /\/vps-(edge|monitoring)\/actions\/runs\/\d+$/);
+    }
+    await expect(delivery(page)).not.toContainText(/getestet/);
+    // Plan VPS E5: no Kuma slug of its own yet.
+    await expect(step(page, 'Betrieb').locator('.state')).toHaveText('Noch nicht eingerichtet');
     await expect(steps(page).last()).toHaveClass(/step-open/);
   });
 
@@ -136,8 +151,8 @@ test.describe('Software Delivery', () => {
     page,
   }) => {
     await serveStatus(page, (document) => {
-      document.projects.conduit!.checks.signals.workflows.push({
-        repo: 'PhilippKlinger/conduit-container',
+      document.projects.videoflix.checks.signals.workflows.push({
+        repo: 'PhilippKlinger/videoflix-deploy',
         workflow: 'Deploy',
         file: 'deploy.yml',
         kind: 'deploy',
@@ -147,13 +162,13 @@ test.describe('Software Delivery', () => {
         completedAt: '2026-11-06T10:42:00Z',
       });
     });
-    await page.goto('/projekte/conduit/');
-    const staging = step(page, 'Staging-Deployment');
-    await expect(staging).toContainText(
+    await page.goto('/projekte/videoflix/');
+    const deployment = step(page, 'Deployment');
+    await expect(deployment).toContainText(
       'Der letzte Deploy-Lauf war erfolgreich, der laufende Stand ist nicht abrufbar.',
     );
-    await expect(staging.locator('.state')).toHaveText('Teilweise');
-    await expect(staging.locator('.step-event')).toContainText('06.11., 11:42');
+    await expect(deployment.locator('.state')).toHaveText('Teilweise');
+    await expect(deployment.locator('.step-event')).toContainText('06.11., 11:42');
   });
 
   test('[Spec 6.1] veralteter Stand wird benannt', async ({ page }) => {
@@ -273,9 +288,9 @@ test.describe('Abruf von /status.json', () => {
     });
   }
 
-  test('[AK6] kaputter Conduit-Block: die ganze Datei gilt als unbrauchbar', async ({ page }) => {
+  test('[AK6] kaputter VPS-Block: die ganze Datei gilt als unbrauchbar', async ({ page }) => {
     await serveStatus(page, (document) => {
-      (document.projects as unknown as Record<string, unknown>)['conduit'] = { code: {} };
+      (document.projects as unknown as Record<string, unknown>)['vps-plattform'] = { code: {} };
     });
     await page.goto('/projekte/videoflix/');
     await expect(notice(page)).toHaveText(refreshFailed);
@@ -311,7 +326,7 @@ test.describe('Abruf von /status.json', () => {
     const homeCard = (page: Page, title: string) =>
       page.locator('#projekte article.card').filter({ hasText: title });
 
-    /** Keeps the answer back until the test has left the Conduit page. */
+    /** Keeps the answer back until the test has left the VPS platform page. */
     async function holdStatus(page: Page, change: Change) {
       let answer = () => {};
       const answered = new Promise<void>((resolve) => (answer = resolve));
@@ -324,23 +339,21 @@ test.describe('Abruf von /status.json', () => {
       return { answer: () => answer(), requests: () => requests };
     }
 
-    async function leaveConduitForHome(page: Page): Promise<void> {
-      await page.goto('/projekte/conduit/');
-      await expect(steps(page)).toHaveCount(4);
+    async function leavePlatformForHome(page: Page): Promise<void> {
+      await page.goto('/projekte/vps-plattform/');
+      await expect(steps(page)).toHaveCount(3);
       await page.locator('main a.back').click();
       await expect(page.locator('#projekte article.card')).toHaveCount(5);
       await expect(delivery(page)).toHaveCount(0);
     }
 
-    const withoutConduit: Change = (document) => delete document.projects.conduit;
-
-    // The home page shows a Conduit card itself, so without conduit this notice is its own (AK6).
+    // The home page shows the VPS card itself, so without vps-plattform this notice is its own.
     test('[AK6] die Startseite meldet nur, was ihre eigenen Karten betrifft', async ({ page }) => {
-      const held = await holdStatus(page, withoutConduit);
-      await leaveConduitForHome(page);
+      const held = await holdStatus(page, beforeVps);
+      await leavePlatformForHome(page);
       await expect(page.locator('#projekte .notice')).toBeEmpty();
       held.answer();
-      await expect(homeCard(page, 'Conduit').locator('.signal .state')).toHaveText(
+      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
       await expect(homeCard(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
@@ -348,17 +361,19 @@ test.describe('Abruf von /status.json', () => {
       expect(held.requests()).toBe(1);
     });
 
-    test('[AK6] mit Conduit im Stand bleibt auf der Startseite kein Hinweis', async ({ page }) => {
+    test('[AK6] mit vps-plattform im Stand bleibt auf der Startseite kein Hinweis', async ({
+      page,
+    }) => {
       const held = await holdStatus(page, () => undefined);
-      await leaveConduitForHome(page);
+      await leavePlatformForHome(page);
       held.answer();
-      await expect(homeCard(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
+      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toBeEmpty();
       expect(held.requests()).toBe(1);
     });
 
     test('[AK6] der Hinweis der Startseite folgt nicht zurück auf Videoflix', async ({ page }) => {
-      await serveStatus(page, withoutConduit);
+      await serveStatus(page, beforeVps);
       await page.goto('/projekte/videoflix/');
       await expect(notice(page)).toBeEmpty();
       await page.locator('main a.back').click();
@@ -382,23 +397,25 @@ test.describe('Abruf von /status.json', () => {
     });
   });
 
-  test.describe('alter Stand ohne Conduit', () => {
-    const withoutConduit: Change = (document) => delete document.projects.conduit;
-
-    test('[AK6] die Conduit-Seite meldet es und bleibt vollständig', async ({ page }) => {
+  // Rollout: until the next status.yml run the server serves the file of the old collector.
+  test.describe('alter Stand mit conduit, ohne vps-plattform', () => {
+    test('[AK6] die VPS-Seite meldet es und bleibt vollständig', async ({ page }) => {
       const errors: Error[] = [];
       page.on('pageerror', (error) => errors.push(error));
-      await serveStatus(page, withoutConduit);
-      await page.goto('/projekte/conduit/');
+      await serveStatus(page, beforeVps);
+      await page.goto('/projekte/vps-plattform/');
       await expect(notice(page)).toHaveText(refreshFailed);
-      await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.conduit);
-      await expect(step(page, 'CI').locator('.state')).toHaveText('Nicht abrufbar');
-      await expect(signal(page)).toContainText('0 von 4 belegt');
+      await expect(delivery(page).locator('.step h3')).toHaveText(stepNames['vps-plattform']);
+      await expect(step(page, 'CI & Security-Checks').locator('.state')).toHaveText(
+        'Nicht abrufbar',
+      );
+      await expect(step(page, 'Betrieb').locator('.state')).toHaveText('Noch nicht eingerichtet');
+      await expect(signal(page)).toContainText('0 von 3 belegt');
       expect(errors).toEqual([]);
     });
 
     test('[AK6] Videoflix zeigt denselben Stand normal', async ({ page }) => {
-      await serveStatus(page, withoutConduit);
+      await serveStatus(page, beforeVps);
       await page.goto('/projekte/videoflix/');
       await expect(signal(page)).toContainText('2 von 6 belegt');
       await expect(notice(page)).toBeEmpty();

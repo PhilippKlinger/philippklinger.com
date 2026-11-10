@@ -4,7 +4,8 @@ import type { StatusSources } from './status';
 
 const owner = 'PhilippKlinger';
 
-const videoflixChecks = [
+// The same three workflows in the repositories of Videoflix and of the VPS platform.
+const standardChecks = [
   { name: 'CI', file: 'ci.yml', kind: 'tests' },
   { name: 'CodeQL', file: 'codeql.yml', kind: 'scan' },
   { name: 'Security Checks', file: 'security.yml', kind: 'scan' },
@@ -18,14 +19,14 @@ export const statusSources: StatusSources = {
         {
           name: `${owner}/videoflix-backend`,
           ciWorkflow: 'ci.yml',
-          workflows: [...videoflixChecks],
+          workflows: [...standardChecks],
           // CI tags every image with the commit SHA.
           attestation: { kind: 'image', image: 'philippklinger/videoflix-backend' },
         },
         {
           name: `${owner}/videoflix-frontend`,
           ciWorkflow: 'ci.yml',
-          workflows: [...videoflixChecks],
+          workflows: [...standardChecks],
           attestation: { kind: 'image', image: 'philippklinger/videoflix-frontend' },
         },
         // Compose files, docs and the deploy workflow: no build output to attest.
@@ -75,18 +76,15 @@ export const statusSources: StatusSources = {
       // No restore test exists for the static site: stays "not reachable" until one does.
       restoreTest: null,
     },
-    conduit: {
+    // Configuration only: both repositories pin upstream images and build none, so nothing to
+    // attest and no version endpoint. videoflix-deploy already counts for Videoflix.
+    'vps-plattform': {
       repos: [
-        {
-          name: `${owner}/conduit-container`,
-          ciWorkflow: 'ci.yml',
-          // deployment.yml runs on main only after the rework (EV-13).
-          workflows: [{ name: 'CI', file: 'ci.yml', kind: 'tests' }],
-          // CI tags every image with the commit SHA.
-          attestation: { kind: 'image', image: 'philippklinger/conduit-backend' },
-        },
+        { name: `${owner}/vps-edge`, ciWorkflow: 'ci.yml', workflows: [...standardChecks] },
+        { name: `${owner}/vps-monitoring`, ciWorkflow: 'ci.yml', workflows: [...standardChecks] },
       ],
       versionEndpoints: [],
+      // No status page slug of its own yet: stays "not set up" until one exists.
       uptime: null,
       restoreTest: null,
     },

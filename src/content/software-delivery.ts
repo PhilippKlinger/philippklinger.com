@@ -715,10 +715,14 @@ function hasAllStations(project: unknown): boolean {
   return isObject(project) && STATIONS.every((key) => isValidStation(project[key], key));
 }
 
-/** conduit may be missing in an older file, but once it is there it has to be whole. */
+/**
+ * vps-plattform may be missing in an older file, but once it is there it has to be whole.
+ * Keys no page reads, like conduit in a file of the old collector, are ignored.
+ */
 function hasValidProjects(projects: Record<string, unknown>): boolean {
-  const conduitFits = !('conduit' in projects) || hasAllStations(projects['conduit']);
-  return conduitFits && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
+  const platform = 'vps-plattform';
+  const platformFits = !(platform in projects) || hasAllStations(projects[platform]);
+  return platformFits && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
 }
 
 function parseJson(text: string): unknown {

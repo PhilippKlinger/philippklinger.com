@@ -10,7 +10,7 @@ function renderPage(): HTMLElement {
     <textarea aria-label="Text"></textarea>
     <article data-card-link>
       <h3>Titel</h3>
-      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/conduit/">CTA</a>
+      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/vps-plattform/">CTA</a>
     </article>`;
   return page;
 }

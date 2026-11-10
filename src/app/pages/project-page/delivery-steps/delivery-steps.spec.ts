@@ -67,10 +67,10 @@ describe('DeliverySteps', () => {
   });
 
   it('marks a step that is not set up yet', async () => {
-    const element = await renderSteps('conduit');
-    const staging = [...element.querySelectorAll('.step')].at(-1);
-    expect(staging?.querySelector('.state-notSetUp')).not.toBeNull();
-    expect(staging?.classList).toContain('step-open');
+    const element = await renderSteps('vps-plattform');
+    const operation = [...element.querySelectorAll('.step')].at(-1);
+    expect(operation?.querySelector('.state-notSetUp')).not.toBeNull();
+    expect(operation?.classList).toContain('step-open');
     expect(element.querySelectorAll('.step-open')).toHaveLength(1);
   });
 
@@ -153,7 +153,7 @@ describe('DeliverySteps', () => {
   it('stops counting its project when the page is gone', async () => {
     TestBed.configureTestingModule({});
     const fixture = TestBed.createComponent(DeliverySteps);
-    fixture.componentRef.setInput('slug', 'conduit');
+    fixture.componentRef.setInput('slug', 'vps-plattform');
     await fixture.whenStable();
     const status = TestBed.inject(DeliveryStatus);
     await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));

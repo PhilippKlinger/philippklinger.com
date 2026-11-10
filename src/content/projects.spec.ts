@@ -6,7 +6,7 @@ describe('projects', () => {
     expect(projects.map((project) => project.slug)).toEqual([
       'videoflix',
       'neuro-check-in',
-      'conduit',
+      'vps-plattform',
       'developer-workspace-kit',
     ]);
   });
@@ -65,15 +65,18 @@ describe('projects', () => {
     ]);
   });
 
-  it('links Conduit to the code, then the report', () => {
-    const conduit = projects.find((project) => project.slug === 'conduit');
-    expect(conduit?.links).toEqual([
-      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/conduit-container' },
-      {
-        label: 'Bericht lesen',
-        url: 'https://philippklinger.github.io/my-dso-blog/docs/projects/conduit-deployment',
-      },
+  it('links the VPS platform to the status page, then both measured repositories', () => {
+    const platform = projects.find((project) => project.slug === 'vps-plattform');
+    expect(platform?.title).toBe('VPS-Plattform');
+    expect(platform?.links).toEqual([
+      { label: 'Statusseite', url: 'https://status.philipp-klinger.com' },
+      { label: 'Edge-Proxy auf GitHub', url: 'https://github.com/PhilippKlinger/vps-edge' },
+      { label: 'Monitoring auf GitHub', url: 'https://github.com/PhilippKlinger/vps-monitoring' },
     ]);
+  });
+
+  it('no longer shows Conduit or links its report (plan VPS platform, E8)', () => {
+    expect(JSON.stringify(projects)).not.toMatch(/conduit/i);
   });
 
   it('shows the Kit without links until a public repository exists', () => {
@@ -94,7 +97,7 @@ describe('projects', () => {
   it.each<[string, string[]]>([
     ['videoflix', ['CI/CD', 'Docker', 'Security-Checks', 'SBOM', 'Monitoring']],
     ['neuro-check-in', ['React Native', 'TypeScript', 'SQLite', 'E2E-Tests']],
-    ['conduit', ['Docker Compose', 'GitHub Actions', 'GHCR', 'Healthchecks']],
+    ['vps-plattform', ['Docker Compose', 'Caddy', 'Uptime Kuma', 'GitHub Actions', 'Trivy']],
     ['developer-workspace-kit', ['Node.js', 'Claude Code', 'GitHub Actions']],
   ])('"%s" has the chips of the spec', (slug, chips) => {
     expect(projects.find((project) => project.slug === slug)?.chips).toEqual(chips);
@@ -110,8 +113,8 @@ describe('projects', () => {
       'Eigene Android-App zur Selbstreflexion im Google Play Store mit React Native und TypeScript; Offline-Datenspeicherung mit SQLite, PDF-Export sowie automatisierte Unit- und E2E-Tests.',
     ],
     [
-      'conduit',
-      'Bestehende Fullstack-Anwendung mit Docker Compose containerisiert; GitHub Actions für Image-Builds, GHCR-Publishing und automatisiertes Staging-Deployment mit Healthchecks.',
+      'vps-plattform',
+      'Gemeinsame Infrastruktur für die Projekte auf einem VPS, als Code beschrieben: Edge-Proxy mit TLS und Sicherheits-Headern, Monitoring mit öffentlicher Statusseite und eine CI, die bei jeder Änderung die echte Konfiguration startet und auf Sicherheitszusagen prüft.',
     ],
     [
       'developer-workspace-kit',

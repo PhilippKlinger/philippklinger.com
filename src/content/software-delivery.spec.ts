@@ -405,8 +405,7 @@ describe('buildDeliveryView', () => {
   });
 
   describe('live without components', () => {
-    const conduitLike: DeliveryPlan = {
-      statusKey: 'conduit',
+    const stagingPlan: DeliveryPlan = {
       runningLabel: 'Läuft auf Staging',
       steps: [step(['code']), step(['checks']), step(['deployRun', 'live'], false)],
     };
@@ -421,12 +420,12 @@ describe('buildDeliveryView', () => {
     });
 
     it('shows no running label without a real live proof', () => {
-      const { signal } = viewOf(conduitLike, noLiveWithRun());
+      const { signal } = viewOf(stagingPlan, noLiveWithRun());
       expect(signal.status).toBe('CI grün');
     });
 
     it('shows the running label with a real live proof', () => {
-      const { signal } = viewOf(conduitLike, provenStatus(withDeployRun));
+      const { signal } = viewOf(stagingPlan, provenStatus(withDeployRun));
       expect(signal.status).toBe('Läuft auf Staging');
     });
   });
@@ -1108,22 +1107,42 @@ describe('parseStatusDocument', () => {
     expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
   });
 
-  it('accepts a document with conduit', () => {
+  it('accepts a document with vps-plattform', () => {
     const document = validDocument();
-    document.projects.conduit = healthyStatus();
+    document.projects['vps-plattform'] = healthyStatus();
     expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
   });
 
-  it('accepts an old document without conduit', () => {
+  it('accepts an old document without vps-plattform', () => {
     const parsed = parseStatusDocument(JSON.stringify(validDocument()));
     expect(parsed).not.toBeNull();
-    expect(pickProjectSnapshot(parsed, 'conduit')).toBeNull();
+    expect(pickProjectSnapshot(parsed, 'vps-plattform')).toBeNull();
   });
 
-  it('accepts a project with empty lists, as the collector writes for Conduit', () => {
+  // Rollout: the server keeps the file of the old collector until status.yml runs again.
+  describe('a file of the old collector, with conduit and without vps-plattform', () => {
+    const oldFile = (conduit: unknown) =>
+      JSON.stringify({ ...validDocument(), projects: { ...validDocument().projects, conduit } });
+
+    it('stays readable: every other project as usual, the VPS platform without a stand', () => {
+      const parsed = parseStatusDocument(oldFile(healthyStatus()));
+      expect(parsed).not.toBeNull();
+      expect(pickProjectSnapshot(parsed, 'videoflix')?.status).toEqual(healthyStatus());
+      expect(pickProjectSnapshot(parsed, 'portfolio')?.status).toEqual(healthyStatus());
+      expect(pickProjectSnapshot(parsed, 'vps-plattform')).toBeNull();
+    });
+
+    it('ignores the conduit block whatever its shape, no page reads it any more', () => {
+      expect(parseStatusDocument(oldFile({ code: {} }))).not.toBeNull();
+    });
+  });
+
+  it('accepts a project with empty lists, as the collector writes for the VPS platform', () => {
     const document = validDocument();
-    document.projects.conduit = healthyStatus();
-    document.projects.conduit.live = { reachable: false, signals: { components: [] }, links: [] };
+    const platform = healthyStatus();
+    platform.supplyChain = { reachable: false, signals: { repos: [] }, links: [] };
+    platform.live = { reachable: false, signals: { components: [] }, links: [] };
+    document.projects['vps-plattform'] = platform;
     expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
   });
 
@@ -1133,10 +1152,10 @@ describe('parseStatusDocument', () => {
     ['is empty', {}],
     ['has a broken station', { ...healthyStatus(), restore: { reachable: 'yes' } }],
     ['misses a station', { ...healthyStatus(), stability: undefined }],
-  ])('rejects a document whose conduit block is broken: it %s', (_name, conduit) => {
+  ])('rejects a document whose vps-plattform block is broken: it %s', (_name, platform) => {
     const text = JSON.stringify({
       ...validDocument(),
-      projects: { ...validDocument().projects, conduit },
+      projects: { ...validDocument().projects, 'vps-plattform': platform },
     });
     expect(parseStatusDocument(text)).toBeNull();
   });
@@ -1198,7 +1217,11 @@ describe('parseStatusDocument: entries of a station', () => {
     const document: StatusDocument = {
       schemaVersion: 1,
       generatedAt,
-      projects: { videoflix: provenStatus(), portfolio: provenStatus(), conduit: provenStatus() },
+      projects: {
+        videoflix: provenStatus(),
+        portfolio: provenStatus(),
+        'vps-plattform': provenStatus(),
+      },
     };
     change(document.projects.videoflix);
     return document;
@@ -1267,9 +1290,9 @@ describe('parseStatusDocument: entries of a station', () => {
     expect(parsedWith(change)).toBeNull();
   });
 
-  it('rejects a broken entry in the conduit block as well', () => {
+  it('rejects a broken entry in the vps-plattform block as well', () => {
     const document = documentWith(() => undefined);
-    Object.assign(document.projects.conduit!.live.signals, { components: [{}] });
+    Object.assign(document.projects['vps-plattform']!.live.signals, { components: [{}] });
     expect(parseStatusDocument(JSON.stringify(document))).toBeNull();
   });
 
@@ -1290,9 +1313,9 @@ describe('parseStatusDocument: entries of a station', () => {
     expect(parsedWith(change)).not.toBeNull();
   });
 
-  it('accepts a file without conduit', () => {
+  it('accepts a file without vps-plattform', () => {
     const document = documentWith(() => undefined);
-    delete document.projects.conduit;
+    delete document.projects['vps-plattform'];
     expect(parseStatusDocument(JSON.stringify(document))).not.toBeNull();
   });
 
@@ -1367,7 +1390,7 @@ describe('pickProjectSnapshot', () => {
       generatedAt,
       projects: { videoflix: healthyStatus(), portfolio: healthyStatus() },
     };
-    expect(pickProjectSnapshot(document, 'conduit')).toBeNull();
+    expect(pickProjectSnapshot(document, 'vps-plattform')).toBeNull();
   });
 
   it('stays empty without a document', () => {
