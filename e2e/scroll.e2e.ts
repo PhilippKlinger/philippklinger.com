@@ -68,6 +68,19 @@ test.describe('Sprungziele (FB-03)', () => {
     }
   });
 
+  test('[FB-03 · WCAG 2.4.3] nach einem Sprung führt Tab in den Abschnitt, nicht zurück in den Header', async ({
+    page,
+  }) => {
+    if (isMobile(page)) await page.getByRole('button', { name: 'Menü' }).click();
+    await page
+      .getByRole('navigation', { name: 'Hauptnavigation' })
+      .getByRole('link', { name: 'Projekte', exact: true })
+      .click();
+    await page.keyboard.press('Tab');
+    const inside = await page.evaluate(() => !!document.activeElement?.closest('#projekte'));
+    expect(inside, 'Fokus liegt nach Tab im Abschnitt Projekte').toBe(true);
+  });
+
   test('[FB-03] Aufruf mit Anker landet am Inhalt', async ({ page }) => {
     for (const id of sections) {
       await page.goto(`/#${id}`);
@@ -85,8 +98,6 @@ test.describe('Nach oben (FB-02)', () => {
     const present = page.getByRole('button', { name: 'Nach oben', includeHidden: true });
     await expect(present).toHaveCount(1);
     await expect(present).toBeHidden();
-    await page.keyboard.press('Tab');
-    await expect(present).not.toBeFocused();
   });
 
   test('[FB-02] Button erscheint, sobald der Hero aus dem Bild ist', async ({ page }) => {
@@ -112,6 +123,18 @@ test.describe('Nach oben (FB-02)', () => {
     await page.locator('#kontakt').scrollIntoViewIfNeeded();
     await button(page).click();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
+  test('[FB-02] am Seitenende liegt der Button über dem Footer, nicht auf ihm', async ({
+    page,
+  }) => {
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(button(page)).toBeVisible();
+    const [box, footer] = [
+      await button(page).boundingBox(),
+      await page.locator('app-footer').boundingBox(),
+    ];
+    expect(box!.y + box!.height, 'Button reicht in den Footer').toBeLessThanOrEqual(footer!.y);
   });
 
   test('[FB-02] nur auf der Startseite', async ({ page }) => {
