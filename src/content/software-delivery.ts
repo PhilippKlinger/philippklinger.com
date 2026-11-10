@@ -130,30 +130,34 @@ const UNAVAILABLE_SENTENCE = 'Dieser Beleg ist gerade nicht abrufbar.';
 
 // Fixed time zone, so the prerendered page and the browser render the same text.
 const timeZone = 'Europe/Berlin';
-const dayTimeFormat = new Intl.DateTimeFormat('de-DE', {
+export const dayTimeFormat = new Intl.DateTimeFormat('de-DE', {
   timeZone,
   day: '2-digit',
   month: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
 });
-const dayFormat = new Intl.DateTimeFormat('de-DE', { timeZone, day: '2-digit', month: '2-digit' });
+export const dayFormat = new Intl.DateTimeFormat('de-DE', {
+  timeZone,
+  day: '2-digit',
+  month: '2-digit',
+});
 const dateFormat = new Intl.DateTimeFormat('de-DE', {
   timeZone,
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
 });
-const oneDecimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
+export const oneDecimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
 
-const shortSha = (sha: string) => sha.slice(0, 7);
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-const unique = <T>(values: T[]) => [...new Set(values)];
-const present = <T>(value: T | null | undefined): value is T =>
+export const shortSha = (sha: string) => sha.slice(0, 7);
+export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+export const unique = <T>(values: T[]) => [...new Set(values)];
+export const present = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 const joinParts = (parts: (string | null)[]) => parts.filter(present).join(', ');
 
-function formatTime(format: Intl.DateTimeFormat, value: string | null): string | null {
+export function formatTime(format: Intl.DateTimeFormat, value: string | null): string | null {
   return value === null || Number.isNaN(Date.parse(value)) ? null : format.format(new Date(value));
 }
 
@@ -162,7 +166,7 @@ function latestTime(runs: WorkflowSignal[]): string | null {
   return times.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) ?? null;
 }
 
-function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSignal[] {
+export function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSignal[] {
   const isDeploy = (run: WorkflowSignal) => run.kind === 'deploy';
   return status.checks.signals.workflows.filter((run) =>
     wanted === 'deploy' ? isDeploy(run) : !isDeploy(run),
@@ -170,7 +174,7 @@ function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSign
 }
 
 /** Older files still list repositories that build nothing; they have nothing to prove here. */
-const builtRepos = (status: ProjectStatus): RepoSupplyChainSignal[] =>
+export const builtRepos = (status: ProjectStatus): RepoSupplyChainSignal[] =>
   status.supplyChain.signals.repos.filter((repo) => repo.attestation !== null);
 
 function isProtected(repo: RepoCodeSignal): boolean {
@@ -183,7 +187,7 @@ function codeProof(repo: RepoCodeSignal): Proof {
   return repo.reachable ? repo.isPublic === true && isProtected(repo) : null;
 }
 
-function runProof(run: WorkflowSignal): Proof {
+export function runProof(run: WorkflowSignal): Proof {
   return run.reachable && run.conclusion !== null ? run.conclusion === 'success' : null;
 }
 
@@ -506,7 +510,7 @@ function measuredView(step: MeasuredStep, status: Status, plan: DeliveryPlan): D
   };
 }
 
-const isMeasured = (step: DeliveryStepPlan): step is MeasuredStep => 'sources' in step;
+export const isMeasured = (step: DeliveryStepPlan): step is MeasuredStep => 'sources' in step;
 
 function fixedView(step: FixedStep): DeliveryStepView {
   return {
