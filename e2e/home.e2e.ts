@@ -167,6 +167,15 @@ test.describe('Abschnitte', () => {
     await expect(contact.locator('a[href*="github.com/PhilippKlinger"]')).toBeVisible();
     await expect(contact.locator('.availability')).toHaveText('Open to Work · remote oder hybrid');
   });
+
+  test('[FB-12] Startseite spricht per Du an, ohne Sie-Anrede', async ({ page }) => {
+    await expect(page.locator('#kontakt .intro')).toContainText('Du suchst Verstärkung');
+    const main = await page.locator('main').innerText();
+    const description = await page.locator('meta[name="description"]').getAttribute('content');
+    for (const text of [main, description ?? '']) {
+      expect(text).not.toMatch(/\b(Sie suchen|Schreiben Sie|Ihnen|Ihre?|Ihrem|Ihren)\b/);
+    }
+  });
 });
 
 test.describe('Design-Tokens', () => {
