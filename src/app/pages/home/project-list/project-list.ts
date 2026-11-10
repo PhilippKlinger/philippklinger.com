@@ -8,17 +8,20 @@ import { ProjectRow, RowContent } from './project-row/project-row';
 
 // DRAFT: ring texts and the status of the reports row, wording to be approved (PK-23).
 const detailsRing = 'Details';
-const reportRow: RowContent = {
-  slug: 'projektberichte',
-  title: reportCard.title,
-  summary: reportCard.text,
-  tech: reportCard.chips,
-  href: reportCard.cta.url,
-  external: true,
-  // Counted from the list, so the number cannot drift from the reports.
-  signal: { state: 'verified', status: `${reportCard.reports.length} Berichte`, when: '' },
-  ring: 'Zum Blog ↗',
-};
+
+function reportRow(): RowContent {
+  return {
+    slug: 'projektberichte',
+    title: reportCard.title,
+    summary: reportCard.text,
+    tech: reportCard.chips,
+    href: reportCard.cta.url,
+    external: true,
+    // Counted from the list when shown, so the number cannot drift from the reports.
+    signal: { state: 'verified', status: `${reportCard.reports.length} Berichte`, when: '' },
+    ring: 'Zum Blog ↗',
+  };
+}
 
 @Component({
   selector: 'app-project-list',
@@ -31,7 +34,7 @@ export class ProjectList {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly rows = computed<RowContent[]>(() => [
     ...projects.map((project) => this.projectRow(project)),
-    reportRow,
+    reportRow(),
   ]);
 
   private projectRow({ slug, title, summary, chips, preview }: Project): RowContent {

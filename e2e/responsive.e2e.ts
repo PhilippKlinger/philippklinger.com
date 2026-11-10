@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { pages } from './support/site';
 
-// Responsive pass over project rows, steps and footer (spec 11, 16.1, AK15). Runs in every project; on the
+// Responsive pass over cards, project rows, steps and footer (spec 11, 16.1, AK15). Runs in every project; on the
 // phone it also checks 320 px, the narrowest width a page has to reflow to (WCAG 1.4.10).
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
 const projectPages = pages.filter((path) => path.startsWith('/projekte/'));
 const narrowest = 320;
-const boxes = '.row, .step, .block, .part, footer .footer';
+const boxes = '.card, .row, .step, .block, .part, footer .footer';
 
 /** Real snapshot with a fresh time, so every step shows its longest real label. */
 async function serveStatus(page: Page): Promise<void> {
@@ -36,7 +36,7 @@ async function atEachWidth(page: Page, check: (width: number) => Promise<void>):
   }
 }
 
-/** Elements that leave the content box of their nearest row or step, or clip their text. */
+/** Elements that leave the content box of their nearest card, row or step, or clip their text. */
 function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
   return page.evaluate((boxSelector) => {
     const name = (el: Element) =>
