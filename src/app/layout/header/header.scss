@@ -1,13 +1,32 @@
 @use 'breakpoints' as bp;
 
+// Transparent over the hero; over the content it needs the page colour to stay readable.
+// On mobile it slides out while the reader scrolls down (FB-13).
+:host {
+  transition:
+    translate 0.2s ease,
+    background-color 0.2s ease;
+
+  &.over-content {
+    border-bottom: var(--border-width) solid var(--color-line-faint);
+    background: var(--color-bg);
+  }
+
+  &.away {
+    translate: 0 -100%;
+  }
+}
+
+// A fixed height, so jump targets can leave exactly this much room below it.
 .header {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: var(--header-height);
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin-inline: auto;
-  padding: var(--space-md) var(--page-gutter);
+  padding: 0 var(--page-gutter);
 }
 
 // Two letters are far narrower than a touch target; the text edge stays on the left.

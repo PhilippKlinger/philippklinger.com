@@ -2,9 +2,9 @@ main:focus {
   outline: none;
 }
 
-// The header overlays the hero, so it sits on top of the page.
+// The header overlays the hero and stays reachable while scrolling (FB-13).
 app-header {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
