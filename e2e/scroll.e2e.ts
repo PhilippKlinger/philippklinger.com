@@ -23,11 +23,15 @@ const atPageEnd = (page: Page) =>
   );
 
 async function expectLandedOn(page: Page, id: string) {
-  await expect.poll(() => contentTop(page, id), `#${id}`).toBeLessThanOrEqual(GAP + 2);
+  const landed = async () => (await contentTop(page, id)) <= GAP + 2 || (await atPageEnd(page));
+  await expect.poll(landed, `#${id}`).toBe(true);
   const top = await contentTop(page, id);
   expect(top, `#${id} liegt über dem Bildschirmrand`).toBeGreaterThanOrEqual(0);
-  if (!(await atPageEnd(page)))
+  if (await atPageEnd(page)) {
+    await expect(page.locator(`#${id} h2`), `#${id} am Seitenende`).toBeInViewport();
+  } else {
     expect(Math.abs(top - GAP), `#${id}: Abstand oben`).toBeLessThanOrEqual(2);
+  }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -78,12 +82,11 @@ test.describe('Nach oben (FB-02)', () => {
 
   test('[FB-02] Button fehlt, solange der Hero im Bild ist', async ({ page }) => {
     // Present in the page, so the check below cannot pass on a missing button.
-    await expect(page.getByRole('button', { name: 'Nach oben', includeHidden: true })).toHaveCount(
-      1,
-    );
-    await expect(button(page)).toBeHidden();
+    const present = page.getByRole('button', { name: 'Nach oben', includeHidden: true });
+    await expect(present).toHaveCount(1);
+    await expect(present).toBeHidden();
     await page.keyboard.press('Tab');
-    await expect(button(page)).not.toBeFocused();
+    await expect(present).not.toBeFocused();
   });
 
   test('[FB-02] Button erscheint, sobald der Hero aus dem Bild ist', async ({ page }) => {
