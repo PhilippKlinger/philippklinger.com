@@ -1,0 +1,55 @@
+// Sticky at the end of the start page: it rides along at the bottom of the viewport and
+// stops above the footer instead of covering its links. The row itself lets clicks through.
+:host {
+  position: sticky;
+  inset-block-end: var(--page-gutter);
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  padding-inline: var(--page-gutter);
+  pointer-events: none;
+}
+
+// Card look of the site: dark surface, accent border, round touch target.
+.back-to-top {
+  display: grid;
+  place-items: center;
+  width: var(--size-touch);
+  height: var(--size-touch);
+  padding: 0;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  color: var(--color-accent);
+  cursor: pointer;
+  pointer-events: auto;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &.shown {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--color-accent);
+      color: var(--color-bg);
+    }
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}

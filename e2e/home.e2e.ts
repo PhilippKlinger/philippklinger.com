@@ -114,6 +114,21 @@ test.describe('Hero', () => {
 });
 
 test.describe('Abschnitte', () => {
+  test('[FB-04] Überschrift jedes Abschnitts heißt wie sein Menüpunkt, ohne Zeile darüber', async ({
+    page,
+  }) => {
+    const expected = {
+      'ueber-mich': 'Über mich',
+      skills: 'Skills',
+      projekte: 'Projekte',
+      kontakt: 'Kontakt',
+    };
+    for (const [id, label] of Object.entries(expected)) {
+      await expect(page.locator(`#${id} h2`), `#${id}`).toHaveText(label);
+    }
+    await expect(page.locator('main .eyebrow')).toHaveCount(0);
+  });
+
   test('[Spec 3.4] Über mich: Porträt und Karte mit 3 Punkten', async ({ page }) => {
     const about = page.locator('#ueber-mich');
     await expect(about.getByRole('img', { name: /Philipp Klinger/ })).toBeVisible();
@@ -260,13 +275,8 @@ test.describe('Mikro-Interaktionen (PK-28)', () => {
   });
 });
 
-test.describe('Hover-Grafiken (PK-29)', () => {
-  const stripes = (element: ReturnType<Page['locator']>) =>
-    element.evaluate((el) => {
-      const style = getComputedStyle(el, '::before');
-      return { image: style.backgroundImage, opacity: style.opacity };
-    });
-  /** Stable reference points: nothing may move when a graphic appears. */
+test.describe('Porträt (FB-05)', () => {
+  /** Stable reference points: nothing may move when the portrait changes. */
   const layout = (page: Page) =>
     page.evaluate(() => ({
       height: document.documentElement.scrollHeight,
@@ -279,15 +289,22 @@ test.describe('Hover-Grafiken (PK-29)', () => {
     await expect(page.locator('.portrait')).toHaveCSS('filter', 'grayscale(1)');
   });
 
-  test('[PK-29] Streifen hinter dem Porträt erscheinen bei Hover', async ({ page }) => {
-    test.skip(isMobile(page), 'kein Hover auf Touch');
+  test('[FB-05] keine Streifen mehr hinter dem Porträt', async ({ page }) => {
     const media = page.locator('.portrait-media');
-    expect((await stripes(media)).opacity).toBe('0');
-    expect((await stripes(media)).image).toContain('repeating-linear-gradient');
-    await media.scrollIntoViewIfNeeded();
+    await media.hover({ force: true });
+    const content = await media.evaluate((el) => getComputedStyle(el, '::before').content);
+    expect(content).toBe('none');
+  });
+
+  test('[FB-05] Hover blendet das Porträt in Farbe, ohne das Layout zu verschieben', async ({
+    page,
+  }) => {
+    test.skip(isMobile(page), 'kein Hover auf Touch');
+    const portrait = page.locator('.portrait');
+    await portrait.scrollIntoViewIfNeeded();
     const before = await layout(page);
-    await media.hover();
-    await expect.poll(async () => (await stripes(media)).opacity).toBe('1');
+    await portrait.hover();
+    await expect(portrait).toHaveCSS('filter', 'grayscale(0)');
     expect(await layout(page), 'Hover verschiebt das Layout').toEqual(before);
   });
 });

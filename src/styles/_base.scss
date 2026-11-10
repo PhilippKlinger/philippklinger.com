@@ -59,14 +59,14 @@ img {
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin-inline: auto;
   padding: var(--space-section) var(--page-gutter) 0;
-  scroll-margin-top: var(--space-lg);
-}
+  // A jump lands on the content with a small gap, not on the padding above it (FB-03).
+  scroll-margin-top: calc(var(--space-lg) - var(--space-section));
 
-// Small label above a heading ("Über mich", "Projekte").
-.eyebrow {
-  margin-bottom: var(--space-xs);
-  font-size: var(--text-lg);
-  color: var(--color-accent);
+  // tabindex="-1" lets a jump move the focus here, so Tab continues in the section.
+  // It is no control, so it shows no focus ring (like main).
+  &:focus {
+    outline: none;
+  }
 }
 
 // Card: dark green surface with an accent border.

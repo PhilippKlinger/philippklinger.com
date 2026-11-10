@@ -1,5 +1,6 @@
 import { Component, DestroyRef, DOCUMENT, inject } from '@angular/core';
 import { About } from './about/about';
+import { BackToTop } from './back-to-top/back-to-top';
 import { Contact } from './contact/contact';
 import { FocusAreas } from './focus-areas/focus-areas';
 import { Hero } from './hero/hero';
@@ -8,8 +9,10 @@ import { ProjectList } from './project-list/project-list';
 
 @Component({
   selector: 'app-home',
-  imports: [Hero, About, FocusAreas, ProjectList, Contact],
+  imports: [Hero, About, FocusAreas, ProjectList, Contact, BackToTop],
   templateUrl: './home.html',
+  // A block box, so the sticky back-to-top button has the page as its containing block.
+  styles: ':host { display: block; }',
 })
 export class Home {
   private readonly document = inject(DOCUMENT);
