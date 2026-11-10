@@ -4,7 +4,7 @@
 // Media queries cannot read custom properties, so they live here as Sass.
 $breakpoints: (
   tablet: 768px,
-  // Delivery cards split into text and panel (60rem).
+  // Project rows and delivery steps go from stacked to columns (60rem).
   card: 960px,
   // The hero pipeline puts its stations side by side; below this the values do not fit.
   pipeline: 1100px,

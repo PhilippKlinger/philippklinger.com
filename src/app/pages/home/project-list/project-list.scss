@@ -4,10 +4,16 @@
   color: var(--color-text-muted);
 }
 
-.cards {
+// Equal rows: a title on two lines makes every row taller, not only its own.
+.rows {
   display: grid;
-  gap: var(--space-md);
+  grid-auto-rows: 1fr;
   margin: var(--space-lg) 0 0;
   padding: 0;
+  border-bottom: var(--border-width) solid var(--color-line-faint);
   list-style: none;
+
+  > li {
+    display: grid;
+  }
 }

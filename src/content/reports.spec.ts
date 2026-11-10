@@ -5,13 +5,11 @@ const repos = 'https://github.com/PhilippKlinger';
 
 describe('reportCard', () => {
   it('has the texts of the spec', () => {
-    expect(reportCard.signal).toEqual({ status: 'Projektberichte', when: 'mit Belegen' });
     expect(reportCard.title).toBe('Security, Linux und Container');
     expect(reportCard.text).toBe(
       'Praxisprojekte mit Bericht: Aufgabe, Vorgehen, Ergebnis und Belege. Jeder Eintrag führt direkt zum passenden Bericht.',
     );
     expect(reportCard.chips).toEqual(['OWASP', 'Linux', 'NGINX', 'Docker Compose']);
-    expect(reportCard.panelTitle).toBe('Direkt zum Beleg');
   });
 
   it('leads to all reports', () => {

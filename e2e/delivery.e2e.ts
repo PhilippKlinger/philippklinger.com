@@ -197,10 +197,10 @@ test.describe('Software Delivery', () => {
     ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
   });
 
-  test('[AK8] [AK17] von der Karte in höchstens 2 Klicks beim Lauf', async ({ page }) => {
+  test('[AK8] [AK17] von der Zeile in höchstens 2 Klicks beim Lauf', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/');
-    await page.getByRole('link', { name: 'Projektdetails ansehen: Videoflix' }).click();
+    await page.getByRole('link', { name: /Videoflix.*Details ansehen/ }).click();
     await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
     await expect(
       step(page, 'Tests & Security-Checks').locator('.step-links a').first(),
@@ -323,8 +323,8 @@ test.describe('Abruf von /status.json', () => {
   });
 
   test.describe('später Abruf nach einem Seitenwechsel im Browser', () => {
-    const homeCard = (page: Page, title: string) =>
-      page.locator('#projekte article.card').filter({ hasText: title });
+    const homeRow = (page: Page, title: string) =>
+      page.locator('#projekte a.row').filter({ hasText: title });
 
     /** Keeps the answer back until the test has left the VPS platform page. */
     async function holdStatus(page: Page, change: Change) {
@@ -343,20 +343,20 @@ test.describe('Abruf von /status.json', () => {
       await page.goto('/projekte/vps-plattform/');
       await expect(steps(page)).toHaveCount(3);
       await page.locator('main a.back').click();
-      await expect(page.locator('#projekte article.card')).toHaveCount(5);
+      await expect(page.locator('#projekte a.row')).toHaveCount(5);
       await expect(delivery(page)).toHaveCount(0);
     }
 
-    // The home page shows the VPS card itself, so without vps-plattform this notice is its own.
-    test('[AK6] die Startseite meldet nur, was ihre eigenen Karten betrifft', async ({ page }) => {
+    // The home page shows the VPS row itself, so without vps-plattform this notice is its own.
+    test('[AK6] die Startseite meldet nur, was ihre eigenen Zeilen betrifft', async ({ page }) => {
       const held = await holdStatus(page, beforeVps);
       await leavePlatformForHome(page);
       await expect(page.locator('#projekte .notice')).toBeEmpty();
       held.answer();
-      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
+      await expect(homeRow(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
-      await expect(homeCard(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
+      await expect(homeRow(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toHaveText(refreshFailed);
       expect(held.requests()).toBe(1);
     });
@@ -367,7 +367,7 @@ test.describe('Abruf von /status.json', () => {
       const held = await holdStatus(page, () => undefined);
       await leavePlatformForHome(page);
       held.answer();
-      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
+      await expect(homeRow(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toBeEmpty();
       expect(held.requests()).toBe(1);
     });

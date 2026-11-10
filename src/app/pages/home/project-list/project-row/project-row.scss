@@ -1,0 +1,158 @@
+@use 'breakpoints' as bp;
+
+// Sizes of a row only (spec 16.1), no other element shares them. The CTA column is fixed, so a
+// focused row that shows its CTA text keeps the same columns as the rows that show the arrow.
+$head-column: 15rem;
+$cta-column: 13rem;
+$row-height: 9.5rem;
+$text-lines: 2;
+$hover-fade: 0.15s ease;
+
+// Fills its list item, so the equal rows of the list reach the link.
+:host {
+  display: grid;
+}
+
+// Below the breakpoint the rows stack; the CTA sits at the bottom, so all rows end alike.
+.row {
+  position: relative;
+  display: grid;
+  grid-template-areas: 'head' 'text' 'tech' 'cta';
+  grid-template-rows: auto auto auto 1fr;
+  gap: var(--space-xs);
+  padding: var(--space-md) 0;
+  border-top: var(--border-width) solid var(--color-line-faint);
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: break-word;
+  transition: background-color $hover-fade;
+
+  // Inside the row, so the outline does not run into the neighbouring rows.
+  &:focus-visible {
+    border-radius: var(--radius-small);
+    outline-offset: calc(-2 * var(--border-width));
+  }
+
+  @include bp.from(card) {
+    grid-template-columns: minmax($head-column, 1fr) 2fr $cta-column;
+    grid-template-areas: 'head text cta' 'head tech cta';
+    grid-template-rows: auto auto;
+    column-gap: var(--space-xl);
+    min-height: $row-height;
+    padding: var(--space-md) var(--space-sm);
+  }
+}
+
+.head {
+  grid-area: head;
+  align-self: center;
+  min-width: 0;
+}
+
+// Running text, so a long status wraps as a sentence.
+.signal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-xs);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.signal-when {
+  color: var(--color-text-subtle);
+}
+
+h3 {
+  margin-top: var(--space-2xs);
+  font-size: var(--text-xl);
+  color: var(--color-text);
+  transition: color $hover-fade;
+}
+
+// Two lines at most, so no row grows past the others.
+.text {
+  display: -webkit-box;
+  grid-area: text;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $text-lines;
+  line-clamp: $text-lines;
+}
+
+.tech {
+  grid-area: tech;
+  overflow: hidden;
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cta {
+  display: inline-flex;
+  grid-area: cta;
+  align-items: center;
+  align-self: end;
+  justify-self: end;
+  gap: var(--space-xs);
+  min-height: var(--size-touch);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.arrow {
+  transition: translate $hover-fade;
+}
+
+@include bp.from(card) {
+  .text {
+    align-self: end;
+  }
+
+  .tech {
+    align-self: start;
+  }
+
+  .cta {
+    align-self: center;
+  }
+}
+
+// Mouse with the ring: the ring says it, the row shows only the arrow. The text stays for screen
+// readers (as .visually-hidden) and comes back on keyboard focus. Touch, reduced motion and
+// keyboard have no ring and keep the text.
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .row:not(:focus-visible) .cta-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .arrow {
+    font-size: var(--text-lg);
+  }
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: var(--color-surface-faint);
+
+    h3 {
+      color: var(--color-accent);
+    }
+
+    .arrow {
+      translate: var(--space-2xs) 0;
+    }
+  }
+}

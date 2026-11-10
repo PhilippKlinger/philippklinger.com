@@ -16,7 +16,7 @@ const EASING = 0.22;
 const RING_ALLOWED =
   '(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)';
 
-/** Optional label at the pointer over a card. The visible CTA stays the real call to action. */
+/** Optional label at the pointer over a project row. The row stays the real link. */
 @Component({
   selector: 'app-cursor-cta',
   templateUrl: './cursor-cta.html',

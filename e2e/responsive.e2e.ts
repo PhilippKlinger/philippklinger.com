@@ -2,13 +2,12 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { pages } from './support/site';
 
-// Responsive pass over cards, steps and footer (spec 4, 11, AK15). Runs in every project; on the
+// Responsive pass over project rows, steps and footer (spec 11, 16.1, AK15). Runs in every project; on the
 // phone it also checks 320 px, the narrowest width a page has to reflow to (WCAG 1.4.10).
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
 const projectPages = pages.filter((path) => path.startsWith('/projekte/'));
-const cardBreakpoint = 960; // 60rem
 const narrowest = 320;
-const boxes = '.card, .flow, .flow-step, .report, .step, .block, .part, footer .footer';
+const boxes = '.row, .step, .block, .part, footer .footer';
 
 /** Real snapshot with a fresh time, so every step shows its longest real label. */
 async function serveStatus(page: Page): Promise<void> {
@@ -37,7 +36,7 @@ async function atEachWidth(page: Page, check: (width: number) => Promise<void>):
   }
 }
 
-/** Elements that leave the content box of their nearest card, panel or step, or clip their text. */
+/** Elements that leave the content box of their nearest row or step, or clip their text. */
 function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
   return page.evaluate((boxSelector) => {
     const name = (el: Element) =>
@@ -49,10 +48,13 @@ function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
       if (rect.width === 0 || rect.height === 0) continue;
       const frame = box.getBoundingClientRect();
       const style = getComputedStyle(box);
+      // Clipped on purpose: the tech line ends in an ellipsis, the CTA text is for screen readers.
+      const { textOverflow, clipPath } = getComputedStyle(el);
+      const intended = textOverflow === 'ellipsis' || clipPath !== 'none';
       const right =
         frame.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
       const left = frame.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
-      const clips = el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1;
+      const clips = !intended && el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1;
       if (rect.right > right + 1 || rect.left < left - 1 || clips) offenders.push(name(el));
     }
     return offenders;
@@ -60,26 +62,6 @@ function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
 }
 
 test.describe('Responsive', () => {
-  test('[AK15] Karte stapelt sich unter 60 rem, ab 60 rem Text links, Panel rechts', async ({
-    page,
-  }) => {
-    await open(page, '/');
-    const width = page.viewportSize()!.width;
-    const cards = page.locator('#projekte .cards > li article.card');
-    await expect(cards).toHaveCount(5);
-    for (const card of await cards.all()) {
-      const main = (await card.locator('.card-main').boundingBox())!;
-      const panel = (await card.locator('.flow').boundingBox())!;
-      if (width < cardBreakpoint) {
-        expect(panel.y, 'panel below the text').toBeGreaterThanOrEqual(main.y + main.height);
-        expect(Math.abs(panel.x - main.x), 'same left edge').toBeLessThanOrEqual(1);
-      } else {
-        expect(panel.x, 'panel right of the text').toBeGreaterThanOrEqual(main.x + main.width);
-        expect(main.width / panel.width, 'text 1.15 fr, panel 1 fr').toBeCloseTo(1.15, 1);
-      }
-    }
-  });
-
   for (const path of ['/', ...projectPages]) {
     test(`[AK15] kein horizontaler Überlauf bei langen Bezeichnungen: ${path}`, async ({
       page,
@@ -95,10 +77,10 @@ test.describe('Responsive', () => {
       });
     });
 
-    test(`[AK15] alle Links in Karten und Schritten ab 44 px: ${path}`, async ({ page }) => {
+    test(`[AK15] alle Links in Zeilen und Schritten ab 44 px: ${path}`, async ({ page }) => {
       await open(page, path);
       const links = page.locator(
-        '#projekte .card a, app-delivery-steps a, .project .back, .project .links a',
+        '#projekte a.row, app-delivery-steps a, .project .back, .project .links a',
       );
       expect(await links.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
@@ -110,15 +92,18 @@ test.describe('Responsive', () => {
         }
       });
     });
+  }
 
+  // Only the project pages show steps; the start page shows one status per row.
+  for (const path of projectPages) {
     test(`[AK15] Schrittzustand bleibt in einer Zeile oder bricht sauber um: ${path}`, async ({
       page,
     }) => {
       await open(page, path);
-      const states = page.locator(':is(.flow-step, .step-head) .state');
+      const states = page.locator('.step-head .state');
       expect(await states.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
-        const offenders = await outsideTheirBox(page, '.flow-step, .step');
+        const offenders = await outsideTheirBox(page, '.step');
         const stateOffenders = offenders.filter((entry) => /\.state\b|^svg/.test(entry));
         expect(stateOffenders, `bei ${width} px`).toEqual([]);
       });

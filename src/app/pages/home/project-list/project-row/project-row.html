@@ -1,0 +1,23 @@
+<a
+  class="row"
+  [href]="row().href"
+  [attr.data-cursor]="row().ring"
+  [attr.target]="row().external ? '_blank' : null"
+  [attr.rel]="row().external ? 'noopener' : null"
+>
+  <div class="head">
+    <p class="signal">
+      <app-state-badge [state]="row().signal.state" [label]="row().signal.status" />
+      @if (row().signal.when; as when) {
+        <span class="signal-when">{{ when }}</span>
+      }
+    </p>
+    <h3>{{ row().title }}</h3>
+  </div>
+  <p class="text">{{ row().summary }}</p>
+  <p class="tech">{{ tech() }}</p>
+  <span class="cta">
+    <span class="cta-text">{{ cta().text }}</span>
+    <span class="arrow" aria-hidden="true">{{ cta().arrow }}</span>
+  </span>
+</a>
