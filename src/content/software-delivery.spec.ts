@@ -1117,6 +1117,7 @@ describe('parseStatusDocument', () => {
     const parsed = parseStatusDocument(JSON.stringify(validDocument()));
     expect(parsed).not.toBeNull();
     expect(pickProjectSnapshot(parsed, 'vps-plattform')).toBeNull();
+    expect(pickProjectSnapshot(parsed, 'neuro-check-in')).toBeNull();
   });
 
   // Rollout: the server keeps the file of the old collector until status.yml runs again.

@@ -88,5 +88,13 @@ export const statusSources: StatusSources = {
       uptime: null,
       restoreTest: null,
     },
+    // The website of the Neuro check-in: only reachability counts, the repositories belong to
+    // the delivery plan of the project itself.
+    'neuro-check-in': {
+      repos: [],
+      versionEndpoints: [],
+      uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'neuro-check-in' },
+      restoreTest: null,
+    },
   },
 };

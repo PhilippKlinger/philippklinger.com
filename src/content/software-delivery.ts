@@ -101,6 +101,7 @@ type Signal = DeliveryView['signal'];
 const LINK_LIMIT = 3;
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const REQUIRED_PROJECTS: RequiredProjectKey[] = ['videoflix', 'portfolio'];
+const OPTIONAL_PROJECTS: ProjectKey[] = ['vps-plattform', 'neuro-check-in'];
 const STATIONS: StationKey[] = ['code', 'checks', 'supplyChain', 'live', 'stability', 'restore'];
 const OPERATING_SOURCES: StepSource[] = ['live', 'stability'];
 
@@ -716,13 +717,14 @@ function hasAllStations(project: unknown): boolean {
 }
 
 /**
- * vps-plattform may be missing in an older file, but once it is there it has to be whole.
+ * The optional projects may be missing in an older file, but once there they have to be whole.
  * Keys no page reads, like conduit in a file of the old collector, are ignored.
  */
 function hasValidProjects(projects: Record<string, unknown>): boolean {
-  const platform = 'vps-plattform';
-  const platformFits = !(platform in projects) || hasAllStations(projects[platform]);
-  return platformFits && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
+  const optionalFit = OPTIONAL_PROJECTS.every(
+    (key) => !(key in projects) || hasAllStations(projects[key]),
+  );
+  return optionalFit && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
 }
 
 function parseJson(text: string): unknown {
