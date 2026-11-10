@@ -64,8 +64,15 @@ test.describe('Sprungziele (FB-03)', () => {
 
   test('[FB-03] jeder Navigationseintrag landet am Inhalt seines Abschnitts', async ({ page }) => {
     const labels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
+    const menuButton = page.getByRole('button', { name: 'Menü' });
     for (const [index, label] of labels.entries()) {
-      if (isMobile(page)) await page.getByRole('button', { name: 'Menü' }).click();
+      if (isMobile(page)) {
+        // After a jump the mobile header has slid out (FB-13); a reader scrolls up a little to
+        // bring it back before opening the menu.
+        if (index > 0) await page.evaluate(() => window.scrollBy(0, -120));
+        await expect(menuButton).toBeInViewport({ ratio: 1 });
+        await menuButton.click();
+      }
       await page
         .getByRole('navigation', { name: 'Hauptnavigation' })
         .getByRole('link', { name: label, exact: true })
