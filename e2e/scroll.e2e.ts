@@ -77,6 +77,10 @@ test.describe('Nach oben (FB-02)', () => {
   const button = (page: Page) => page.getByRole('button', { name: 'Nach oben' });
 
   test('[FB-02] Button fehlt, solange der Hero im Bild ist', async ({ page }) => {
+    // Present in the page, so the check below cannot pass on a missing button.
+    await expect(page.getByRole('button', { name: 'Nach oben', includeHidden: true })).toHaveCount(
+      1,
+    );
     await expect(button(page)).toBeHidden();
     await page.keyboard.press('Tab');
     await expect(button(page)).not.toBeFocused();

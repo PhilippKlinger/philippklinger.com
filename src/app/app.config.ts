@@ -8,6 +8,7 @@ import {
 import { routes } from './app.routes';
 import { PageTitleStrategy } from './page-title-strategy';
 import { provideHomeScrollRestore } from './home-scroll-restore';
+import { provideNativeViewportScroller } from './native-viewport-scroller';
 import {
   provideClientHydration,
   withI18nSupport,
@@ -28,6 +29,8 @@ export const appConfig: ApplicationConfig = {
     // (script-src 'self') blocks. No template uses @defer, so nothing depends on it.
     provideClientHydration(withI18nSupport(), withNoIncrementalHydration()),
     provideHomeScrollRestore(),
+    // Anchor jumps follow scroll-margin-top from the styles (FB-03).
+    provideNativeViewportScroller(),
     { provide: TitleStrategy, useClass: PageTitleStrategy },
   ],
 };
