@@ -61,6 +61,12 @@ img {
   padding: var(--space-section) var(--page-gutter) 0;
   // A jump lands on the content with a small gap, not on the padding above it (FB-03).
   scroll-margin-top: calc(var(--space-lg) - var(--space-section));
+
+  // tabindex="-1" lets a jump move the focus here, so Tab continues in the section.
+  // It is no control, so it shows no focus ring (like main).
+  &:focus {
+    outline: none;
+  }
 }
 
 // Card: dark green surface with an accent border.

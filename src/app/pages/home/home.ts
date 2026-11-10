@@ -11,6 +11,8 @@ import { ProjectList } from './project-list/project-list';
   selector: 'app-home',
   imports: [Hero, About, FocusAreas, ProjectList, Contact, BackToTop],
   templateUrl: './home.html',
+  // A block box, so the sticky back-to-top button has the page as its containing block.
+  styles: ':host { display: block; }',
 })
 export class Home {
   private readonly document = inject(DOCUMENT);
