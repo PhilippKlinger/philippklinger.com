@@ -24,7 +24,10 @@ const atPageEnd = (page: Page) =>
   );
 
 async function expectLandedOn(page: Page, id: string) {
-  const landed = async () => (await contentTop(page, id)) <= GAP + 2 || (await atPageEnd(page));
+  // Waits for the resting state: on mobile the header slides out after a jump, so the gap is
+  // only final once that has finished.
+  const landed = async () =>
+    Math.abs((await contentTop(page, id)) - GAP) <= 2 || (await atPageEnd(page));
   await expect.poll(landed, `#${id}`).toBe(true);
   const top = await contentTop(page, id);
   expect(top, `#${id} liegt unter dem Header oder über dem Bildschirmrand`).toBeGreaterThanOrEqual(
