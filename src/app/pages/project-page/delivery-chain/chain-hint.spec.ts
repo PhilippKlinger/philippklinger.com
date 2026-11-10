@@ -35,19 +35,52 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('shows again after 10 s without activity, once', () => {
+  it('shows again 10 s after the first showing hid, once', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
-    vi.advanceTimersByTime(2500 + 6000);
+    vi.advanceTimersByTime(8500);
     expect(hint.shown()).toBe(false);
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(9999);
+    expect(hint.shown()).toBe(false);
+    vi.advanceTimersByTime(1);
     expect(hint.shown()).toBe(true);
     vi.advanceTimersByTime(6000);
     expect(hint.shown()).toBe(false);
-    hint.activity();
     vi.advanceTimersByTime(60000);
     expect(hint.shown()).toBe(false);
     hint.destroy();
+  });
+
+  it('postpones the second showing by activity while hidden', () => {
+    const hint = new ChainHint(memoryStorage());
+    hint.inView(true);
+    vi.advanceTimersByTime(15000);
+    hint.activity();
+    vi.advanceTimersByTime(9999);
+    expect(hint.shown()).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(hint.shown()).toBe(true);
+    hint.destroy();
+  });
+
+  it('keeps showing on activity while shown', () => {
+    const hint = new ChainHint(memoryStorage());
+    hint.inView(true);
+    vi.advanceTimersByTime(2500);
+    hint.activity();
+    expect(hint.shown()).toBe(true);
+    vi.advanceTimersByTime(5999);
+    expect(hint.shown()).toBe(true);
+    hint.destroy();
+  });
+
+  it('arms no timer on activity after destroy', () => {
+    const hint = new ChainHint(memoryStorage());
+    hint.inView(true);
+    vi.advanceTimersByTime(8500);
+    hint.destroy();
+    hint.activity();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('never shows after the first choice, also in a new instance with the same storage', () => {

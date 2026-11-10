@@ -17,6 +17,7 @@ export class ChainHint {
   private finished: boolean;
   private showings = 0;
   private visible = false;
+  private destroyed = false;
   private showTimer?: Timer;
   private hideTimer?: Timer;
   private idleTimer?: Timer;
@@ -27,7 +28,7 @@ export class ChainHint {
 
   inView(visible: boolean): void {
     // A repeated report must not cancel the running hide timer.
-    if (visible === this.visible) return;
+    if (this.destroyed || visible === this.visible) return;
     this.visible = visible;
     this.cancelTimers();
     if (!visible) {
@@ -36,11 +37,13 @@ export class ChainHint {
     }
     // The first showing waits for the reader to settle; later ones follow idleness.
     if (this.showings === 0) this.showTimer = setTimeout(() => this.show(), SHOW_AFTER_MS);
-    this.armIdle();
+    else this.armIdle();
   }
 
   activity(): void {
-    if (this.visible) this.armIdle();
+    // Idle time only counts while the hint is hidden, so it never flickers back at once.
+    if (this.destroyed || !this.visible || this.showings === 0 || this._shown()) return;
+    this.armIdle();
   }
 
   chosen(): void {
@@ -51,6 +54,7 @@ export class ChainHint {
   }
 
   destroy(): void {
+    this.destroyed = true;
     this.cancelTimers();
   }
 
@@ -59,7 +63,12 @@ export class ChainHint {
     this.showings++;
     this._shown.set(true);
     clearTimeout(this.hideTimer);
-    this.hideTimer = setTimeout(() => this._shown.set(false), HIDE_AFTER_MS);
+    this.hideTimer = setTimeout(() => this.hide(), HIDE_AFTER_MS);
+  }
+
+  private hide(): void {
+    this._shown.set(false);
+    this.armIdle();
   }
 
   private armIdle(): void {
