@@ -5,6 +5,18 @@
   [attr.target]="row().external ? '_blank' : null"
   [attr.rel]="row().external ? 'noopener' : null"
 >
+  <!-- Touch and stacked rows: a small fixed image. Below the fold, so lazy; empty alt: the row says it all. -->
+  <span class="thumb" aria-hidden="true">
+    @if (row().preview; as preview) {
+      <img
+        [src]="preview.src"
+        [width]="preview.width"
+        [height]="preview.height"
+        alt=""
+        loading="lazy"
+      />
+    }
+  </span>
   <div class="head">
     <p class="signal">
       <app-state-badge [state]="row().signal.state" [label]="row().signal.status" />

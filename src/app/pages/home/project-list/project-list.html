@@ -2,9 +2,12 @@
   <h2 id="projects-title" i18n>Projekte</h2>
   <p class="notice" role="status">{{ status.notice() }}</p>
 
-  <ul class="rows">
-    @for (row of rows(); track row.slug) {
-      <li><app-project-row [row]="row" /></li>
-    }
-  </ul>
+  <div #list class="list">
+    <ul class="rows">
+      @for (row of rows(); track row.slug) {
+        <li><app-project-row [row]="row" /></li>
+      }
+    </ul>
+    <app-row-preview />
+  </div>
 </section>

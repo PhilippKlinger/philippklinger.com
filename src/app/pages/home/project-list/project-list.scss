@@ -4,6 +4,11 @@
   color: var(--color-text-muted);
 }
 
+// Holds the rows and their preview, which stands in a row on keyboard focus.
+.list {
+  position: relative;
+}
+
 // Equal rows: a title on two lines makes every row taller, not only its own.
 .rows {
   display: grid;

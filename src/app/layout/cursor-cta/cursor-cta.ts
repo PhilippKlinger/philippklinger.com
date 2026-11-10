@@ -12,8 +12,10 @@ import type { Point } from '../haze/haze-shader';
 import type { CursorDot } from './cursor-dot';
 import { cursorText } from './cursor-text';
 
-const EASING = 0.22;
-const RING_ALLOWED =
+// Shared with the row preview, so the image beside the ring moves with it.
+export const RING_EASING = 0.22;
+// Also in project-row.scss (CTA text) and the base of FOLLOW_ALLOWED in row-preview.ts.
+export const RING_ALLOWED =
   '(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)';
 
 /** Optional label at the pointer over a project row. The row stays the real link. */
@@ -109,8 +111,8 @@ export class CursorCta {
   private readonly frame = (): void => {
     this.frameId = requestAnimationFrame(this.frame);
     this.position = {
-      x: ease(this.position.x, this.target.x, EASING),
-      y: ease(this.position.y, this.target.y, EASING),
+      x: ease(this.position.x, this.target.x, RING_EASING),
+      y: ease(this.position.y, this.target.y, RING_EASING),
     };
     this.host.style.translate = `${this.position.x}px ${this.position.y}px`;
   };

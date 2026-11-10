@@ -1,5 +1,17 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+
+declare global {
+  interface Window {
+    layoutShift: number;
+  }
+}
+
+/** Not in the DOM types of TypeScript yet. */
+interface LayoutShift extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
 
 // The project list on the start page (spec 16.1, 16.2). Status data comes from a real snapshot
 // of status.json through page.route, with a time and changes set per test.
@@ -258,6 +270,152 @@ test.describe('Liste', () => {
       .poll(() => page.evaluate((y) => Math.abs(window.scrollY - y), before))
       .toBeLessThan(3);
     await expect(target).toBeInViewport();
+  });
+});
+
+// The one preview image of the list (spec 16.1, L5, L10). On wide rows with a mouse it follows the
+// pointer beside the ring; on keyboard focus and with reduced motion it stands in the row; touch
+// and stacked rows (below 960 px, deviation from 768 px, see the row layout) show a small image.
+test.describe('Vorschaubild', () => {
+  interface Box {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
+  const preview = (page: Page) => page.locator('#projekte app-row-preview');
+  const boxOf = async (locator: Locator): Promise<Box> => (await locator.boundingBox())!;
+  const overlaps = (a: Box, b: Box) =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const twoFrames = (page: Page) =>
+    page.evaluate(
+      () =>
+        new Promise<void>((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => done())),
+        ),
+    );
+
+  // The listeners come with the app, the prerendered list alone does not answer the pointer yet.
+  async function openHydrated(page: Page): Promise<void> {
+    await openList(page);
+    await expect(page.locator('[ngh]')).toHaveCount(0);
+  }
+
+  async function expectInRow(image: Box, link: Locator): Promise<void> {
+    const rowBox = await boxOf(link);
+    expect(image.x).toBeGreaterThanOrEqual(rowBox.x);
+    expect(image.x + image.width).toBeLessThanOrEqual(rowBox.x + rowBox.width);
+    const center = (box: Box) => box.y + box.height / 2;
+    expect(Math.abs(center(image) - center(rowBox))).toBeLessThan(1);
+    expect(overlaps(image, await boxOf(link.locator('h3'))), 'verdeckt den Titel').toBe(false);
+  }
+
+  test('[L5] Maus: Bild neben dem Zeiger, nie über dem Titel, am rechten Rand links davon', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'desktop');
+    await openHydrated(page);
+    await expect(page.locator('#projekte .thumb').first()).toBeHidden();
+    const videoflix = row(page, 'Videoflix');
+    await videoflix.scrollIntoViewIfNeeded();
+    const rowBox = await boxOf(videoflix);
+    const title = await boxOf(videoflix.locator('h3'));
+    const y = rowBox.y + rowBox.height / 2;
+    for (const x of [title.x + 10, rowBox.x + rowBox.width / 2]) {
+      await page.mouse.move(x, y);
+      await expect(preview(page)).toHaveCSS('opacity', '1');
+      expect(overlaps(await boxOf(preview(page)), title), `Zeiger bei ${x}`).toBe(false);
+    }
+    await expect(preview(page).locator('img')).toHaveAttribute('src', /videoflix/);
+
+    const nearEdge = rowBox.x + rowBox.width - 20;
+    await page.mouse.move(nearEdge, y);
+    await expect
+      .poll(async () => {
+        const image = await boxOf(preview(page));
+        return image.x + image.width <= nearEdge && !overlaps(image, title);
+      }, 'links vom Zeiger')
+      .toBe(true);
+  });
+
+  test('[L5] Tastatur: Bild fest in der Zeile', async ({ page }, testInfo) => {
+    onlyIn(testInfo, 'desktop');
+    await openHydrated(page);
+    await tabIntoList(page);
+    const first = links(page).first();
+    await expect(first).toBeFocused();
+    await expect(preview(page)).toHaveCSS('opacity', '1');
+    await expectInRow(await boxOf(preview(page)), first);
+  });
+
+  test('[L5] Reduced Motion: Bild steht fest, die Maus bewegt es nicht', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'desktop');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openHydrated(page);
+    const neuro = row(page, 'Neuro Check-in');
+    await neuro.scrollIntoViewIfNeeded();
+    const rowBox = await boxOf(neuro);
+    const y = rowBox.y + rowBox.height / 2;
+    await page.mouse.move(rowBox.x + rowBox.width * 0.3, y);
+    await expect(preview(page)).toHaveCSS('opacity', '1');
+    const before = await boxOf(preview(page));
+    await expectInRow(before, neuro);
+    for (const [share, shift] of [
+      [0.6, 10],
+      [0.45, -10],
+    ]) {
+      await page.mouse.move(rowBox.x + rowBox.width * share, y + shift);
+      await twoFrames(page);
+      expect(await boxOf(preview(page))).toEqual(before);
+    }
+  });
+
+  test('[L5] Touch und gestapelte Zeilen: kleines Bild links in jeder Zeile', async ({
+    page,
+  }, testInfo) => {
+    test.skip(!['mobile', 'tablet'].includes(testInfo.project.name), 'nur gestapelte Zeilen');
+    await openList(page);
+    for (const link of await links(page).all()) {
+      const thumb = link.locator('.thumb');
+      await expect(thumb).toBeVisible();
+      const image = await boxOf(thumb);
+      expect(image.x + image.width).toBeLessThanOrEqual((await boxOf(link.locator('h3'))).x);
+    }
+    await expect(preview(page)).toBeHidden();
+  });
+
+  test('[L10] Bilder mit festen Maßen, kein Layout-Sprung beim Laden und beim Hover', async ({
+    page,
+  }, testInfo) => {
+    test.skip(!['mobile', 'desktop'].includes(testInfo.project.name), 'Touch und Maus genügen');
+    await page.addInitScript(() => {
+      window.layoutShift = 0;
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries() as unknown as LayoutShift[]) {
+          if (!entry.hadRecentInput) window.layoutShift += entry.value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await openHydrated(page);
+    for (const link of await links(page).all()) await link.hover();
+    // Ends on a row with an image, so the large one is loaded on the desktop as well.
+    await links(page).first().hover();
+    const images = page.locator('#projekte img:visible');
+    await expect.poll(() => images.count()).toBeGreaterThan(0);
+    for (const image of await images.all()) {
+      await expect(image).toHaveAttribute('width', /^\d+$/);
+      await expect(image).toHaveAttribute('height', /^\d+$/);
+    }
+    await expect
+      .poll(() =>
+        images.evaluateAll((all) => all.every((image) => (image as HTMLImageElement).complete)),
+      )
+      .toBe(true);
+    await twoFrames(page);
+    expect(await page.evaluate(() => window.layoutShift)).toBeLessThan(0.01);
   });
 });
 

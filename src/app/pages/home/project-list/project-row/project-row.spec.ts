@@ -58,6 +58,24 @@ describe('ProjectRow', () => {
     expect(link.querySelector('.signal-when')).toBeNull();
   });
 
+  it('shows the small image with its fixed size, as decoration', () => {
+    const preview = { src: 'images/projects/videoflix.webp', width: 640, height: 336 };
+    const thumb = render({ ...projectRow, preview }).querySelector('a .thumb')!;
+    expect(thumb.getAttribute('aria-hidden')).toBe('true');
+    const image = thumb.querySelector('img')!;
+    expect(image.getAttribute('src')).toBe(preview.src);
+    expect(image.getAttribute('width')).toBe('640');
+    expect(image.getAttribute('height')).toBe('336');
+    expect(image.getAttribute('alt')).toBe('');
+    expect(image.getAttribute('loading')).toBe('lazy');
+  });
+
+  it('keeps the place of the small image for a row without one', () => {
+    const thumb = render(projectRow).querySelector('a .thumb');
+    expect(thumb).not.toBeNull();
+    expect(thumb!.querySelector('img')).toBeNull();
+  });
+
   it('keeps the cta text for screen readers', () => {
     const link = render(projectRow).querySelector('a')!;
     const text = link.querySelector('.cta-text')!;

@@ -3,7 +3,9 @@
 // Sizes of a row only (spec 16.1), no other element shares them. The CTA column is fixed, so a
 // focused row that shows its CTA text keeps the same columns as the rows that show the arrow.
 $head-column: 15rem;
+// Also in row-preview.scss, where the anchored image ends at the CTA column.
 $cta-column: 13rem;
+$thumb-width: 7rem;
 $row-height: 9.5rem;
 $text-lines: 2;
 $hover-fade: 0.15s ease;
@@ -13,13 +15,15 @@ $hover-fade: 0.15s ease;
   display: grid;
 }
 
-// Below the breakpoint the rows stack; the CTA sits at the bottom, so all rows end alike.
+// Below the breakpoint the rows stack with the small image beside the head; the CTA sits at the
+// bottom, so all rows end alike.
 .row {
   position: relative;
   display: grid;
-  grid-template-areas: 'head' 'text' 'tech' 'cta';
+  grid-template-columns: $thumb-width minmax(0, 1fr);
+  grid-template-areas: 'thumb head' 'text text' 'tech tech' 'cta cta';
   grid-template-rows: auto auto auto 1fr;
-  gap: var(--space-xs);
+  gap: var(--space-xs) var(--space-sm);
   padding: var(--space-md) 0;
   border-top: var(--border-width) solid var(--color-line-faint);
   color: inherit;
@@ -33,13 +37,32 @@ $hover-fade: 0.15s ease;
     outline-offset: calc(-2 * var(--border-width));
   }
 
+  // Touch keeps the small image in its own column, it has no pointer to show the large one.
   @include bp.from(card) {
-    grid-template-columns: minmax($head-column, 1fr) 2fr $cta-column;
-    grid-template-areas: 'head text cta' 'head tech cta';
+    grid-template-columns: $thumb-width minmax($head-column, 1fr) 2fr $cta-column;
+    grid-template-areas: 'thumb head text cta' 'thumb head tech cta';
     grid-template-rows: auto auto;
     column-gap: var(--space-xl);
     min-height: $row-height;
     padding: var(--space-md) var(--space-sm);
+  }
+}
+
+// Fixed size before the image loads, so nothing moves when it arrives.
+.thumb {
+  grid-area: thumb;
+  align-self: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-line-faint);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 
@@ -125,7 +148,21 @@ h3 {
   }
 }
 
-// Mouse with the ring: the ring says it, the row shows only the arrow. The text stays for screen
+// Mouse on wide rows: the image goes beside the pointer (row-preview), not into the row.
+@media (hover: hover) and (pointer: fine) {
+  @include bp.from(card) {
+    .row {
+      grid-template-columns: minmax($head-column, 1fr) 2fr $cta-column;
+      grid-template-areas: 'head text cta' 'head tech cta';
+    }
+
+    .thumb {
+      display: none;
+    }
+  }
+}
+
+// Same query as RING_ALLOWED in cursor-cta.ts. Mouse with the ring: the ring says it, the row shows only the arrow. The text stays for screen
 // readers (as .visually-hidden) and comes back on keyboard focus. Touch, reduced motion and
 // keyboard have no ring and keep the text.
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {

@@ -13,7 +13,7 @@ export interface RowContent {
   /** Leads off the site, so it opens in a new tab. */
   external: boolean;
   signal: DeliveryView['signal'];
-  /** Image beside the pointer, shown from the next step on. */
+  /** Image beside the pointer, or small in the row on touch and stacked rows. */
   preview?: ProjectPreview;
   /** Text of the ring at the pointer. */
   ring: string;
