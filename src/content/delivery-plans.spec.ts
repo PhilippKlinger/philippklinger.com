@@ -80,12 +80,11 @@ describe('deliveryPlans', () => {
       ],
     ],
     [
-      'conduit',
+      'vps-plattform',
       [
         ['Code', 'CI'],
-        ['CI', 'Image'],
-        ['Image in GHCR', 'Deploy'],
-        ['Staging-Deployment', undefined],
+        ['CI & Security-Checks', 'Betrieb'],
+        ['Betrieb', undefined],
       ],
     ],
     [
@@ -116,7 +115,7 @@ describe('deliveryPlans', () => {
       'videoflix',
       [['code'], ['checks'], ['supplyChain'], ['live', 'deployRun'], ['stability'], ['restore']],
     ],
-    ['conduit', [['code'], ['checks'], ['image'], ['deployRun', 'live']]],
+    ['vps-plattform', [['code'], ['checks'], ['stability']]],
     ['portfolio', [['code'], ['checks'], ['supplyChain'], ['live'], ['stability']]],
   ])('"%s" reads each step from the sources of the spec', (slug, expected) => {
     const steps = deliveryPlans[slug].steps.filter(isMeasured);
@@ -133,10 +132,16 @@ describe('deliveryPlans', () => {
     expect(await findForbiddenTerm(JSON.stringify(deliveryPlans), [TOPIC_A, TOPIC_B])).toBe(false);
   });
 
-  it('conduit starts its deployment as not set up', () => {
-    const deployment = deliveryPlans['conduit'].steps.at(-1) as MeasuredStep;
-    expect(deployment.setUp).toBe(false);
-    expect(deployment.sources).toEqual(['deployRun', 'live']);
+  // Plan VPS platform E5: no status page of its own yet, so operation waits for its Kuma slug.
+  it('the VPS platform starts its operation as not set up', () => {
+    const operation = deliveryPlans['vps-plattform'].steps.at(-1) as MeasuredStep;
+    expect(operation.setUp).toBe(false);
+    expect(operation.sources).toEqual(['stability']);
+  });
+
+  it('shows the operation of the VPS platform as not set up while the data is silent', () => {
+    const { steps } = buildDeliveryView(deliveryPlans['vps-plattform'], null);
+    expect(steps.map((item) => item.state)).toEqual(['unavailable', 'unavailable', 'notSetUp']);
   });
 
   it.each([
@@ -173,12 +178,20 @@ describe('deliveryPlans', () => {
     }
   });
 
-  it('claims neither tests nor a scan for Conduit, its CI has none', () => {
-    expect(JSON.stringify(deliveryPlans['conduit'])).not.toMatch(/getestet|Schwachstellen/);
-    const ci = deliveryPlans['conduit'].steps.find((item) => item.name === 'CI') as MeasuredStep;
-    expect(ci.sentences.verified).toBe('Jede Änderung wird automatisch gebaut und validiert.');
+  it('says what the CI of the VPS platform really does: start and scan, no tests', () => {
+    const ci = deliveryPlans['vps-plattform'].steps.find(
+      (item) => item.name === 'CI & Security-Checks',
+    ) as MeasuredStep;
+    expect(ci.sentences.verified).toBe(
+      'Jede Änderung startet die echte Konfiguration und wird auf Schwachstellen geprüft.',
+    );
+    expect(JSON.stringify(deliveryPlans['vps-plattform'])).not.toMatch(/getestet/);
     expect(ci.sentences.partial).toBeTruthy();
     expect(ci.sentences.deviation).toBeTruthy();
+  });
+
+  it('has no plan for Conduit any more', () => {
+    expect(deliveryPlans).not.toHaveProperty('conduit');
   });
 
   it.each(['videoflix', 'portfolio'])('"%s" is neutral on a partial signed build', (slug) => {
@@ -193,7 +206,7 @@ describe('deliveryPlans', () => {
 
   it('has an own sentence for a red deploy run wherever one is read', () => {
     const readers = measuredSteps.filter((item) => item.sources.includes('deployRun'));
-    expect(readers).toHaveLength(2);
+    expect(readers).toHaveLength(1);
     for (const reader of readers) {
       expect(reader.sentences.deployRunFailed).toBe(
         'Der letzte Deploy-Lauf war nicht erfolgreich.',
@@ -213,10 +226,6 @@ describe('deliveryPlans', () => {
       const { attestation } = status.supplyChain.signals.repos[0];
       Object.assign(attestation!, { reachable: false, provenanceCount: null });
       expect(deploymentOf('videoflix', status).sentence).toBe(RUN_WITHOUT_LIVE);
-    });
-
-    it('conduit names the run in the same way', () => {
-      expect(deploymentOf('conduit', runWithoutLive()).sentence).toBe(RUN_WITHOUT_LIVE);
     });
 
     it('names the run when live has components, but none of them is proven', () => {
@@ -250,12 +259,12 @@ describe('deliveryPlans', () => {
   it('shows the running label of the spec', () => {
     expect(deliveryPlans['videoflix'].runningLabel).toBe('Läuft in Produktion');
     expect(deliveryPlans['portfolio'].runningLabel).toBe('Läuft in Produktion');
-    expect(deliveryPlans['conduit'].runningLabel).toBe('Läuft auf Staging');
+    expect(deliveryPlans['vps-plattform'].runningLabel).toBe('Läuft in Produktion');
   });
 
   it('reads the measured projects from their status key, the others from the content', () => {
     expect(deliveryPlans['videoflix'].statusKey).toBe('videoflix');
-    expect(deliveryPlans['conduit'].statusKey).toBe('conduit');
+    expect(deliveryPlans['vps-plattform'].statusKey).toBe('vps-plattform');
     expect(deliveryPlans['portfolio'].statusKey).toBe('portfolio');
     expect(deliveryPlans['neuro-check-in'].statusKey).toBeUndefined();
     expect(deliveryPlans['developer-workspace-kit'].statusKey).toBeUndefined();
@@ -266,6 +275,13 @@ describe('deliveryPlans', () => {
       'PhilippKlinger/videoflix-backend': 'Backend',
       'PhilippKlinger/videoflix-frontend': 'Frontend',
       'PhilippKlinger/videoflix-deploy': 'Deploy',
+    });
+  });
+
+  it('names the repositories of the VPS platform after their role', () => {
+    expect(deliveryPlans['vps-plattform'].repoLabels).toEqual({
+      'PhilippKlinger/vps-edge': 'Edge-Proxy',
+      'PhilippKlinger/vps-monitoring': 'Monitoring',
     });
   });
 

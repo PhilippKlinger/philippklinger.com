@@ -4,6 +4,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // Five cards on the start page (spec 4, 5, 6.1, 10). Status data comes from a real snapshot of
 // status.json through page.route, with a time and changes set per test.
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
+// The file the server keeps after the deploy until status.yml runs again: conduit, no VPS.
+const beforeVpsText = readFileSync('e2e/fixtures/status-before-vps.json', 'utf8');
 
 interface Workflow {
   conclusion: string;
@@ -44,8 +46,9 @@ function failChecks(document: StatusFile): void {
   document.projects['videoflix'].checks.signals.workflows[0].conclusion = 'failure';
 }
 
-function dropConduit(document: StatusFile): void {
-  delete document.projects['conduit'];
+/** Keeps the fresh time, so only the projects are those of the old collector. */
+function beforeVps(document: StatusFile): void {
+  document.projects = (JSON.parse(beforeVpsText) as StatusFile).projects;
 }
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
@@ -85,7 +88,7 @@ test.describe('Karten', () => {
     await expect(cards(page).locator('h3')).toHaveText([
       'Videoflix',
       'Neuro Check-in',
-      'Conduit',
+      'VPS-Plattform',
       'Developer Workspace Kit',
       'Security, Linux und Container',
     ]);
@@ -118,7 +121,7 @@ test.describe('Karten', () => {
   }) => {
     await page.goto('/');
     const links = page.locator('#projekte .cta-quiet, #projekte .report-links a');
-    await expect(links).toHaveCount(6 + 7);
+    await expect(links).toHaveCount(7 + 7);
     for (const link of await links.all()) {
       const box = (await link.boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(44);
@@ -128,9 +131,9 @@ test.describe('Karten', () => {
 
   test('[AK2] Klick auf die Kartenfläche öffnet die Detailseite', async ({ page }) => {
     await page.goto('/');
-    await card(page, 'Conduit').locator('.card-main > p').click();
-    await expect(page).toHaveURL(/\/projekte\/conduit\/?$/);
-    await expect(page.locator('h1')).toHaveText('Conduit');
+    await card(page, 'VPS-Plattform').locator('.card-main > p').click();
+    await expect(page).toHaveURL(/\/projekte\/vps-plattform\/?$/);
+    await expect(page.locator('h1')).toHaveText('VPS-Plattform');
   });
 
   test('[Spec 11] Browser-Zurück stellt die Scroll-Position der Startseite wieder her', async ({
@@ -215,14 +218,14 @@ test.describe('Karten', () => {
     }) => {
       await page.goto('/');
       const opened = context.waitForEvent('page');
-      await card(page, 'Conduit').locator('a[data-card-cta]').click(options);
-      await expect(await opened).toHaveURL(/\/projekte\/conduit\/?$/);
+      await card(page, 'VPS-Plattform').locator('a[data-card-cta]').click(options);
+      await expect(await opened).toHaveURL(/\/projekte\/vps-plattform\/?$/);
       await expect(page).toHaveURL(/\/$/);
     });
 
     test(`[AK2] ${name} auf die Kartenfläche navigiert nicht`, async ({ page, context }) => {
       await page.goto('/');
-      await card(page, 'Conduit').locator('.card-main > p').click(options);
+      await card(page, 'VPS-Plattform').locator('.card-main > p').click(options);
       await afterSelectionWindow(page);
       await expect(page).toHaveURL(/\/$/);
       expect(context.pages()).toHaveLength(1);
@@ -245,13 +248,13 @@ test.describe('Karten', () => {
     expect(reached).toEqual([
       'Projektdetails ansehen: Videoflix',
       'Projektdetails ansehen: Neuro Check-in',
-      'Projektdetails ansehen: Conduit',
+      'Projektdetails ansehen: VPS-Plattform',
       'Projektdetails ansehen: Developer Workspace Kit',
       'Alle Projektberichte ansehen',
     ]);
   });
 
-  test('[AK3] Videoflix zeigt sechs Schritte, Neuro drei, Conduit vier, Kit drei', async ({
+  test('[AK3] Videoflix zeigt sechs Schritte, Neuro drei, VPS-Plattform drei, Kit drei', async ({
     page,
   }) => {
     await serveStatus(page);
@@ -269,11 +272,10 @@ test.describe('Karten', () => {
       'Unit- & E2E-Tests',
       'Release im Play Store',
     ]);
-    await expect(stepNames(card(page, 'Conduit'))).toHaveText([
+    await expect(stepNames(card(page, 'VPS-Plattform'))).toHaveText([
       'Code',
-      'CI',
-      'Image in GHCR',
-      'Staging-Deployment',
+      'CI & Security-Checks',
+      'Betrieb',
     ]);
     await expect(stepNames(card(page, 'Developer Workspace Kit'))).toHaveText([
       'Code',
@@ -293,11 +295,7 @@ test.describe('Karten', () => {
       'Betrieb',
       'Backup',
     ]);
-    await expect(card(page, 'Conduit').locator('.flow-arrow')).toHaveText([
-      'CI',
-      'Image',
-      'Deploy',
-    ]);
+    await expect(card(page, 'VPS-Plattform').locator('.flow-arrow')).toHaveText(['CI', 'Betrieb']);
   });
 
   test('[WCAG 1.1.1] der Pfeil hat leeren Alternativtext', async ({ page }, testInfo) => {
@@ -317,6 +315,15 @@ test.describe('Karten', () => {
     await expect(videoflix.locator('.signal .state')).toHaveText('CI grün');
     await expect(videoflix.locator('.signal-when')).toHaveText('zuletzt 05.11.');
     await expect(videoflix.locator('.flow-foot')).toHaveText('2 von 6 belegt');
+    const platform = card(page, 'VPS-Plattform');
+    await expect(platform.locator('.signal .state')).toHaveText('CI grün');
+    await expect(platform.locator('.signal-when')).toHaveText('zuletzt 10.11.');
+    await expect(platform.locator('.flow-foot')).toHaveText('2 von 3 belegt');
+    await expect(platform.locator('.flow-step .state')).toHaveText([
+      'Belegt',
+      'Belegt',
+      'Noch nicht eingerichtet',
+    ]);
     const neuro = card(page, 'Neuro Check-in');
     await expect(neuro.locator('.signal .state')).toHaveText('Live im Play Store');
     await expect(neuro.locator('.signal-when')).toHaveText('Version 1.11.2');
@@ -397,7 +404,7 @@ test.describe('Status im Browser', () => {
   test('[Spec 6.1] Startseite fragt status.json genau einmal', async ({ page }) => {
     const requests = await serveStatus(page);
     await page.goto('/');
-    await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
+    await expect(card(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
     await page.waitForLoadState('networkidle');
     expect(requests).toHaveLength(1);
   });
@@ -416,7 +423,7 @@ test.describe('Status im Browser', () => {
     await expect(
       stepOf(videoflix, 'Tests & Security-Checks').locator('.state-deviation'),
     ).toBeVisible();
-    await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
+    await expect(card(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
     await expect(notice(page)).toBeEmpty();
   });
 
@@ -452,24 +459,31 @@ test.describe('Status im Browser', () => {
     await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
   });
 
-  test('[AK6] Status ohne conduit: Conduit nicht abrufbar, Videoflix normal', async ({ page }) => {
+  // Rollout: until the next status.yml run the server serves the file of the old collector.
+  test('[AK6] alter Stand mit conduit, ohne vps-plattform: Seite vollständig', async ({ page }) => {
     const errors: Error[] = [];
     page.on('pageerror', (error) => errors.push(error));
-    await serveStatus(page, statusFile(dropConduit));
+    await serveStatus(page, statusFile(beforeVps));
     await page.goto('/');
     await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
     await expect(card(page, 'Videoflix').locator('.flow-foot')).toHaveText('2 von 6 belegt');
-    const conduit = card(page, 'Conduit');
-    await expect(conduit.locator('.signal .state')).toHaveText('Stand nicht abrufbar');
-    await expect(conduit.locator('.signal-when')).toHaveCount(0);
-    await expect(conduit.locator('.flow-step .state')).toHaveText([
-      'Nicht abrufbar',
+    await expect(card(page, 'Neuro Check-in').locator('.signal .state')).toHaveText(
+      'Live im Play Store',
+    );
+    await expect(card(page, 'Developer Workspace Kit').locator('.signal .state')).toHaveText(
+      'Code privat',
+    );
+    const platform = card(page, 'VPS-Plattform');
+    await expect(platform.locator('.signal .state')).toHaveText('Stand nicht abrufbar');
+    await expect(platform.locator('.signal-when')).toHaveCount(0);
+    await expect(platform.locator('.flow-step .state')).toHaveText([
       'Nicht abrufbar',
       'Nicht abrufbar',
       'Noch nicht eingerichtet',
     ]);
     await expect(notice(page)).toHaveText(failedNotice);
     await expect(cards(page)).toHaveCount(5);
+    await expect(page.locator('#projekte')).not.toContainText(/conduit/i);
     expect(errors).toEqual([]);
   });
 
@@ -490,7 +504,7 @@ test.describe('Status im Browser', () => {
       await expect(page.locator('#projekte [role="status"]')).toHaveCount(1);
       await expect(cards(page)).toHaveCount(5);
       await expect(page.locator('#projekte a[data-card-cta]')).toHaveCount(5);
-      await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 4 + 3);
+      await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 3 + 3);
       await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
@@ -546,16 +560,18 @@ test.describe('Status im Browser', () => {
     test('[Spec 6.1] gesunder Stand: Karten zeigen ihn, kein Hinweis', async ({ page }) => {
       await serveStatus(page);
       await goAndReturn(page);
-      await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText('CI grün');
+      await expect(card(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
       await expect(card(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
       await page.waitForLoadState('networkidle');
       await expect(notice(page)).toBeEmpty();
     });
 
-    test('[AK6] Status ohne conduit: Hinweis steht auch nach dem Rückweg', async ({ page }) => {
-      await serveStatus(page, statusFile(dropConduit));
+    test('[AK6] alter Stand ohne vps-plattform: Hinweis steht auch nach dem Rückweg', async ({
+      page,
+    }) => {
+      await serveStatus(page, statusFile(beforeVps));
       await goAndReturn(page);
-      await expect(card(page, 'Conduit').locator('.signal .state')).toHaveText(
+      await expect(card(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
       await expect(notice(page)).toHaveText(failedNotice);
@@ -578,7 +594,7 @@ test.describe('Ohne JavaScript', () => {
     for (const heading of await cards(page).locator('h3').all()) {
       await expect(heading).toBeVisible();
     }
-    await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 4 + 3);
+    await expect(page.locator('#projekte .flow-step')).toHaveCount(6 + 3 + 3 + 3);
     await expect(page.locator('#projekte .flow-foot')).toHaveCount(4);
     const hrefs = await page
       .locator('#projekte a[data-card-cta]')
@@ -586,11 +602,11 @@ test.describe('Ohne JavaScript', () => {
     expect(hrefs).toEqual([
       '/projekte/videoflix/',
       '/projekte/neuro-check-in/',
-      '/projekte/conduit/',
+      '/projekte/vps-plattform/',
       '/projekte/developer-workspace-kit/',
       reportBase,
     ]);
-    await card(page, 'Conduit').locator('a[data-card-cta]').click();
-    await expect(page).toHaveURL(/\/projekte\/conduit\/$/);
+    await card(page, 'VPS-Plattform').locator('a[data-card-cta]').click();
+    await expect(page).toHaveURL(/\/projekte\/vps-plattform\/$/);
   });
 });

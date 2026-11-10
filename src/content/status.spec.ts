@@ -184,13 +184,13 @@ function collect(fetch: FetchLike, sources: StatusSources = statusSources, timeo
   });
 }
 
-const conduitSource: ProjectSource = {
+const imageSource: ProjectSource = {
   repos: [
     {
-      name: 'PhilippKlinger/conduit-container',
+      name: 'PhilippKlinger/example-container',
       ciWorkflow: 'ci.yml',
       workflows: [{ name: 'CI', file: 'ci.yml', kind: 'tests' }],
-      attestation: { kind: 'image', image: 'philippklinger/conduit-backend' },
+      attestation: { kind: 'image', image: 'philippklinger/example-backend' },
     },
   ],
   versionEndpoints: [],
@@ -205,16 +205,16 @@ const noSource: ProjectSource = {
 };
 
 // The other projects stay silent, so a call can only come from the project under test.
-function onlyProject(conduit: ProjectSource): StatusSources {
+function onlyProject(source: ProjectSource): StatusSources {
   return {
     linkHosts: statusSources.linkHosts,
-    projects: { videoflix: noSource, portfolio: noSource, conduit },
+    projects: { videoflix: noSource, portfolio: noSource, 'vps-plattform': source },
   };
 }
 
-async function collectConduit(fetch: FetchLike, source = conduitSource): Promise<ProjectStatus> {
+async function collectOnly(fetch: FetchLike, source = imageSource): Promise<ProjectStatus> {
   const { projects } = await collect(fetch, onlyProject(source));
-  return projects.conduit!;
+  return projects['vps-plattform']!;
 }
 
 // Never answers on its own: rejects like the native fetch once the signal fires.
@@ -259,7 +259,11 @@ describe('collectStatus', () => {
 
     expect(status.schemaVersion).toBe(STATUS_SCHEMA_VERSION);
     expect(status.generatedAt).toBe('2026-11-05T12:00:00.000Z');
-    expect(Object.keys(status.projects).sort()).toEqual(['conduit', 'portfolio', 'videoflix']);
+    expect(Object.keys(status.projects).sort()).toEqual([
+      'portfolio',
+      'videoflix',
+      'vps-plattform',
+    ]);
 
     const { videoflix, portfolio } = status.projects;
     for (const station of STATIONS) {
@@ -760,7 +764,7 @@ describe('collectStatus', () => {
   });
 });
 
-describe('collectStatus for Conduit and the deploy run', () => {
+describe('collectStatus for a built image and the deploy run', () => {
   const attestationNotFound: [RegExp, Handler] = [
     /\/attestations\/sha256:/,
     () => json({ message: 'Not Found' }, { status: 404 }),
@@ -768,20 +772,25 @@ describe('collectStatus for Conduit and the deploy run', () => {
   const noImage: [RegExp, Handler] = [/ghcr\.io\/v2\//, () => new Response('', { status: 404 })];
   const ghcrLink = {
     kind: 'image',
-    source: 'PhilippKlinger/conduit-container',
-    url: 'https://github.com/users/PhilippKlinger/packages/container/package/conduit-backend',
+    source: 'PhilippKlinger/example-container',
+    url: 'https://github.com/users/PhilippKlinger/packages/container/package/example-backend',
   };
 
   it('collects every project of the sources, not a fixed list', async () => {
-    const sources = onlyProject(conduitSource);
+    const sources = onlyProject(imageSource);
     const withLater = { ...sources, projects: { ...sources.projects, later: noSource } };
     const { projects } = await collect(fakeFetch().fetch, withLater);
-    expect(Object.keys(projects).sort()).toEqual(['conduit', 'later', 'portfolio', 'videoflix']);
+    expect(Object.keys(projects).sort()).toEqual([
+      'later',
+      'portfolio',
+      'videoflix',
+      'vps-plattform',
+    ]);
   });
 
   it('treats a project without uptime source as not reachable, without a request', async () => {
     const { fetch, calls } = fakeFetch();
-    const { stability } = await collectConduit(fetch);
+    const { stability } = await collectOnly(fetch);
     expect(stability).toEqual({
       reachable: false,
       signals: {
@@ -799,10 +808,10 @@ describe('collectStatus for Conduit and the deploy run', () => {
 
   it('leaves repositories without attestation source out of the supply chain', async () => {
     const withoutAttestation = { name: 'PhilippKlinger/compose-only', workflows: [] };
-    const source = { ...conduitSource, repos: [...conduitSource.repos, withoutAttestation] };
-    const { supplyChain, code } = await collectConduit(fakeFetch().fetch, source);
+    const source = { ...imageSource, repos: [...imageSource.repos, withoutAttestation] };
+    const { supplyChain, code } = await collectOnly(fakeFetch().fetch, source);
     expect(supplyChain.signals.repos.map(({ repo }) => repo)).toEqual([
-      'PhilippKlinger/conduit-container',
+      'PhilippKlinger/example-container',
     ]);
     expect(supplyChain.reachable).toBe(true);
     expect(code.signals.repos).toHaveLength(2);
@@ -810,7 +819,7 @@ describe('collectStatus for Conduit and the deploy run', () => {
 
   it('keeps the digest of an image whose attestation is missing', async () => {
     const { fetch } = fakeFetch([attestationNotFound]);
-    const { supplyChain } = await collectConduit(fetch);
+    const { supplyChain } = await collectOnly(fetch);
     expect(supplyChain.signals.repos[0].attestation).toMatchObject({
       reachable: false,
       subjectDigest: DIGEST,
@@ -819,13 +828,13 @@ describe('collectStatus for Conduit and the deploy run', () => {
   });
 
   it('links the GHCR package once the digest is known', async () => {
-    const { supplyChain } = await collectConduit(fakeFetch([attestationNotFound]).fetch);
+    const { supplyChain } = await collectOnly(fakeFetch([attestationNotFound]).fetch);
     expect(supplyChain.links).toContainEqual(ghcrLink);
     expect(supplyChain.links.map(({ kind }) => kind)).not.toContain('attestations');
   });
 
   it('does not link the GHCR package without a digest', async () => {
-    const { supplyChain } = await collectConduit(fakeFetch([noImage]).fetch);
+    const { supplyChain } = await collectOnly(fakeFetch([noImage]).fetch);
     expect(supplyChain.links.map(({ kind }) => kind)).not.toContain('image');
   });
 
@@ -834,10 +843,11 @@ describe('collectStatus for Conduit and the deploy run', () => {
     expect(projects.portfolio.supplyChain.links.map(({ kind }) => kind)).not.toContain('image');
   });
 
-  it('accepts conduit in the closed vocabulary of the document', async () => {
-    const sources = onlyProject(conduitSource);
+  // The writer checks every key, so without this the first run after the merge would fail.
+  it('accepts vps-plattform in the closed vocabulary of the document', async () => {
+    const sources = onlyProject(imageSource);
     const status = await collect(fakeFetch().fetch, sources);
-    expect(status.projects.conduit?.supplyChain.signals.repos).toHaveLength(1);
+    expect(status.projects['vps-plattform']?.supplyChain.signals.repos).toHaveLength(1);
     expect(validateStatus(status, sources)).toEqual([]);
   });
 
@@ -854,18 +864,18 @@ describe('collectStatus for Conduit and the deploy run', () => {
       () =>
         json({
           workflow_runs: [
-            run('PhilippKlinger/conduit-container', { conclusion: 'failure', head_sha: OLD_SHA }),
+            run('PhilippKlinger/example-container', { conclusion: 'failure', head_sha: OLD_SHA }),
           ],
         }),
     ];
 
     it('takes the green commit, not the head of the latest run', async () => {
-      const { supplyChain } = await collectConduit(fakeFetch([redLatestRun]).fetch);
+      const { supplyChain } = await collectOnly(fakeFetch([redLatestRun]).fetch);
       expect(supplyChain.signals.repos[0].attestation?.sourceSha).toBe(GREEN_SHA);
     });
 
     it('keeps it when the attestation is missing', async () => {
-      const { supplyChain } = await collectConduit(fakeFetch([attestationNotFound]).fetch);
+      const { supplyChain } = await collectOnly(fakeFetch([attestationNotFound]).fetch);
       expect(supplyChain.signals.repos[0].attestation?.sourceSha).toBe(GREEN_SHA);
     });
 
@@ -925,7 +935,7 @@ describe('collectStatus for a single job of a workflow', () => {
     ];
   }
   const signalOf = async (routes: [RegExp, Handler][]) =>
-    (await collectConduit(fakeFetch(routes).fetch, source)).checks;
+    (await collectOnly(fakeFetch(routes).fetch, source)).checks;
 
   it('reads the job while the run still waits for the approval of another job', async () => {
     const checks = await signalOf(jobsByRun({ 7: [finished('success'), waitingProduction] }));
@@ -1040,5 +1050,45 @@ describe('validateStatus', () => {
     (status.projects.videoflix.code.signals as unknown as Record<string, unknown>)['hostname'] =
       'x';
     expect(validateStatus(status, statusSources)).not.toEqual([]);
+  });
+});
+
+describe('statusSources', () => {
+  const platformChecks = [
+    { name: 'CI', file: 'ci.yml', kind: 'tests' },
+    { name: 'CodeQL', file: 'codeql.yml', kind: 'scan' },
+    { name: 'Security Checks', file: 'security.yml', kind: 'scan' },
+  ];
+
+  it('measures Videoflix, the site and the VPS platform, no longer Conduit', () => {
+    expect(Object.keys(statusSources.projects)).toEqual([
+      'videoflix',
+      'portfolio',
+      'vps-plattform',
+    ]);
+  });
+
+  // Plan VPS platform E3 to E5: videoflix-deploy already counts for Videoflix, nothing is built.
+  it('measures the VPS platform in both of its repositories, without image or status page', () => {
+    expect(statusSources.projects['vps-plattform']).toEqual({
+      repos: [
+        { name: 'PhilippKlinger/vps-edge', ciWorkflow: 'ci.yml', workflows: platformChecks },
+        { name: 'PhilippKlinger/vps-monitoring', ciWorkflow: 'ci.yml', workflows: platformChecks },
+      ],
+      versionEndpoints: [],
+      uptime: null,
+      restoreTest: null,
+    });
+  });
+
+  it('writes a valid document for every project of the real sources', async () => {
+    const status = await collect(fakeFetch().fetch);
+    expect(status.projects['vps-plattform']?.code.signals.repos).toHaveLength(2);
+    expect(status.projects['vps-plattform']?.supplyChain).toEqual({
+      reachable: false,
+      signals: { repos: [] },
+      links: [],
+    });
+    expect(validateStatus(status, statusSources)).toEqual([]);
   });
 });

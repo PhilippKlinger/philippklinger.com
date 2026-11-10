@@ -22,21 +22,21 @@ const textsOf = (host: HTMLElement, selector: string) =>
 
 describe('ProjectCard', () => {
   it('has a CTA to the project page with trailing slash and the title in its label', () => {
-    const cta = render('conduit').querySelector('a[data-card-cta]');
-    expect(cta?.getAttribute('href')).toBe('/projekte/conduit/');
-    expect(cta?.getAttribute('aria-label')).toBe('Projektdetails ansehen: Conduit');
+    const cta = render('vps-plattform').querySelector('a[data-card-cta]');
+    expect(cta?.getAttribute('href')).toBe('/projekte/vps-plattform/');
+    expect(cta?.getAttribute('aria-label')).toBe('Projektdetails ansehen: VPS-Plattform');
     expect(cta?.getAttribute('data-cursor')).toBe('Projekt ansehen');
     expect(cta?.textContent?.trim()).toBe('Projektdetails ansehen');
   });
 
   it('makes the surface a card link', () => {
-    expect(render('conduit').querySelector('article.card[data-card-link]')).not.toBeNull();
+    expect(render('vps-plattform').querySelector('article.card[data-card-link]')).not.toBeNull();
   });
 
   it('shows title and text', () => {
-    const host = render('conduit');
-    expect(host.querySelector('.card h3')?.textContent).toBe('Conduit');
-    expect(host.querySelector('.card-main p')?.textContent).toBe(bySlug('conduit').summary);
+    const host = render('vps-plattform');
+    expect(host.querySelector('.card h3')?.textContent).toBe('VPS-Plattform');
+    expect(host.querySelector('.card-main p')?.textContent).toBe(bySlug('vps-plattform').summary);
   });
 
   it('shows the quiet links', () => {
@@ -54,11 +54,12 @@ describe('ProjectCard', () => {
   });
 
   it('shows chips as a list', () => {
-    expect(textsOf(render('conduit'), 'ul.chips > li')).toEqual([
+    expect(textsOf(render('vps-plattform'), 'ul.chips > li')).toEqual([
       'Docker Compose',
+      'Caddy',
+      'Uptime Kuma',
       'GitHub Actions',
-      'GHCR',
-      'Healthchecks',
+      'Trivy',
     ]);
   });
 
@@ -117,14 +118,31 @@ describe('ProjectCard', () => {
     expect(host.querySelector('.signal .state-verified')).toBeNull();
   });
 
-  it('keeps Conduit readable when the status has no entry for it', () => {
-    const host = render('conduit');
+  // Rollout: a file of the old collector still carries conduit and no vps-plattform.
+  it('keeps the VPS platform readable when the status has no entry for it', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: STATUS_SNAPSHOT,
+          useValue: {
+            schemaVersion: 1,
+            generatedAt: '2026-11-06T00:58:11.069Z',
+            projects: {
+              videoflix: healthyStatus(),
+              portfolio: healthyStatus(),
+              conduit: healthyStatus(),
+            },
+          },
+        },
+      ],
+    });
+    const host = render('vps-plattform');
     expect(host.querySelector('.signal .state')?.textContent?.trim()).toBe('Stand nicht abrufbar');
-    expect(textsOf(host, '.flow-step strong')).toEqual([
-      'Code',
-      'CI',
-      'Image in GHCR',
-      'Staging-Deployment',
+    expect(textsOf(host, '.flow-step strong')).toEqual(['Code', 'CI & Security-Checks', 'Betrieb']);
+    expect(textsOf(host, '.flow-step .state')).toEqual([
+      'Nicht abrufbar',
+      'Nicht abrufbar',
+      'Noch nicht eingerichtet',
     ]);
   });
 });

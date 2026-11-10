@@ -5,7 +5,7 @@ function renderCard(): HTMLElement {
   page.innerHTML = `
     <article data-card-link>
       <h3>Titel</h3>
-      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/conduit/"><span>CTA</span></a>
+      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/vps-plattform/"><span>CTA</span></a>
       <a href="https://github.com/">Code</a>
       <button type="button">Knopf</button>
     </article>
