@@ -12,7 +12,6 @@ interface Workflow {
 }
 interface ProjectEntry {
   checks: { signals: { workflows: Workflow[] } };
-  stability: unknown;
 }
 interface StatusFile {
   schemaVersion: number;
@@ -54,24 +53,6 @@ async function serveStatus(page: Page, document: StatusFile = statusFile()): Pro
     return route.fulfill({ json: document });
   });
   return requests;
-}
-
-/** The fixture predates the Neuro Check-in website, so a proven uptime is added per test. */
-function withNeuroUptime(document: StatusFile): void {
-  const neuro = structuredClone(document.projects['vps-plattform']);
-  neuro.stability = {
-    reachable: true,
-    signals: {
-      monitorsTotal: 1,
-      monitorsUp: 1,
-      uptime24h: 1,
-      uptime30d: 1,
-      lastHeartbeatAt: new Date().toISOString(),
-      oldestVisibleHeartbeatAt: '2026-11-05T12:00:00Z',
-    },
-    links: [{ kind: 'status-page', source: 'site', url: 'https://status.example.com/neuro' }],
-  };
-  document.projects['neuro-check-in'] = neuro;
 }
 
 function failChecks(document: StatusFile): void {
@@ -246,7 +227,7 @@ test.describe('Liste', () => {
   });
 
   test('[L3] Statuszeile folgt den Daten, Berichte zählen ihre Liste', async ({ page }) => {
-    await serveStatus(page, statusFile(withNeuroUptime));
+    await serveStatus(page);
     await page.goto('/');
     await expect(signal(page, 'Videoflix')).toHaveText('CI grün');
     await expect(row(page, 'Videoflix').locator('.signal-when')).toHaveText('zuletzt 05.11.');

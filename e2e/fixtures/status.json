@@ -700,6 +700,62 @@
         },
         "links": []
       }
+    },
+    "neuro-check-in": {
+      "code": {
+        "reachable": false,
+        "signals": {
+          "repos": []
+        },
+        "links": []
+      },
+      "checks": {
+        "reachable": false,
+        "signals": {
+          "workflows": []
+        },
+        "links": []
+      },
+      "supplyChain": {
+        "reachable": false,
+        "signals": {
+          "repos": []
+        },
+        "links": []
+      },
+      "live": {
+        "reachable": false,
+        "signals": {
+          "components": []
+        },
+        "links": []
+      },
+      "stability": {
+        "reachable": true,
+        "signals": {
+          "monitorsTotal": 1,
+          "monitorsUp": 1,
+          "uptime24h": 1,
+          "uptime30d": 1,
+          "lastHeartbeatAt": "2026-11-10T15:20:00Z",
+          "oldestVisibleHeartbeatAt": "2026-11-09T15:20:00Z"
+        },
+        "links": [
+          {
+            "kind": "status-page",
+            "source": "neuro-check-in",
+            "url": "https://status.philipp-klinger.com/status/neuro-check-in"
+          }
+        ]
+      },
+      "restore": {
+        "reachable": false,
+        "signals": {
+          "testedAt": null,
+          "result": null
+        },
+        "links": []
+      }
     }
   }
 }

@@ -465,8 +465,11 @@ test.describe('Vorschaubild', () => {
 
 test.describe('Fester Inhalt', () => {
   test('[AK3] Neuro Check-in: Release mit Link, der Rest Code privat', async ({ page }) => {
+    await serveStatus(page);
     await page.goto('/projekte/neuro-check-in/');
-    await expect(signal(page)).toContainText('1 von 4 öffentlich belegt, Code privat');
+    await expect(signal(page)).toContainText('2 von 4 öffentlich belegt, Code privat');
+    await expect(signal(page)).toContainText('100 % (24 h)');
+    await expect(step(page, 'Website').locator('.state-verified')).toHaveText('Belegt');
     await expect(step(page, 'Code').locator('.state-private')).toHaveText('Code privat');
     const release = step(page, 'Release im Play Store');
     await expect(release.locator('.state-verified')).toHaveText('Belegt');

@@ -16,6 +16,7 @@ import {
   StepSource,
 } from './software-delivery';
 import { ProjectStatus, StatusDocument, StatusLink, WorkflowSignal } from './status';
+import e2eStatus from '../../e2e/fixtures/status.json';
 import { healthyStatus } from './status.fixture';
 
 const generatedAt = '2026-11-06T00:58:11.069Z';
@@ -1118,6 +1119,14 @@ describe('parseStatusDocument', () => {
     const document = validDocument();
     document.projects['vps-plattform'] = healthyStatus();
     expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
+  });
+
+  it('accepts the healthy e2e fixture with every project', () => {
+    const parsed = parseStatusDocument(JSON.stringify(e2eStatus));
+    expect(parsed).not.toBeNull();
+    for (const key of ['videoflix', 'portfolio', 'vps-plattform', 'neuro-check-in'] as const) {
+      expect(pickProjectSnapshot(parsed, key)).not.toBeNull();
+    }
   });
 
   it('accepts an old document without vps-plattform', () => {
