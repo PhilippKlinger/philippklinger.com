@@ -25,6 +25,7 @@ import {
   unique,
 } from './software-delivery';
 import {
+  DIGEST,
   LinkKind,
   LiveComponentSignal,
   ProjectStatus,
@@ -86,6 +87,8 @@ const VALUE_WITHOUT_DATA: Partial<Record<StepState, string>> = {
 };
 const RESTORE_RESULT = { passed: 'bestanden', failed: 'fehlgeschlagen' } as const;
 const EMPTY: ChainCell = { text: '—' };
+const IMAGE_NAME = /^[a-z0-9][a-z0-9._-]*$/;
+const REPO = /^[\w.-]+\/[\w.-]+$/;
 
 /** Deploy runs and the image belong to the station that shows them. */
 const STATION_OF: Record<StepSource, StationKey> = {
@@ -199,7 +202,7 @@ function valueOfSupplyChain(status: ProjectStatus): string | null {
 
 function shortDigest(digest: string): string {
   const [algorithm, hex = ''] = digest.split(':');
-  return hex.length > 12 ? `${algorithm}:${hex.slice(0, 12)}…` : digest;
+  return hex.length > 7 ? `${algorithm}:${hex.slice(0, 7)}…` : digest;
 }
 
 function scoreCell(links: StatusLink[], { repo, scorecard }: RepoSupplyChainSignal): ChainCell {
@@ -230,6 +233,14 @@ function tableOfSupplyChain(status: ProjectStatus, { plan }: Context): ChainTabl
   );
 }
 
+/** Only parts of a known shape go into a command that readers copy into their shell. */
+function verifyCommand(repo: string, name = '', digest = ''): string | null {
+  if (!REPO.test(repo) || !IMAGE_NAME.test(name) || !DIGEST.test(digest)) return null;
+  const image = `oci://ghcr.io/${repo.split('/')[0].toLowerCase()}/${name}@${digest}`;
+  // Broken into lines as in a shell, so the command can be copied as it stands.
+  return ['gh attestation verify', `  ${image}`, `  --repo ${repo}`].join(' \\\n');
+}
+
 function verifyOf(status: ProjectStatus): string | null {
   const { links } = status.supplyChain;
   const imageUrl = (repo: RepoSupplyChainSignal) => linkOf(links, 'image', repo.repo)?.url;
@@ -237,11 +248,8 @@ function verifyOf(status: ProjectStatus): string | null {
     (repo) => repo.attestation?.subjectDigest && imageUrl(repo),
   );
   if (!built) return null;
-  const owner = built.repo.split('/')[0].toLowerCase();
   const name = imageUrl(built)?.split('/').at(-1);
-  const image = `oci://ghcr.io/${owner}/${name}@${built.attestation?.subjectDigest}`;
-  // Broken into lines as in a shell, so the command can be copied as it stands.
-  return ['gh attestation verify', `  ${image}`, `  --repo ${built.repo}`].join(' \\\n');
+  return verifyCommand(built.repo, name, built.attestation?.subjectDigest ?? undefined);
 }
 
 function valueOfLive(status: ProjectStatus): string | null {

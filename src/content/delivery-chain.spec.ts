@@ -131,6 +131,14 @@ function videoflixStatus(change: (status: ProjectStatus) => void = () => undefin
   return status;
 }
 
+function backendImageLink(status: ProjectStatus): StatusLink {
+  const found = status.supplyChain.links.find(
+    (link) => link.kind === 'image' && link.source === backend,
+  );
+  if (!found) throw new Error('no image link');
+  return found;
+}
+
 function chainOf(status: ProjectStatus, chainPlan: DeliveryPlan = plan): ChainView {
   return buildChainView(chainPlan, { generatedAt, status });
 }
@@ -198,7 +206,7 @@ describe('buildChainView', () => {
     expect(build.table?.rows[0]).toEqual([
       { text: 'Backend' },
       { text: 'f4f1b93', sha: 'f4f1b93' },
-      { text: 'sha256:346d0a94572e…', url: `${packages}/videoflix-backend` },
+      { text: 'sha256:346d0a9…', url: `${packages}/videoflix-backend` },
       { text: '520 Pakete' },
       { text: '6,7 / 10', url: 'https://scorecard.dev/viewer/?uri=github.com/' + backend },
       { text: 'Attestierung', url: `${github}/videoflix-backend/attestations` },
@@ -214,6 +222,27 @@ describe('buildChainView', () => {
         `  --repo ${backend}`,
     );
     expect(station(videoflixStatus(), 'Code').verify).toBeNull();
+  });
+
+  it('builds no verify command from a malformed digest, image name or repo', () => {
+    const changes: ((status: ProjectStatus) => void)[] = [
+      (status) => {
+        const [first] = status.supplyChain.signals.repos;
+        first.attestation = { ...first.attestation!, subjectDigest: 'sha256:abc; rm -rf ~' };
+      },
+      (status) => {
+        backendImageLink(status).url = `${packages}/videoflix backend$(id)`;
+      },
+      (status) => {
+        const repo = `${backend} --x`;
+        status.supplyChain.signals.repos[0].repo = repo;
+        backendImageLink(status).source = repo;
+      },
+    ];
+
+    for (const change of changes) {
+      expect(station(videoflixStatus(change), 'Signed Build').verify).toBeNull();
+    }
   });
 
   it('marks live as matching only with matchesLatestGreen', () => {

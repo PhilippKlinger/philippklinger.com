@@ -210,7 +210,7 @@ const MAX_STRING_LENGTH = 300;
 
 const VERSION_SHA = /^[0-9a-f]{7,40}$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
-const DIGEST = /^sha256:[0-9a-f]{64}$/;
+export const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
 const KUMA_TIME = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/;
 const BRANCH_NAME = /^[\w./-]{1,100}$/;
