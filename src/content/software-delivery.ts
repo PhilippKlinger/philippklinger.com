@@ -140,7 +140,8 @@ export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.
 export const unique = <T>(values: T[]) => [...new Set(values)];
 export const present = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
-const percent = (share: number) => `${oneDecimal.format(share * 100)} %`;
+export const percent = (share: number | null) =>
+  share === null ? null : `${oneDecimal.format(share * 100)} %`;
 
 export function formatTime(format: Intl.DateTimeFormat, value: string | null): string | null {
   return value === null || Number.isNaN(Date.parse(value)) ? null : format.format(new Date(value));
@@ -359,11 +360,12 @@ function operatingSignal(
 ): Signal | null {
   const states = statesWith(plan, steps, OPERATING_SOURCES);
   const isRunning = states.length > 0 && states.every((state) => state === 'verified');
+  const share = percent(uptime24h);
   if (plan.runningLabel && isRunning)
     return {
       state: 'verified',
       status: plan.runningLabel,
-      when: uptime24h === null ? stand : `${percent(uptime24h)} (24 h)`,
+      when: share === null ? stand : `${share} (24 h)`,
     };
   return states.includes('deviation')
     ? { state: 'deviation', status: 'Abweichung im Betrieb', when: stand }

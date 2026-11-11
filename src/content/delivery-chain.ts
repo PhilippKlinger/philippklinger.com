@@ -15,6 +15,7 @@ import {
   isMeasured,
   MeasuredStep,
   oneDecimal,
+  percent,
   present,
   ProjectSnapshot,
   runProof,
@@ -107,8 +108,6 @@ const STATION_OF: Record<StepSource, StationKey> = {
 const repoName = (repo: string) => repo.split('/').at(-1) ?? repo;
 const labelOf = (plan: DeliveryPlan, repo: string) => plan.repoLabels?.[repo] ?? repoName(repo);
 const textCell = (text: string | null): ChainCell => (text === null ? EMPTY : { text });
-const percent = (ratio: number | null) =>
-  ratio === null ? null : `${oneDecimal.format(ratio * 100)} %`;
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
 /** No table without rows, so a station never shows an empty frame. */
