@@ -176,6 +176,7 @@ describe('DeliveryChain', () => {
   });
 
   // A Tab right after the arrow key must not reach the field that is about to be hidden.
+  // No press() here: its TestBed.tick() would render in between and hide the race.
   it('[D4] shows the field of a tab already when the tab takes the focus', async () => {
     const element = await renderChain('vps-plattform');
     const [first, second] = tabs(element);

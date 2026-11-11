@@ -39,16 +39,15 @@ test.describe('Aufbau', () => {
       await page.goto(`/#${id}`);
       const heading = page.locator(`#${id} h2`);
       await expect(heading).toBeInViewport();
-      // On mobile the header slides out over 0.2 s; judge where it ends, not where it passes.
-      await page
-        .locator('app-header')
-        .evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
-      const covered = await heading.evaluate((el) => {
-        const box = el.getBoundingClientRect();
-        const hit = document.elementFromPoint(box.left + 4, box.top + box.height / 2);
-        return !(hit && (el === hit || el.contains(hit)));
-      });
-      expect(covered, `#${id} h2 ist verdeckt`).toBe(false);
+      // On mobile the header leaves after the scroll event and slides out over 0.2 s:
+      // judge where it ends, not where it passes.
+      const covered = () =>
+        heading.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          const hit = document.elementFromPoint(box.left + 4, box.top + box.height / 2);
+          return !(hit && (el === hit || el.contains(hit)));
+        });
+      await expect.poll(covered, { message: `#${id} h2 ist verdeckt` }).toBe(false);
     }
   });
 });
