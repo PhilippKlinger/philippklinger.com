@@ -208,7 +208,12 @@ const noSource: ProjectSource = {
 function onlyProject(source: ProjectSource): StatusSources {
   return {
     linkHosts: statusSources.linkHosts,
-    projects: { videoflix: noSource, portfolio: noSource, 'vps-plattform': source },
+    projects: {
+      videoflix: noSource,
+      portfolio: noSource,
+      'vps-plattform': source,
+      'neuro-check-in': noSource,
+    },
   };
 }
 
@@ -260,6 +265,7 @@ describe('collectStatus', () => {
     expect(status.schemaVersion).toBe(STATUS_SCHEMA_VERSION);
     expect(status.generatedAt).toBe('2026-11-05T12:00:00.000Z');
     expect(Object.keys(status.projects).sort()).toEqual([
+      'neuro-check-in',
       'portfolio',
       'videoflix',
       'vps-plattform',
@@ -782,6 +788,7 @@ describe('collectStatus for a built image and the deploy run', () => {
     const { projects } = await collect(fakeFetch().fetch, withLater);
     expect(Object.keys(projects).sort()).toEqual([
       'later',
+      'neuro-check-in',
       'portfolio',
       'videoflix',
       'vps-plattform',
@@ -848,6 +855,20 @@ describe('collectStatus for a built image and the deploy run', () => {
     const sources = onlyProject(imageSource);
     const status = await collect(fakeFetch().fetch, sources);
     expect(status.projects['vps-plattform']?.supplyChain.signals.repos).toHaveLength(1);
+    expect(validateStatus(status, sources)).toEqual([]);
+  });
+
+  it('collects neuro-check-in from Kuma only', async () => {
+    const source: ProjectSource = {
+      repos: [],
+      versionEndpoints: [],
+      uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'neuro-check-in' },
+      restoreTest: null,
+    };
+    const sources = onlyProject(noSource);
+    sources.projects['neuro-check-in'] = source;
+    const status = await collect(fakeFetch().fetch, sources);
+    expect(status.projects['neuro-check-in']?.stability.reachable).toBe(true);
     expect(validateStatus(status, sources)).toEqual([]);
   });
 
@@ -1065,6 +1086,7 @@ describe('statusSources', () => {
       'videoflix',
       'portfolio',
       'vps-plattform',
+      'neuro-check-in',
     ]);
   });
 

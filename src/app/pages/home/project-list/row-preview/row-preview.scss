@@ -1,0 +1,59 @@
+@use 'breakpoints' as bp;
+
+// Sizes of the preview only (spec 16.1, mockup 1), no other element shares them.
+$follow-width: 22rem;
+$anchored-width: 17rem;
+// Same as $cta-column in project-row.scss: the anchored image ends where the CTA column starts.
+$cta-column: 13rem;
+$hidden-scale: 0.96;
+$fade: 0.15s ease;
+
+// Fixed beside the pointer, below the ring (z-index 40) and the header (z-index 10); clicks go through to the row. Touch and
+// stacked rows show the small image in the row instead, so this one stays out there.
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  display: none;
+  width: $follow-width;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  box-shadow: 0 var(--space-md) var(--space-xl) color-mix(in srgb, var(--color-bg) 70%, transparent);
+  opacity: 0;
+  scale: $hidden-scale;
+  transition:
+    opacity $fade,
+    scale $fade;
+  pointer-events: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    @include bp.from(card) {
+      display: block;
+    }
+  }
+}
+
+:host(.is-on) {
+  opacity: 1;
+  scale: 1;
+}
+
+// Keyboard focus and reduced motion: fixed in the row, its top set from the row.
+:host(.is-anchored) {
+  position: absolute;
+  right: calc(#{$cta-column} + var(--space-sm));
+  left: auto;
+  width: $anchored-width;
+  translate: 0 -50%;
+}
+
+img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

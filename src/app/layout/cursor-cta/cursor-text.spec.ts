@@ -1,37 +1,38 @@
 import { cursorText } from './cursor-text';
 
-function renderCard(): HTMLElement {
+function renderList(): HTMLElement {
   const page = document.createElement('div');
   page.innerHTML = `
-    <article data-card-link>
+    <a class="row" data-cursor="Details" href="/projekte/vps-plattform/">
       <h3>Titel</h3>
-      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/vps-plattform/"><span>CTA</span></a>
-      <a href="https://github.com/">Code</a>
-      <button type="button">Knopf</button>
-    </article>
+      <span class="cta"><span>CTA</span></span>
+    </a>
+    <a href="https://github.com/">Code</a>
+    <button type="button">Knopf</button>
     <p>Daneben</p>`;
   return page;
 }
 
 describe('cursorText', () => {
-  it('returns the text of the card under the pointer', () => {
-    expect(cursorText(renderCard().querySelector('h3'))).toBe('Projekt ansehen');
+  it('returns the text of the row under the pointer', () => {
+    expect(cursorText(renderList().querySelector('h3'))).toBe('Details');
   });
 
-  it('returns null on a link inside the card', () => {
-    expect(cursorText(renderCard().querySelector('a[href^="https"]'))).toBeNull();
+  it('returns the text on the row link itself and inside its CTA', () => {
+    expect(cursorText(renderList().querySelector('a.row'))).toBe('Details');
+    expect(cursorText(renderList().querySelector('.cta span'))).toBe('Details');
   });
 
-  it('returns null inside the CTA, which already says it', () => {
-    expect(cursorText(renderCard().querySelector('a[data-card-cta] span'))).toBeNull();
+  it('returns null on another link', () => {
+    expect(cursorText(renderList().querySelector('a[href^="https"]'))).toBeNull();
   });
 
-  it('returns null on a button inside the card', () => {
-    expect(cursorText(renderCard().querySelector('button'))).toBeNull();
+  it('returns null on a button', () => {
+    expect(cursorText(renderList().querySelector('button'))).toBeNull();
   });
 
-  it('returns null outside of a card', () => {
-    expect(cursorText(renderCard().querySelector('p'))).toBeNull();
+  it('returns null outside of a row', () => {
+    expect(cursorText(renderList().querySelector('p'))).toBeNull();
   });
 
   it('returns null for no target', () => {

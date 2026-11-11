@@ -16,6 +16,7 @@ import {
   StepSource,
 } from './software-delivery';
 import { ProjectStatus, StatusDocument, StatusLink, WorkflowSignal } from './status';
+import e2eStatus from '../../e2e/fixtures/status.json';
 import { healthyStatus } from './status.fixture';
 
 const generatedAt = '2026-11-06T00:58:11.069Z';
@@ -872,12 +873,19 @@ describe('buildDeliveryView', () => {
       expect(signalOf()).toEqual({
         state: 'verified',
         status: 'Läuft in Produktion',
-        when: 'Stand 06.11., 01:58',
+        when: '100 % (24 h)',
       });
       const notMonitored = signalOf((status) => {
         status.stability.reachable = false;
       });
       expect(notMonitored.status).not.toBe('Läuft in Produktion');
+    });
+
+    it('falls back to the time of the data without a 24 h uptime', () => {
+      const signal = signalOf((status) => {
+        status.stability.signals.uptime24h = null;
+      });
+      expect(signal.when).toBe('Stand 06.11., 01:58');
     });
 
     it('shows no running label without a step that proves it', () => {
@@ -1113,10 +1121,19 @@ describe('parseStatusDocument', () => {
     expect(parseStatusDocument(JSON.stringify(document))).toEqual(document);
   });
 
+  it('accepts the healthy e2e fixture with every project', () => {
+    const parsed = parseStatusDocument(JSON.stringify(e2eStatus));
+    expect(parsed).not.toBeNull();
+    for (const key of ['videoflix', 'portfolio', 'vps-plattform', 'neuro-check-in'] as const) {
+      expect(pickProjectSnapshot(parsed, key)).not.toBeNull();
+    }
+  });
+
   it('accepts an old document without vps-plattform', () => {
     const parsed = parseStatusDocument(JSON.stringify(validDocument()));
     expect(parsed).not.toBeNull();
     expect(pickProjectSnapshot(parsed, 'vps-plattform')).toBeNull();
+    expect(pickProjectSnapshot(parsed, 'neuro-check-in')).toBeNull();
   });
 
   // Rollout: the server keeps the file of the old collector until status.yml runs again.

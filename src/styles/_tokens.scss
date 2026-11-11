@@ -18,7 +18,6 @@
   --color-line-muted: rgb(198 198 198 / 45%);
   --color-card: rgb(24 28 27 / 82%);
   --color-step: rgb(31 46 43 / 80%);
-  --color-panel: rgb(0 0 0 / 28%);
   --color-line-faint: color-mix(in srgb, var(--color-text-muted) 30%, transparent);
   --color-surface-faint: color-mix(in srgb, var(--color-text) 3%, transparent);
 
@@ -71,7 +70,6 @@
   // Touch targets of at least 44 px (web-quality rule).
   --size-touch: 2.75rem;
   --size-step-arrow: 2.25rem;
-  --size-flow-arrow: 1.625rem;
 
   @include bp.from(tablet) {
     --text-lg: 1.25rem;

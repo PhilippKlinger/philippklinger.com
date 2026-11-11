@@ -290,7 +290,7 @@ test.describe('Porträt (FB-05)', () => {
     page.evaluate(() => ({
       height: document.documentElement.scrollHeight,
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      list: document.querySelector('.cards')?.getBoundingClientRect().height,
+      list: document.querySelector('.rows')?.getBoundingClientRect().height,
       about: document.querySelector('.about')?.getBoundingClientRect().height,
     }));
 

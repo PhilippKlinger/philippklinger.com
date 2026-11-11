@@ -297,13 +297,15 @@ describe('DeliveryChain', () => {
     expect(element.querySelector('.rail, .panel, .hint')).toBeNull();
   });
 
-  it('keeps a chain for fixed content with one public step', async () => {
+  // Neuro: private code, a public release and the website, whose data has not come yet.
+  it('keeps a chain for a project with private steps', async () => {
     const element = await renderChain('neuro-check-in');
 
     expect(tabs(element).map((tab) => tab.getAttribute('data-state'))).toEqual([
       'private',
       'private',
       'verified',
+      'unavailable',
     ]);
     expect(element.querySelector('.private')).toBeNull();
   });

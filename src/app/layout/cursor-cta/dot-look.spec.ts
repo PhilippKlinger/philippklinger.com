@@ -8,10 +8,9 @@ function renderPage(): HTMLElement {
     <button type="button"><span>Knopf</span></button>
     <input aria-label="Feld" />
     <textarea aria-label="Text"></textarea>
-    <article data-card-link>
+    <a class="row" data-cursor="Details" href="/projekte/vps-plattform/">
       <h3>Titel</h3>
-      <a data-card-cta data-cursor="Projekt ansehen" href="/projekte/vps-plattform/">CTA</a>
-    </article>`;
+    </a>`;
   return page;
 }
 
@@ -32,11 +31,8 @@ describe('dotLook', () => {
     expect(dotLook(renderPage().querySelector('button span'))).toBe('circle');
   });
 
-  it('is a circle on the link of a card, where the ring stays off', () => {
-    expect(dotLook(renderPage().querySelector('a[data-card-cta]'))).toBe('circle');
-  });
-
-  it('is off on the surface of a card, where the ring is on', () => {
+  it('is off on a row of the project list, where the ring is on', () => {
+    expect(dotLook(renderPage().querySelector('a.row'))).toBe('off');
     expect(dotLook(renderPage().querySelector('h3'))).toBe('off');
   });
 

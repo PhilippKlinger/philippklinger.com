@@ -101,6 +101,7 @@ type Signal = DeliveryView['signal'];
 const LINK_LIMIT = 3;
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const REQUIRED_PROJECTS: RequiredProjectKey[] = ['videoflix', 'portfolio'];
+const OPTIONAL_PROJECTS: ProjectKey[] = ['vps-plattform', 'neuro-check-in'];
 const STATIONS: StationKey[] = ['code', 'checks', 'supplyChain', 'live', 'stability', 'restore'];
 const OPERATING_SOURCES: StepSource[] = ['live', 'stability'];
 
@@ -327,11 +328,13 @@ function liveEvent(status: ProjectStatus): string | null {
   return `Live: ${joinParts([...shas, liveComparison(components)])}`;
 }
 
+const percent = (share: number) => `${oneDecimal.format(share * 100)} %`;
+
 // DRAFT: event text, wording to be approved (PK-23).
 function stabilityEvent({ reachable, signals }: ProjectStatus['stability']): string | null {
   if (!reachable) return null;
   const { uptime30d, monitorsTotal, monitorsUp } = signals;
-  if (uptime30d !== null) return `Verfügbarkeit 30 Tage: ${oneDecimal.format(uptime30d * 100)} %`;
+  if (uptime30d !== null) return `Verfügbarkeit 30 Tage: ${percent(uptime30d)}`;
   if (monitorsTotal === null || monitorsUp === null) return null;
   return `${monitorsUp} von ${monitorsTotal} Diensten erreichbar`;
 }
@@ -553,11 +556,16 @@ function operatingSignal(
   plan: DeliveryPlan,
   steps: DeliveryStepView[],
   stand: string,
+  uptime24h: number | null,
 ): Signal | null {
   const states = statesWith(plan, steps, OPERATING_SOURCES);
   const isRunning = states.length > 0 && states.every((state) => state === 'verified');
   if (plan.runningLabel && isRunning)
-    return { state: 'verified', status: plan.runningLabel, when: stand };
+    return {
+      state: 'verified',
+      status: plan.runningLabel,
+      when: uptime24h === null ? stand : `${percent(uptime24h)} (24 h)`,
+    };
   return states.includes('deviation')
     ? { state: 'deviation', status: 'Abweichung im Betrieb', when: stand }
     : null;
@@ -595,7 +603,7 @@ function signalOf(plan: DeliveryPlan, steps: DeliveryStepView[], snapshot: Snaps
   if (!snapshot) return NO_SIGNAL;
   const stand = `Stand ${formatTime(dayTimeFormat, snapshot.generatedAt)}`;
   return (
-    operatingSignal(plan, steps, stand) ??
+    operatingSignal(plan, steps, stand, snapshot.status.stability.signals.uptime24h) ??
     checksSignal(plan, steps, snapshot.status) ??
     fallbackSignal(steps, stand)
   );
@@ -718,13 +726,14 @@ function hasAllStations(project: unknown): boolean {
 }
 
 /**
- * vps-plattform may be missing in an older file, but once it is there it has to be whole.
+ * The optional projects may be missing in an older file, but once there they have to be whole.
  * Keys no page reads, like conduit in a file of the old collector, are ignored.
  */
 function hasValidProjects(projects: Record<string, unknown>): boolean {
-  const platform = 'vps-plattform';
-  const platformFits = !(platform in projects) || hasAllStations(projects[platform]);
-  return platformFits && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
+  const optionalFit = OPTIONAL_PROJECTS.every(
+    (key) => !(key in projects) || hasAllStations(projects[key]),
+  );
+  return optionalFit && REQUIRED_PROJECTS.every((key) => hasAllStations(projects[key]));
 }
 
 function parseJson(text: string): unknown {
