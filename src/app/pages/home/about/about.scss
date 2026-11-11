@@ -1,9 +1,17 @@
 @use 'breakpoints' as bp;
 
+// The path speaks the line language of the hero pipeline: a muted track, an accent fill, nodes
+// on it. Across from the pipeline breakpoint, upright below, as the hero on the phone.
+
+:host {
+  --node: 1.375rem;
+  display: block;
+}
+
 .about {
   display: grid;
   gap: var(--space-lg);
-  align-items: center;
+  align-items: start;
 }
 
 // The portrait has no focus state on purpose: it is no control, and a tab stop would
@@ -28,37 +36,146 @@
   }
 }
 
-.intro {
-  margin-block: var(--space-md);
+// Three text styles only: the heading, the motto in the style of the hero claim, running text.
+.body {
+  display: grid;
+  gap: var(--space-md);
+  max-width: var(--lead-width);
 }
 
-.points {
-  display: flex;
-  flex-direction: column;
+.motto {
+  max-width: 38rem;
+  font-size: var(--text-lg);
+  line-height: var(--leading-subtitle);
+}
+
+.text {
+  color: var(--color-text-muted);
+}
+
+.path {
+  position: relative;
+}
+
+.track,
+.fill {
+  position: absolute;
+  top: calc(var(--node) / 2);
+  bottom: calc(var(--node) / 2);
+  left: calc(var(--node) / 2 - var(--border-width) / 2);
+  width: var(--border-width);
+}
+
+.track {
+  background: var(--color-line);
+}
+
+.fill {
+  background: var(--color-accent);
+  transform: scaleY(var(--drawn, 1));
+  transform-origin: top;
+}
+
+.stops {
+  display: grid;
   gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--color-text-muted);
 
   li {
     display: flex;
-    gap: var(--space-sm);
-    align-items: flex-start;
+    gap: var(--space-snug);
+    align-items: center;
+    color: var(--color-text-muted);
   }
 
-  // Fixed size so the external sprite cannot shift the text when it loads.
-  svg {
-    flex: none;
-    width: 1.5em;
-    height: 1.5em;
-    fill: var(--color-accent);
+  // Today is told by colour and the filled node, not by another weight.
+  li:last-child {
+    color: var(--color-text);
+  }
+}
+
+.node {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: var(--node);
+  height: var(--node);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-bg);
+  transition: background-color 0.3s ease;
+}
+
+li:last-child .node {
+  background: var(--color-accent);
+}
+
+// Motion: emptied after hydration while below the fold, filled once in view (about.ts).
+// A change takes the transition of its new state: emptying is instant (out of sight), filling
+// runs.
+[data-line='run'] .fill {
+  transition: transform 0.9s ease-out;
+}
+
+[data-line='armed'] {
+  --drawn: 0;
+
+  li:last-child .node {
+    background: var(--color-bg);
+  }
+}
+
+[data-line='run'] {
+  --drawn: 1;
+
+  li:last-child .node {
+    background: var(--color-accent);
+    transition-delay: 0.8s;
   }
 }
 
 @include bp.from(tablet) {
   .about {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: var(--space-xl);
+    align-items: center;
+  }
+}
+
+@include bp.from(pipeline) {
+  .track,
+  .fill {
+    inset: calc(var(--node) / 2) calc(var(--node) / 2) auto;
+    width: auto;
+    height: var(--border-width);
+  }
+
+  .fill {
+    transform: scaleX(var(--drawn, 1));
+    transform-origin: left;
+  }
+
+  // As the hero: the last station sits on the right content edge.
+  .stops {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) var(--node);
+    gap: 0;
+
+    li {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-xs);
+      white-space: nowrap;
+    }
+
+    // Left, centred, right: each title hangs at its node.
+    li:nth-child(2) .name {
+      transform: translateX(calc(var(--node) / 2 - 50%));
+    }
+
+    li:last-child {
+      align-items: flex-end;
+    }
   }
 }

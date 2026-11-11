@@ -22,18 +22,14 @@ export const navigation = [
   { label: 'Kontakt', fragment: 'kontakt' },
 ];
 
-// DRAFT: about section, wording to be approved. Facts follow the final CV.
+// DRAFT: about section (FB-06, mockup runde-5), wording follows in the text pass (Task 15).
+// Facts and titles follow the final CV; no employer names (draft 2026-11-08).
 export const about = {
-  intro:
-    'Ich entwickle Webanwendungen vom Frontend bis zum Backend und sorge dafür, dass sie sicher und nachvollziehbar deployt werden. Aus über vier Jahren im Field Service für komplexe Fahrzeugprüfsysteme bringe ich systematische Fehleranalyse unter Druck mit.',
-  // icon: symbol id in public/images/tools.svg.
-  points: [
-    { icon: 'location', text: 'Offen für Remote, hybrid oder vor Ort, ab sofort verfügbar.' },
-    // The approved AI sentence lives here instead of the hero (Grill 2026-11-04).
-    { icon: 'cognition', text: profile.aiNote },
-    {
-      icon: 'wrench',
-      text: 'Aus dem Field Service kenne ich Troubleshooting an Systemen, die laufen müssen.',
-    },
-  ],
+  // Red thread of Bewerbungsphase/Wissensbasis/02-fundament.md (working version).
+  motto:
+    'Ich sorge dafür, dass komplexe Systeme zuverlässig und nachweisbar laufen: früher Prüfstände, heute Anwendungen und Pipelines.',
+  // Short titles of the CV stations, one line each on the path.
+  path: ['Techniker Maschinenbau', 'Field Service Engineer', 'Software Engineer'],
+  // The approved AI sentence lives here instead of the hero (Grill 2026-11-04).
+  text: `Als Field Service Engineer habe ich an komplexen Fahrzeugprüfsystemen Fehler analysiert und behoben und weltweit Inbetriebnahmen neuer Prüfanlagen unterstützt. Heute entwickle ich Fullstack-Anwendungen mit Tests, Security-Checks und Deployment als festem Teil der Arbeit und baue eigene Werkzeuge wie meine Android-App und das Developer Workspace Kit. ${profile.aiNote} Mein Ziel ist Software, die ein Team verstehen, weiterentwickeln und betreiben kann.`,
 };

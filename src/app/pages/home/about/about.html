@@ -11,20 +11,24 @@
     />
   </div>
 
-  <div>
-    <div class="card">
-      <h2 id="about-title" i18n>Über mich</h2>
-      <p class="intro">{{ about.intro }}</p>
-      <ul class="points">
-        @for (point of about.points; track point.icon) {
+  <div class="body">
+    <h2 id="about-title" i18n>Über mich</h2>
+    <!-- DRAFT -->
+    <p class="motto">{{ about.motto }}</p>
+    <!-- Prerendered fully drawn; after hydration the line only waits when it is still below. -->
+    <div #path class="path" [attr.data-line]="line()">
+      <span class="track" aria-hidden="true"></span>
+      <span class="fill" aria-hidden="true"></span>
+      <ol class="stops" i18n-aria-label aria-label="Werdegang">
+        @for (station of about.path; track station) {
           <li>
-            <svg aria-hidden="true">
-              <use [attr.href]="'/images/tools.svg#' + point.icon" />
-            </svg>
-            {{ point.text }}
+            <span class="node" aria-hidden="true"></span>
+            <span class="name">{{ station }}</span>
           </li>
         }
-      </ul>
+      </ol>
     </div>
+    <!-- DRAFT -->
+    <p class="text">{{ about.text }}</p>
   </div>
 </section>
