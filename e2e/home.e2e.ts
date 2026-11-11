@@ -129,23 +129,19 @@ test.describe('Abschnitte', () => {
     await expect(page.locator('main .eyebrow')).toHaveCount(0);
   });
 
-  test('[Spec 3.4] Über mich: Porträt und Karte mit 3 Punkten', async ({ page }) => {
-    const about = page.locator('#ueber-mich');
-    await expect(about.getByRole('img', { name: /Philipp Klinger/ })).toBeVisible();
-    await expect(about.locator('.card li')).toHaveCount(3);
-    await expect(about.locator('.card')).toContainText('KI nutze ich als Werkzeug');
-    await expect(page.locator('.hero')).not.toContainText('KI nutze ich');
-  });
-
-  test('[B14] Über mich: jeder Punkt zeigt ein dekoratives Icon und seinen Text', async ({
+  test('[FB-06] Über mich: Porträt, Leitsatz, Weg und ein Absatz, ohne Karte und Icons', async ({
     page,
   }) => {
-    const points = page.locator('#ueber-mich .points li');
-    await expect(points).toHaveCount(3);
-    await expect(points).toHaveText(about.points.map((point) => point.text));
-    for (const point of await points.all()) {
-      await expect(point.locator('svg[aria-hidden="true"]')).toBeVisible();
-    }
+    const section = page.locator('#ueber-mich');
+    await expect(section.getByRole('img', { name: /Philipp Klinger/ })).toBeVisible();
+    await expect(section.locator('.motto')).toHaveText(about.motto);
+    await expect(section.getByRole('list', { name: 'Werdegang' }).locator('li')).toHaveText(
+      about.path,
+    );
+    await expect(section.locator('.text')).toHaveText(about.text);
+    await expect(section.locator('.text')).toContainText('KI nutze ich als Werkzeug');
+    await expect(section.locator('.card, use')).toHaveCount(0);
+    await expect(page.locator('.hero')).not.toContainText('KI nutze ich');
   });
 
   test('[Spec 3.4/5] Skills: 3 Karten mit je 4–6 Werkzeugen', async ({ page }) => {
@@ -188,7 +184,7 @@ test.describe('Design-Tokens', () => {
   });
 
   test('[Spec 3.4] Fließtext in Karla, beide Schriften geladen', async ({ page }) => {
-    await expect(page.locator('#ueber-mich .intro')).toHaveCSS('font-family', KARLA);
+    await expect(page.locator('#ueber-mich .text')).toHaveCSS('font-family', KARLA);
     const loaded = await page.evaluate(() => [
       document.fonts.check('16px "Fira Code Variable"'),
       document.fonts.check('16px "Karla Variable"'),

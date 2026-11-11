@@ -1,11 +1,19 @@
 import { about, profile } from './profile';
 
-describe('about.points', () => {
-  it('pairs each point with its icon in the designed order', () => {
-    expect(about.points.map((point) => point.icon)).toEqual(['location', 'cognition', 'wrench']);
+describe('about', () => {
+  it('walks the path in the order of the CV, from the trade to today', () => {
+    expect(about.path).toEqual([
+      'Techniker Maschinenbau',
+      'Field Service Engineer',
+      'Software Engineer',
+    ]);
   });
 
-  it('keeps the approved AI sentence as the second point', () => {
-    expect(about.points[1].text).toBe(profile.aiNote);
+  it('keeps the approved AI sentence inside the one paragraph', () => {
+    expect(about.text).toContain(profile.aiNote);
+  });
+
+  it('stays short: one paragraph of at most 90 words (research D4)', () => {
+    expect(about.text.split(/\s+/).length).toBeLessThanOrEqual(90);
   });
 });
