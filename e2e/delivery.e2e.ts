@@ -102,6 +102,31 @@ const beforeVps: Change = (document) => {
 /** Pages whose chain waits for status.json; only they show a stand. */
 const isMeasured = (path: string) => !!deliveryPlans[path.split('/')[2]]?.statusKey;
 
+/**
+ * Brings the chain into view and lets more than the 2.5 s of D5 pass on the page clock. The own
+ * observer only settles once the page's observer has reported: it is older, so it is told first.
+ */
+async function dwellOnChain(page: Page): Promise<void> {
+  await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+  const rail = delivery(page).locator('.rail');
+  await rail.scrollIntoViewIfNeeded();
+  await rail.evaluate(
+    (element) =>
+      new Promise<void>((resolve) => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            if (entries.at(-1)!.intersectionRatio < 0.6) return;
+            observer.disconnect();
+            resolve();
+          },
+          { threshold: 0.6 },
+        );
+        observer.observe(element);
+      }),
+  );
+  await page.clock.runFor(3000);
+}
+
 /** Neither a tick for what is not proven nor an empty frame where data is missing (D8). */
 async function expectNoFalseProof(page: Page, ticks: number): Promise<void> {
   await expect(delivery(page).locator('.tick')).toHaveCount(ticks);
@@ -296,6 +321,39 @@ test.describe('Kette bedienen', () => {
       .withTags(wcag)
       .analyze();
     expect(violations.map((violation) => violation.id)).toEqual([]);
+  });
+
+  test('[D5] Klick-Hinweis an der Kette, nach der ersten Wahl nie mehr, ruhig ohne Bewegung', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop',
+      'Zeiten und Speicher hängen nicht an der Breite',
+    );
+    await page.clock.install();
+    await serveStatus(page);
+    await page.goto('/projekte/vps-plattform/');
+    const hint = delivery(page).locator('.hint');
+    const ring = stations(page).nth(1).locator('.node');
+    const animations = () => ring.evaluate((node) => node.getAnimations({ subtree: true }).length);
+    await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+    await expect(hint).toBeHidden();
+
+    await dwellOnChain(page);
+    await expect(hint).toBeVisible();
+    await expect(hint).toHaveAttribute('aria-hidden', 'true');
+    await expect(hint.getByText('Klick dich durch die Stationen')).toBeVisible();
+    await expect(hint.getByText('Tippe auf eine Station')).toBeHidden();
+    await expect.poll(animations, 'Puls am zweiten Knoten').toBeGreaterThan(0);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect.poll(animations, 'ruhiger Ring').toBe(0);
+    await expect(hint).toBeVisible();
+
+    await stations(page).last().click();
+    await expect(hint).toBeHidden();
+    await page.reload();
+    await dwellOnChain(page);
+    await expect(hint).toBeHidden();
   });
 
   test('[D6] Zeiger auf einen Commit hebt ihn überall im Feld hervor', async ({

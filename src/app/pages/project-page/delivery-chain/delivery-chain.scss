@@ -37,6 +37,10 @@ h2 {
   }
 }
 
+.chain {
+  position: relative;
+}
+
 .rail {
   position: relative;
   display: grid;
@@ -180,6 +184,97 @@ h2 {
 
   .value {
     color: var(--color-text-muted);
+  }
+}
+
+// Click hint (D5): below the chain it points at, laid over the room above the field, so it never
+// moves the page. It takes no click; a tap goes to whatever lies beneath.
+.hint {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + var(--space-2xs));
+  right: 0;
+  left: calc(var(--node) + var(--space-snug));
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-compact);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--space-2xs));
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    visibility 0.3s;
+
+  &.on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  svg {
+    flex: none;
+    width: var(--space-sm);
+    height: var(--space-sm);
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+// A pointer clicks, a finger taps.
+.by-pointer {
+  display: none;
+}
+
+@media (hover: hover) {
+  .by-pointer {
+    display: inline;
+  }
+
+  .by-touch {
+    display: none;
+  }
+}
+
+// A ring around the node the hint points at. It pulses only for those who allow motion.
+.beckon .node::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--border-width));
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 50%;
+  opacity: 0.6;
+  transform: scale(1.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .beckon .node::after {
+    animation: ring 1.6s ease-out infinite;
+  }
+}
+
+@keyframes ring {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.2);
   }
 }
 
@@ -456,6 +551,26 @@ h2 {
   .tab:last-child::after {
     left: auto;
     right: calc(var(--node) / 2 - var(--space-xs));
+  }
+
+  // Under the second node, which starts one segment in.
+  .hint {
+    top: calc(100% - var(--space-sm));
+    left: calc((100% - var(--node)) / var(--gaps));
+
+    // Points up at the node.
+    &::before {
+      content: '';
+      position: absolute;
+      top: calc(var(--space-compact) / -2 - var(--border-width));
+      left: calc(var(--node) / 2 - var(--space-compact) / 2);
+      width: var(--space-compact);
+      height: var(--space-compact);
+      border: solid var(--color-accent);
+      border-width: var(--border-width) 0 0 var(--border-width);
+      background: var(--color-surface);
+      transform: rotate(45deg);
+    }
   }
 
   .panel {

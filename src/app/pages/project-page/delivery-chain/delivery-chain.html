@@ -20,55 +20,75 @@
       {{ texts.private }}
     </p>
   } @else {
-    <!-- Prerendered as a list; after hydration the same items become tabs (WAI-ARIA APG). -->
-    <ol
-      class="rail"
-      [attr.role]="enhanced() ? 'tablist' : null"
-      [attr.aria-label]="texts.stations"
-      [style.--gaps]="view().stations.length - 1"
-    >
-      @for (station of view().stations; track station.name; let index = $index) {
-        <li
-          #tab
-          class="tab"
-          [id]="tabId(index)"
-          [attr.data-state]="station.state"
-          [attr.role]="enhanced() ? 'tab' : null"
-          [attr.aria-selected]="enhanced() ? index === selected() : null"
-          [attr.aria-controls]="enhanced() ? panelId(index) : null"
-          [attr.tabindex]="enhanced() ? (index === selected() ? 0 : -1) : null"
-          (click)="select(index, true)"
-          (keydown)="choose($event, index)"
-        >
-          @if (station.toNext; as via) {
-            <span class="via" aria-hidden="true">→ {{ via }}</span>
-          }
-          <span class="node" aria-hidden="true">
-            @switch (station.state) {
-              @case ('verified') {
-                <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
-              }
-              @case ('deviation') {
-                <svg class="cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
-              }
-              @case ('private') {
-                <svg class="lock" viewBox="0 0 16 16">
-                  <rect class="body" x="4" y="7.5" width="8" height="5.5" rx="1" />
-                  <path d="M5.8 7.5V6a2.2 2.2 0 0 1 4.4 0v1.5" />
-                </svg>
-              }
+    <div class="chain" [style.--gaps]="view().stations.length - 1">
+      <!-- Prerendered as a list; after hydration the same items become tabs (WAI-ARIA APG). -->
+      <ol
+        #rail
+        class="rail"
+        [attr.role]="enhanced() ? 'tablist' : null"
+        [attr.aria-label]="texts.stations"
+      >
+        @for (station of view().stations; track station.name; let index = $index) {
+          <li
+            #tab
+            class="tab"
+            [id]="tabId(index)"
+            [attr.data-state]="station.state"
+            [attr.role]="enhanced() ? 'tab' : null"
+            [attr.aria-selected]="enhanced() ? index === selected() : null"
+            [attr.aria-controls]="enhanced() ? panelId(index) : null"
+            [attr.tabindex]="enhanced() ? (index === selected() ? 0 : -1) : null"
+            [class.beckon]="index === 1 && hintShown()"
+            (click)="clicked(index)"
+            (keydown)="choose($event, index)"
+          >
+            @if (station.toNext; as via) {
+              <span class="via" aria-hidden="true">→ {{ via }}</span>
             }
-          </span>
-          <span class="cell">
-            <span class="name">{{ station.name }}</span>
-            <span class="value">{{ station.value }}</span>
-            @if (spoken(station.state)) {
-              <span class="visually-hidden">, {{ deliveryTexts.stateLabels[station.state] }}</span>
-            }
-          </span>
-        </li>
+            <span class="node" aria-hidden="true">
+              @switch (station.state) {
+                @case ('verified') {
+                  <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
+                }
+                @case ('deviation') {
+                  <svg class="cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+                }
+                @case ('private') {
+                  <svg class="lock" viewBox="0 0 16 16">
+                    <rect class="body" x="4" y="7.5" width="8" height="5.5" rx="1" />
+                    <path d="M5.8 7.5V6a2.2 2.2 0 0 1 4.4 0v1.5" />
+                  </svg>
+                }
+              }
+            </span>
+            <span class="cell">
+              <span class="name">{{ station.name }}</span>
+              <span class="value">{{ station.value }}</span>
+              @if (spoken(station.state)) {
+                <span class="visually-hidden"
+                  >, {{ deliveryTexts.stateLabels[station.state] }}</span
+                >
+              }
+            </span>
+          </li>
+        }
+      </ol>
+
+      @if (enhanced()) {
+        <!-- Only an aid for the eye: for screen readers the chain is a tab list already. -->
+        <p class="hint" aria-hidden="true" [class.on]="hintShown()">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0v3.5a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.8-2.4L4.4 14a1.5 1.5 0 0 1 2.3-1.9L9 14.5"
+            />
+          </svg>
+          <!-- DRAFT -->
+          <span class="by-pointer">{{ texts.hintPointer }}</span>
+          <!-- DRAFT -->
+          <span class="by-touch">{{ texts.hintTouch }}</span>
+        </p>
       }
-    </ol>
+    </div>
 
     <div class="panels">
       @for (station of view().stations; track station.name; let index = $index) {

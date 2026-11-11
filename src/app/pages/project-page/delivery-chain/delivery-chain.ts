@@ -7,6 +7,7 @@ import {
   inject,
   input,
   signal,
+  viewChild,
   viewChildren,
 } from '@angular/core';
 import { buildChainView, ChainTable, ChainView } from '../../../../content/delivery-chain';
@@ -18,6 +19,7 @@ import {
   StepState,
 } from '../../../../content/software-delivery';
 import { DeliveryStatus } from '../../../delivery/delivery-status';
+import { ChainHint } from './chain-hint';
 
 // DRAFT: texts of the chain, wording to be approved.
 const chainTexts = {
@@ -28,6 +30,8 @@ const chainTexts = {
   verify: 'Selbst prüfen',
   passing: 'passing',
   failed: 'failed',
+  hintPointer: 'Klick dich durch die Stationen',
+  hintTouch: 'Tippe auf eine Station',
 };
 
 /** States whose value is a measurement, so screen readers also hear the state as a word. */
@@ -39,6 +43,10 @@ const ARROW_STEPS: Partial<Record<string, number>> = {
   ArrowUp: -1,
 };
 
+// The hint waits until most of the chain is on screen (D5).
+const HINT_THRESHOLD = 0.6;
+const ACTIVITY_EVENTS = ['pointermove', 'scroll', 'keydown'];
+
 const hasNoPublicChain = (plan: DeliveryPlan) =>
   !plan.statusKey && plan.steps.every((step) => !isMeasured(step) && step.state === 'private');
 
@@ -47,6 +55,15 @@ function standLine({ stand, repoCount }: ChainView): string | null {
   if (!stand || repoCount === 0) return stand;
   const unit = repoCount === 1 ? chainTexts.repo : chainTexts.repos;
   return `${stand} · ${repoCount} ${unit}`;
+}
+
+/** Merely reading localStorage throws where the browser blocks storage. */
+function browserStorage(): Storage | null {
+  try {
+    return localStorage;
+  } catch {
+    return null;
+  }
 }
 
 @Component({
@@ -62,6 +79,8 @@ export class DeliveryChain {
   private readonly status = inject(DeliveryStatus);
   private readonly destroyRef = inject(DestroyRef);
   private readonly tabs = viewChildren<ElementRef<HTMLElement>>('tab');
+  private readonly rail = viewChild<ElementRef<HTMLElement>>('rail');
+  private readonly hint = signal<ChainHint | null>(null);
 
   readonly slug = input.required<string>();
   readonly selected = signal(0);
@@ -79,17 +98,26 @@ export class DeliveryChain {
   });
   protected readonly stand = computed(() => standLine(this.view()));
   protected readonly isPrivate = computed(() => hasNoPublicChain(this.plan()));
+  protected readonly hintShown = computed(() => this.hint()?.shown() ?? false);
 
   private readonly plan = computed(() => deliveryPlans[this.slug()]);
 
   constructor() {
     // Browser only and after hydration, so the prerendered list is what hydration finds.
-    afterNextRender(() => this.enhanced.set(true));
+    afterNextRender(() => {
+      this.enhanced.set(true);
+      this.startHint();
+    });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the click hint reads byUser
   select(index: number, byUser: boolean): void {
     this.selected.set(index);
+    if (byUser) this.hint()?.chosen();
+  }
+
+  // Hydration replays a click on the list; only a click on a tab is a choice of the reader.
+  protected clicked(index: number): void {
+    if (this.enhanced()) this.select(index, true);
   }
 
   protected choose(event: KeyboardEvent, index: number): void {
@@ -112,6 +140,36 @@ export class DeliveryChain {
   /** Column name in front of a value when the table stacks; the first column needs none. */
   protected labelOf({ head }: ChainTable, column: number): string | null {
     return column > 0 && head[column] ? head[column] : null;
+  }
+
+  private startHint(): void {
+    const rail = this.rail()?.nativeElement;
+    if (!rail) return;
+    const hint = new ChainHint(browserStorage());
+    const lifetime = new AbortController();
+    this.watchView(rail, hint, lifetime.signal);
+    this.watchActivity(hint, lifetime.signal);
+    this.destroyRef.onDestroy(() => {
+      lifetime.abort();
+      hint.destroy();
+    });
+    this.hint.set(hint);
+  }
+
+  private watchView(rail: HTMLElement, hint: ChainHint, lifetime: AbortSignal): void {
+    // A fast scroll can report out and in at once, so the last entry counts. Its ratio, not
+    // isIntersecting: that is true for any overlap, below the threshold as well.
+    const observer = new IntersectionObserver(
+      (entries) => hint.inView(entries.at(-1)!.intersectionRatio >= HINT_THRESHOLD),
+      { threshold: HINT_THRESHOLD },
+    );
+    observer.observe(rail);
+    lifetime.addEventListener('abort', () => observer.disconnect());
+  }
+
+  private watchActivity(hint: ChainHint, lifetime: AbortSignal): void {
+    const options = { passive: true, signal: lifetime };
+    for (const type of ACTIVITY_EVENTS) addEventListener(type, () => hint.activity(), options);
   }
 
   /** Arrows move and wrap around, Home and End jump to the ends (WAI-ARIA APG tabs). */

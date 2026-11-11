@@ -8,6 +8,7 @@ import { DeliveryStatus } from '../../../delivery/delivery-status';
 import { STATUS_SNAPSHOT } from '../../../delivery/status-snapshot';
 import { DeliveryChain } from './delivery-chain';
 
+const HINT_KEY = 'pk-chain-hint-done';
 const generatedAt = '2026-11-06T00:58:11.069Z';
 const repo = 'PhilippKlinger/example';
 const digest = 'sha256:346d0a94572ee913c68f3a6b528aeb79d39175beb265489ac390fdcfa72c09de';
@@ -69,15 +70,31 @@ async function renderPrerendered(slug: string, document: StatusDocument | null =
   try {
     const fixture = mount(slug, document);
     await fixture.whenStable();
-    return fixture.nativeElement as HTMLElement;
+    return fixture;
   } finally {
     vi.unstubAllGlobals();
   }
 }
 
 describe('DeliveryChain', () => {
+  // jsdom has no IntersectionObserver. An inert one means: the chain never reports being in view.
+  beforeEach(() =>
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe = () => undefined;
+        disconnect = () => undefined;
+      },
+    ),
+  );
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.removeItem(HINT_KEY);
+  });
+
   it('renders all stations before hydration', async () => {
-    const element = await renderPrerendered('videoflix', documentWith(linkedStatus()));
+    const fixture = await renderPrerendered('videoflix', documentWith(linkedStatus()));
+    const element = fixture.nativeElement as HTMLElement;
     const plan = deliveryPlans['videoflix'];
 
     expect(texts(element.querySelectorAll('.tab .name'))).toEqual(
@@ -87,6 +104,35 @@ describe('DeliveryChain', () => {
     expect(shownPanels(element)).toHaveLength(plan.steps.length);
     expect(element.querySelector('[role="tablist"], [role="tab"], [role="tabpanel"]')).toBeNull();
     expect(element.querySelector('[tabindex]')).toBeNull();
+    expect(element.querySelector('.hint')).toBeNull();
+  });
+
+  // A click replayed by hydration is no choice of the reader and must not end the click hint.
+  it('takes a click as a choice only once the list has become tabs', async () => {
+    const fixture = await renderPrerendered('vps-plattform');
+    (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.tab')[1].click();
+    expect(fixture.componentInstance.selected()).toBe(0);
+  });
+
+  it('adds the click hint in the browser, hidden from screen readers and not yet shown', async () => {
+    const element = await renderChain('vps-plattform');
+    const hint = element.querySelector('.hint');
+
+    expect(hint?.getAttribute('aria-hidden')).toBe('true');
+    expect(hint?.classList.contains('on')).toBe(false);
+    expect(texts(hint!.querySelectorAll('span'))).toEqual([
+      'Klick dich durch die Stationen',
+      'Tippe auf eine Station',
+    ]);
+    expect(element.querySelector('.beckon')).toBeNull();
+  });
+
+  it('remembers the first choice of a station for the next visit', async () => {
+    const element = await renderChain('vps-plattform');
+    expect(localStorage.getItem(HINT_KEY)).toBeNull();
+
+    tabs(element)[1].click();
+    expect(localStorage.getItem(HINT_KEY)).toBe('1');
   });
 
   it('turns into tabs with one field after the first render', async () => {
@@ -248,7 +294,7 @@ describe('DeliveryChain', () => {
       'Code privat. Die Läufe zeige ich im Gespräch.',
     );
     expect(element.querySelector('.private .node svg')).not.toBeNull();
-    expect(element.querySelector('.rail, .panel')).toBeNull();
+    expect(element.querySelector('.rail, .panel, .hint')).toBeNull();
   });
 
   it('keeps a chain for fixed content with one public step', async () => {
