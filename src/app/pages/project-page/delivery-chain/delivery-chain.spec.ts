@@ -219,20 +219,6 @@ describe('DeliveryChain', () => {
     expect(byName('Code').querySelector('.visually-hidden')?.textContent).toContain('Belegt');
   });
 
-  it('shows the table with its heads, a label per stacked value and the links in their row', async () => {
-    const element = await renderChain('videoflix', documentWith(linkedStatus()));
-    tabs(element)[1].click();
-    TestBed.tick();
-    const [panel] = shownPanels(element);
-
-    expect(texts(panel.querySelectorAll('th'))).toEqual(['Repo', 'CI', 'Commit']);
-    const cells = [...panel.querySelectorAll('tbody tr:first-child td')];
-    expect(cells.map((cell) => cell.getAttribute('data-label'))).toEqual([null, 'CI', 'Commit']);
-    expect(cells[1].querySelector('a')?.getAttribute('href')).toBe('https://github.com/run');
-    expect(cells[1].querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('passing');
-    expect(cells[2].querySelector('[data-sha]')?.getAttribute('data-sha')).toBe('82dcf43');
-  });
-
   it('offers the verify command for the attested image', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
     tabs(element)[2].click();

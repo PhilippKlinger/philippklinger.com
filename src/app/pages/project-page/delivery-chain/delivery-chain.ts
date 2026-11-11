@@ -10,7 +10,7 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
-import { buildChainView, ChainTable, ChainView } from '../../../../content/delivery-chain';
+import { buildChainView, ChainView } from '../../../../content/delivery-chain';
 import { deliveryPlans } from '../../../../content/delivery-plans';
 import {
   DeliveryPlan,
@@ -20,6 +20,7 @@ import {
 } from '../../../../content/software-delivery';
 import { DeliveryStatus } from '../../../delivery/delivery-status';
 import { ChainHint } from './chain-hint';
+import { ChainPanel } from './chain-panel';
 
 // DRAFT: texts of the chain, wording to be approved.
 const chainTexts = {
@@ -27,9 +28,6 @@ const chainTexts = {
   repo: 'Repo',
   repos: 'Repos',
   private: 'Code privat. Die Läufe zeige ich im Gespräch.',
-  verify: 'Selbst prüfen',
-  passing: 'passing',
-  failed: 'failed',
   hintPointer: 'Klick dich durch die Stationen',
   hintTouch: 'Tippe auf eine Station',
 };
@@ -70,6 +68,7 @@ function browserStorage(): Storage | null {
   selector: 'app-delivery-chain',
   templateUrl: './delivery-chain.html',
   styleUrl: './delivery-chain.scss',
+  imports: [ChainPanel],
   host: {
     '(pointerover)': 'follow($event)',
     '(pointerleave)': 'hoveredSha.set(null)',
@@ -136,11 +135,6 @@ export class DeliveryChain {
   protected tabId = (index: number) => `chain-tab-${index}`;
   protected panelId = (index: number) => `chain-panel-${index}`;
   protected spoken = (state: StepState) => MEASURED_STATES.includes(state);
-
-  /** Column name in front of a value when the table stacks; the first column needs none. */
-  protected labelOf({ head }: ChainTable, column: number): string | null {
-    return column > 0 && head[column] ? head[column] : null;
-  }
 
   private startHint(): void {
     const rail = this.rail()?.nativeElement;

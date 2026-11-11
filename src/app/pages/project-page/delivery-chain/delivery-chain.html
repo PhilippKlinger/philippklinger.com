@@ -92,72 +92,18 @@
 
     <div class="panels">
       @for (station of view().stations; track station.name; let index = $index) {
-        <div
+        <app-chain-panel
           class="panel"
           [id]="panelId(index)"
           [attr.role]="enhanced() ? 'tabpanel' : null"
           [attr.aria-labelledby]="enhanced() ? tabId(index) : null"
           [attr.tabindex]="enhanced() ? 0 : null"
           [hidden]="enhanced() && index !== selected()"
-        >
-          <p class="kicker">
-            {{ index + 1 }} / {{ view().stations.length }} · <b>{{ station.name }}</b>
-          </p>
-          <p class="what">{{ station.sentence }}</p>
-
-          @if (station.table; as table) {
-            <table class="facts">
-              <thead>
-                <tr>
-                  @for (head of table.head; track $index) {
-                    <th scope="col">{{ head }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of table.rows; track $index) {
-                  <tr>
-                    @for (cell of row; track $index; let column = $index) {
-                      <td [attr.data-label]="labelOf(table, column)">
-                        @if (cell.ok !== undefined) {
-                          <!-- DRAFT: spoken label of the sign -->
-                          <span
-                            class="mark"
-                            [class.fail]="!cell.ok"
-                            role="img"
-                            [attr.aria-label]="cell.ok ? texts.passing : texts.failed"
-                            >{{ cell.ok ? '✓' : '✗' }}</span
-                          >
-                        }
-                        @if (cell.url; as url) {
-                          <a [href]="url">{{ cell.text }}<span aria-hidden="true"> ↗</span></a>
-                        } @else if (cell.sha; as sha) {
-                          <!-- The red thread: one commit, highlighted wherever it appears. -->
-                          <span
-                            class="sha"
-                            [attr.data-sha]="sha"
-                            [attr.data-match]="sha === hoveredSha() ? '' : null"
-                            >{{ cell.text }}</span
-                          >
-                        } @else {
-                          {{ cell.text }}
-                        }
-                      </td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-
-          @if (station.verify; as verify) {
-            <details class="verify">
-              <!-- DRAFT -->
-              <summary>{{ texts.verify }}&nbsp;<span aria-hidden="true">›</span></summary>
-              <pre>{{ verify }}</pre>
-            </details>
-          }
-        </div>
+          [station]="station"
+          [index]="index"
+          [count]="view().stations.length"
+          [hoveredSha]="hoveredSha()"
+        />
       }
     </div>
   }
