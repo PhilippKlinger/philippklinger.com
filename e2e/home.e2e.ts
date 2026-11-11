@@ -39,6 +39,10 @@ test.describe('Aufbau', () => {
       await page.goto(`/#${id}`);
       const heading = page.locator(`#${id} h2`);
       await expect(heading).toBeInViewport();
+      // On mobile the header slides out over 0.2 s; judge where it ends, not where it passes.
+      await page
+        .locator('app-header')
+        .evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
       const covered = await heading.evaluate((el) => {
         const box = el.getBoundingClientRect();
         const hit = document.elementFromPoint(box.left + 4, box.top + box.height / 2);
