@@ -306,9 +306,14 @@ test.describe('Kette bedienen', () => {
     await expect(tabs).toHaveCount(3);
     await expect(delivery(page).locator('[role="tab"][tabindex="0"]')).toHaveCount(1);
 
-    // A click on the heading sets where the Tab key goes on from, whatever the page head holds.
-    await delivery(page).locator('h2').click();
-    await page.keyboard.press('Tab');
+    // Tab from the start of main until the focus enters the chain, whatever the page head holds.
+    // A click on the heading would focus main (tabindex -1, skip link target), not set a start.
+    await page.locator('main').focus();
+    const inChain = () =>
+      page.evaluate(() => !!document.activeElement?.closest('app-delivery-chain'));
+    for (let press = 0; press < 40 && !(await inChain()); press++) {
+      await page.keyboard.press('Tab');
+    }
     await expect(tabs.first()).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(tabs.nth(1)).toBeFocused();
