@@ -224,6 +224,36 @@ describe('buildChainView', () => {
     expect(station(videoflixStatus(), 'Code').verify).toBeNull();
   });
 
+  // The digest stays when the attestation is missing or out of reach (spec 6.2), the command
+  // would fail.
+  it('builds no verify command for an image without attestation', () => {
+    const counts = [0, null];
+
+    for (const provenanceCount of counts) {
+      const build = station(
+        videoflixStatus((status) => {
+          status.supplyChain.signals.repos.forEach((repo) => {
+            repo.attestation = { ...repo.attestation!, provenanceCount };
+          });
+        }),
+        'Signed Build',
+      );
+      expect(build.verify).toBeNull();
+    }
+  });
+
+  it('takes the first image that has an attestation for the verify command', () => {
+    const build = station(
+      videoflixStatus((status) => {
+        const [first] = status.supplyChain.signals.repos;
+        first.attestation = { ...first.attestation!, provenanceCount: 0 };
+      }),
+      'Signed Build',
+    );
+
+    expect(build.verify).toContain(`videoflix-frontend@${frontendDigest}`);
+  });
+
   it('builds no verify command from a malformed digest, image name or repo', () => {
     const changes: ((status: ProjectStatus) => void)[] = [
       (status) => {

@@ -241,12 +241,14 @@ function verifyCommand(repo: string, name = '', digest = ''): string | null {
   return ['gh attestation verify', `  ${image}`, `  --repo ${repo}`].join(' \\\n');
 }
 
+// The digest stays without an attestation (spec 6.2), so only a counted provenance makes it one.
+const isAttested = ({ attestation }: RepoSupplyChainSignal) =>
+  (attestation?.provenanceCount ?? 0) > 0 && !!attestation?.subjectDigest;
+
 function verifyOf(status: ProjectStatus): string | null {
   const { links } = status.supplyChain;
   const imageUrl = (repo: RepoSupplyChainSignal) => linkOf(links, 'image', repo.repo)?.url;
-  const built = builtRepos(status).find(
-    (repo) => repo.attestation?.subjectDigest && imageUrl(repo),
-  );
+  const built = builtRepos(status).find((repo) => isAttested(repo) && imageUrl(repo));
   if (!built) return null;
   const name = imageUrl(built)?.split('/').at(-1);
   return verifyCommand(built.repo, name, built.attestation?.subjectDigest ?? undefined);
