@@ -48,17 +48,20 @@ h2 {
   margin: var(--space-lg) 0 0;
   padding: 0;
   list-style: none;
+}
 
-  // The line from the first node to the last one.
-  &::before {
-    content: '';
-    position: absolute;
-    top: calc(var(--size-touch) / 2);
-    bottom: calc(var(--size-touch) / 2);
-    left: calc(var(--node) / 2 - var(--border-width) / 2);
-    width: var(--border-width);
-    background: var(--color-accent);
-  }
+// The line from the first node to the last one; the rail starts --space-lg below the chain.
+.track {
+  position: absolute;
+  top: calc(var(--space-lg) + var(--size-touch) / 2);
+  bottom: calc(var(--size-touch) / 2);
+  left: calc(var(--node) / 2 - var(--border-width) / 2);
+  width: var(--border-width);
+  background: var(--color-accent);
+}
+
+.tip {
+  display: none;
 }
 
 .tab {
@@ -301,13 +304,13 @@ h2 {
     container-type: inline-size;
     // As in the hero: the last station sits on the right content edge.
     grid-template-columns: repeat(var(--gaps), minmax(0, 1fr)) var(--node);
+  }
 
-    &::before {
-      inset: calc(var(--space-sm) + var(--node) / 2 - var(--border-width) / 2) calc(var(--node) / 2)
-        auto;
-      width: auto;
-      height: var(--border-width);
-    }
+  .track {
+    inset: calc(var(--space-lg) + var(--space-sm) + var(--node) / 2 - var(--border-width) / 2)
+      calc(var(--node) / 2) auto;
+    width: auto;
+    height: var(--border-width);
   }
 
   .tab {
@@ -357,8 +360,8 @@ h2 {
   }
 
   // Points from the chosen station into its field.
-  [aria-selected='true']::after {
-    content: '';
+  [aria-selected='true'] > .tip {
+    display: block;
     position: absolute;
     z-index: 2;
     bottom: calc(-1 * var(--space-md) - var(--border-width));
@@ -371,7 +374,7 @@ h2 {
     transform: rotate(45deg);
   }
 
-  .tab:last-child::after {
+  .tab:last-child > .tip {
     left: auto;
     right: calc(var(--node) / 2 - var(--space-xs));
   }

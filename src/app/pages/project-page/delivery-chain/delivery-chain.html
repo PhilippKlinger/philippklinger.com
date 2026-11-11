@@ -21,6 +21,9 @@
     </p>
   } @else {
     <div class="chain" [style.--gaps]="view().stations.length - 1">
+      <!-- Line and tip are elements, not pseudo elements: axe cannot judge text whose ancestor
+           holds an absolute pseudo element with a background (contrast.e2e.ts). -->
+      <span class="track" aria-hidden="true"></span>
       <!-- Prerendered as a list; after hydration the same items become tabs (WAI-ARIA APG). -->
       <ol
         #rail
@@ -70,6 +73,7 @@
                 >
               }
             </span>
+            <span class="tip" aria-hidden="true"></span>
           </li>
         }
       </ol>
