@@ -8,46 +8,34 @@ const allText = JSON.stringify(projectPageContent);
 const isFilled = (text: string) => text.trim().length > 0;
 const wordsOf = (value: object) => JSON.stringify(Object.values(value)).match(/[\p{L}\d]+/gu);
 
-// Written in the cut of Block C (DECISIONS 2026-11-10): one decision, cards of about 60 words.
-const BLOCK_C_PAGES = ['vps-plattform'];
-const olderPages = pages.filter(([slug]) => !BLOCK_C_PAGES.includes(slug));
+// Spec 16.3 (D9): every card at 70 words or less.
+const MAX_CARD_WORDS = 70;
+const cardsOf = ({ architecture, decisions, failure }: ProjectPageContent): [string, object][] => [
+  ['architecture', [architecture.summary, ...architecture.parts]],
+  ['decision', decisions[0]],
+  ['failure', failure],
+];
 
 describe('projectPageContent', () => {
   it('covers exactly the four projects of the routes', () => {
     expect(Object.keys(projectPageContent)).toEqual(projects.map((project) => project.slug));
   });
 
-  it.each(olderPages)('%s has 2 to 3 decisions with reason and price', (_slug, content) => {
-    expect(content.decisions.length).toBeGreaterThanOrEqual(2);
-    expect(content.decisions.length).toBeLessThanOrEqual(3);
-    for (const decision of content.decisions) {
-      expect(Object.values(decision).every(isFilled)).toBe(true);
+  it.each(pages)('%s has exactly one decision and one failure', (_slug, content) => {
+    expect(content.decisions).toHaveLength(1);
+    expect(Object.values(content.decisions[0]).every(isFilled)).toBe(true);
+    expect(Object.keys(content.failure)).toEqual(['title', 'found', 'changed']);
+    expect(Object.values(content.failure).every(isFilled)).toBe(true);
+  });
+
+  it.each(pages)('%s keeps every card at 70 words or less', (_slug, content) => {
+    for (const [name, card] of cardsOf(content)) {
+      expect(wordsOf(card)?.length ?? 0, name).toBeLessThanOrEqual(MAX_CARD_WORDS);
     }
   });
 
-  describe('the VPS platform in the cut of Block C', () => {
+  describe('the VPS platform', () => {
     const content = projectPageContent['vps-plattform']!;
-
-    it('has exactly one decision with reason and price', () => {
-      expect(content.decisions).toHaveLength(1);
-      expect(Object.values(content.decisions[0]).every(isFilled)).toBe(true);
-    });
-
-    it.each<[string, () => object]>([
-      [
-        'architecture',
-        () => [
-          content.architecture.summary,
-          ...content.architecture.parts.flatMap(({ name, role }) => [name, role]),
-        ],
-      ],
-      ['decision', () => content.decisions[0]],
-      ['failure', () => content.failure],
-    ])('keeps the %s card at about 60 words', (_name, card) => {
-      const words = wordsOf(card()) ?? [];
-      expect(words.length).toBeGreaterThanOrEqual(40);
-      expect(words.length).toBeLessThanOrEqual(80);
-    });
 
     it('tells the real Trivy finding as its failure', () => {
       expect(JSON.stringify(content.failure)).toContain('CVE-2026-111497');
@@ -58,17 +46,11 @@ describe('projectPageContent', () => {
     });
   });
 
-  it.each(pages)('%s has an architecture with 3 to 6 parts', (_slug, content) => {
+  it.each(pages)('%s has an architecture with a summary and 2 to 6 parts', (_slug, content) => {
     expect(isFilled(content.architecture.summary)).toBe(true);
-    expect(content.architecture.parts.length).toBeGreaterThanOrEqual(3);
+    expect(content.architecture.parts.length).toBeGreaterThanOrEqual(2);
     expect(content.architecture.parts.length).toBeLessThanOrEqual(6);
-    for (const part of content.architecture.parts) {
-      expect(Object.values(part).every(isFilled)).toBe(true);
-    }
-  });
-
-  it.each(pages)('%s has a complete failure', (_slug, content) => {
-    expect(Object.values(content.failure).every(isFilled)).toBe(true);
+    expect(content.architecture.parts.every(isFilled)).toBe(true);
   });
 
   it('has no internal values', () => {

@@ -111,8 +111,8 @@ export const deliveryTexts = {
   stale: 'Dieser Stand ist älter als einen Tag.',
   howBuilt: 'Wie es gebaut ist',
   architecture: 'Architektur',
-  decisions: 'Entscheidungen',
-  failure: 'Ein echter Fehler',
+  decision: 'Entscheidung',
+  failure: 'Fehler',
   stateLabels: {
     verified: 'Belegt',
     partial: 'Teilweise',
