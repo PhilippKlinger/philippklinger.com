@@ -84,7 +84,7 @@ $hover-fade: 0.15s ease;
 }
 
 .signal-when {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
 }
 
 h3 {
@@ -110,7 +110,7 @@ h3 {
   overflow: hidden;
   font-family: var(--font-code);
   font-size: var(--text-sm);
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
