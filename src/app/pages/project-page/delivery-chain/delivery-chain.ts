@@ -1,5 +1,6 @@
 import {
   afterNextRender,
+  ChangeDetectorRef,
   Component,
   computed,
   DestroyRef,
@@ -77,6 +78,7 @@ function browserStorage(): Storage | null {
 export class DeliveryChain {
   private readonly status = inject(DeliveryStatus);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly tabs = viewChildren<ElementRef<HTMLElement>>('tab');
   private readonly rail = viewChild<ElementRef<HTMLElement>>('rail');
   private readonly hint = signal<ChainHint | null>(null);
@@ -124,6 +126,9 @@ export class DeliveryChain {
     if (!this.enhanced() || next === null) return;
     event.preventDefault();
     this.select(next, true);
+    // Render the new field before the focus moves: a Tab before the next scheduled render
+    // would reach the old field, which then hides and drops the focus to the body.
+    this.changeDetector.detectChanges();
     this.tabs()[next]?.nativeElement.focus();
   }
 
