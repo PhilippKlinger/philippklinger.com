@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { deliveryPlans } from '../src/content/delivery-plans';
 import { projects } from '../src/content/projects';
 import type { StatusDocument } from '../src/content/status';
 import { pages } from './support/site';
@@ -97,6 +98,9 @@ const stepNames = {
 const beforeVps: Change = (document) => {
   document.projects = (JSON.parse(beforeVpsText) as StatusDocument).projects;
 };
+
+/** Pages whose chain waits for status.json; only they show a stand. */
+const isMeasured = (path: string) => !!deliveryPlans[path.split('/')[2]]?.statusKey;
 
 /** Neither a tick for what is not proven nor an empty frame where data is missing (D8). */
 async function expectNoFalseProof(page: Page, ticks: number): Promise<void> {
@@ -267,7 +271,10 @@ test.describe('Kette bedienen', () => {
     await expect(tabs).toHaveCount(3);
     await expect(delivery(page).locator('[role="tab"][tabindex="0"]')).toHaveCount(1);
 
-    await tabs.first().focus();
+    // A click on the heading sets where the Tab key goes on from, whatever the page head holds.
+    await delivery(page).locator('h2').click();
+    await page.keyboard.press('Tab');
+    await expect(tabs.first()).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(tabs.nth(1)).toBeFocused();
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
@@ -322,8 +329,15 @@ test.describe('Kette bedienen', () => {
       await page.waitForFunction(
         () => !document.querySelector('app-delivery-chain .tab:not([role])'),
       );
+      // A measured page fills its tables from status.json; measure only once the data is in.
+      if (isMeasured(path)) await expect(delivery(page).locator('.stand')).toBeVisible();
       for (const item of await stations(page).all()) {
         await item.click();
+        await expect(item).toHaveAttribute('aria-selected', 'true');
+        // Opened, so the verify command is measured too.
+        for (const summary of await panel(page).locator('details.verify summary').all()) {
+          await summary.click();
+        }
         const label = `${path} ${await item.locator('.name').innerText()}`;
         expect(await scrolls(), label).toBe(false);
         for (const link of await panel(page).locator('a').all()) {
