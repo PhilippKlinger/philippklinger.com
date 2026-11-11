@@ -200,6 +200,18 @@ describe('buildChainView', () => {
     expect(checks.table?.rows[0][3]).toEqual({ text: 'f4f1b93', sha: 'f4f1b93' });
   });
 
+  // A run link of an older file names no workflow, so no cell can tell which run it is.
+  it('[D3] links no run from a link without a workflow name', () => {
+    const checks = station(
+      videoflixStatus((status) => {
+        status.checks.links.forEach((link) => delete link.workflow);
+      }),
+      'Tests & Security-Checks',
+    );
+
+    expect(checks.table?.rows[0][1]).toEqual({ text: '08.11.', ok: true });
+  });
+
   it('shows image, origin, digest, SBOM and scorecard per built repo', () => {
     const build = station(videoflixStatus(), 'Signed Build');
 

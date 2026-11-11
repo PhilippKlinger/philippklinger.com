@@ -152,7 +152,7 @@ async function expectLayout(page: Page): Promise<void> {
 }
 
 test.describe('Software Delivery', () => {
-  test('[AK3] [D2] Videoflix: eine Station je Schritt, Zustand mit Zeichen und Wort', async ({
+  test('[AK3] [D2] [D3] Videoflix: eine Station je Schritt, Zustand mit Zeichen und Wort', async ({
     page,
   }) => {
     await serveStatus(page);
@@ -180,6 +180,16 @@ test.describe('Software Delivery', () => {
     ]);
     await expect(delivery(page).locator('.stand')).toContainText('· 3 Repos');
     await expectLayout(page);
+    // "Belegt" with its public proof: the run of every workflow in its cell (AK5).
+    await choose(page, 'Tests & Security-Checks');
+    const runs = panel(page).locator('a');
+    await expect(runs).toHaveCount(6);
+    for (const link of await runs.all()) {
+      await expect(link).toHaveAttribute(
+        'href',
+        /\/videoflix-(backend|frontend)\/actions\/runs\/\d+$/,
+      );
+    }
     await choose(page, 'Signed Build');
     await expect(panel(page)).toContainText('die Signatur fehlt noch');
     await expect(notice(page)).toBeEmpty();
