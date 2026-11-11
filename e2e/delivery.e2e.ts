@@ -100,7 +100,7 @@ const beforeVps: Change = (document) => {
 };
 
 /** Pages whose chain waits for status.json; only they show a stand. */
-const isMeasured = (path: string) => !!deliveryPlans[path.split('/')[2]]?.statusKey;
+const hasStatus = (path: string) => !!deliveryPlans[path.split('/')[2]]?.statusKey;
 
 /**
  * Brings the chain into view and lets more than the 2.5 s of D5 pass on the page clock. The own
@@ -388,7 +388,7 @@ test.describe('Kette bedienen', () => {
         () => !document.querySelector('app-delivery-chain .tab:not([role])'),
       );
       // A measured page fills its tables from status.json; measure only once the data is in.
-      if (isMeasured(path)) await expect(delivery(page).locator('.stand')).toBeVisible();
+      if (hasStatus(path)) await expect(delivery(page).locator('.stand')).toBeVisible();
       for (const item of await stations(page).all()) {
         await item.click();
         await expect(item).toHaveAttribute('aria-selected', 'true');
@@ -609,6 +609,10 @@ test.describe('Abruf von /status.json', () => {
     const requests = await serveStatus(page);
     await page.goto('/projekte/developer-workspace-kit/');
     await expect(page.locator('main h1')).toBeVisible();
+    // [D1] Order of the blocks and the links: projects.e2e.ts checks them for every page.
+    await expect(delivery(page).locator('.private')).toHaveText(
+      'Code privat. Die Läufe zeige ich im Gespräch.',
+    );
     await expect(stations(page)).toHaveCount(0);
     await page.waitForLoadState('networkidle');
     expect(requests()).toBe(0);
@@ -663,21 +667,6 @@ test.describe('Fester Inhalt', () => {
       'href',
       /^https:\/\/play\.google\.com\//,
     );
-  });
-
-  test('[D1] Kit: drei Blöcke, die Kette als eine Zeile „Code privat“', async ({ page }) => {
-    await page.goto('/projekte/developer-workspace-kit/');
-    await expect(page.locator('main :is(h1, h2)')).toHaveText([
-      'Developer Workspace Kit',
-      'Software Delivery',
-      'Wie es gebaut ist',
-    ]);
-    await expect(delivery(page).locator('.private')).toHaveText(
-      'Code privat. Die Läufe zeige ich im Gespräch.',
-    );
-    await expect(stations(page)).toHaveCount(0);
-    await expect(page.locator('main .links')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Links', exact: true })).toHaveCount(0);
   });
 });
 

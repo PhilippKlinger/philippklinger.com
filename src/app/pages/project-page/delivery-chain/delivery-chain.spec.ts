@@ -107,7 +107,7 @@ describe('DeliveryChain', () => {
     expect(element.querySelector('.hint')).toBeNull();
   });
 
-  // A click replayed by hydration is no choice of the reader and must not end the click hint.
+  // A click before the list has become tabs is no choice of the reader and keeps the click hint.
   it('takes a click as a choice only once the list has become tabs', async () => {
     const fixture = await renderPrerendered('vps-plattform');
     (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.tab')[1].click();

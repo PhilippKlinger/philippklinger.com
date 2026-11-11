@@ -115,7 +115,7 @@ export class DeliveryChain {
     if (byUser) this.hint()?.chosen();
   }
 
-  // Hydration replays a click on the list; only a click on a tab is a choice of the reader.
+  // A click before the list has become tabs is no choice of the reader.
   protected clicked(index: number): void {
     if (this.enhanced()) this.select(index, true);
   }
