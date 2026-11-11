@@ -85,6 +85,8 @@ const VALUE_WITHOUT_DATA: Partial<Record<StepState, string>> = {
   unavailable: NO_DATA,
   private: 'Code privat',
 };
+// DRAFT. A half-filled node next to "nicht abrufbar" would contradict itself.
+const PARTIAL_WITHOUT_VALUE = 'teilweise';
 const RESTORE_RESULT = { passed: 'bestanden', failed: 'fehlgeschlagen' } as const;
 const EMPTY: ChainCell = { text: '—' };
 const IMAGE_NAME = /^[a-z0-9][a-z0-9._-]*$/;
@@ -344,10 +346,16 @@ const SOURCES: Record<StationKey, Source> = {
   restore: { value: valueOfRestore, table: tableOfRestore },
 };
 
-function measuredContent(step: MeasuredStep, status: ProjectStatus, plan: DeliveryPlan): Content {
+function measuredContent(
+  step: MeasuredStep,
+  state: StepState,
+  status: ProjectStatus,
+  plan: DeliveryPlan,
+): Content {
   const key = STATION_OF[step.sources[0]];
+  const fallback = state === 'partial' ? PARTIAL_WITHOUT_VALUE : NO_DATA;
   return {
-    value: SOURCES[key].value(status) ?? NO_DATA,
+    value: SOURCES[key].value(status) ?? fallback,
     table: SOURCES[key].table(status, { plan, step }),
     verify: key === 'supplyChain' ? verifyOf(status) : null,
   };
@@ -374,7 +382,7 @@ function contentOf(
   const withoutData = VALUE_WITHOUT_DATA[state];
   if (withoutData) return noTable(withoutData);
   if (!isMeasured(step)) return fixedContent(step);
-  return status ? measuredContent(step, status, plan) : noTable(NO_DATA);
+  return status ? measuredContent(step, state, status, plan) : noTable(NO_DATA);
 }
 
 function stationOf(

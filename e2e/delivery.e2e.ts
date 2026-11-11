@@ -162,7 +162,7 @@ test.describe('Software Delivery', () => {
     await expect(stations(page).locator('.value')).toHaveText([
       '75 merged PRs',
       '6 von 6 passing',
-      'nicht abrufbar',
+      'teilweise',
       'nicht abrufbar',
       'noch nicht eingerichtet',
       'noch nicht eingerichtet',

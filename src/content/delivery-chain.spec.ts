@@ -359,15 +359,32 @@ describe('buildChainView', () => {
         status.supplyChain.signals.repos.forEach((repo) => {
           repo.reachable = false;
           repo.attestation = { reachable: false, subjectDigest: null, provenanceCount: null };
+          repo.sbom = { reachable: false, spdxVersion: null, packageCount: null };
+          repo.scorecard = { reachable: false, score: null, date: null };
         });
       }),
       'Signed Build',
     );
 
-    expect(build.state).not.toBe('verified');
+    expect(build.state).toBe('unavailable');
     expect(build.value).toBe('nicht abrufbar');
     expect(build.table).toBeNull();
     expect(build.verify).toBeNull();
+  });
+
+  // SBOM and scorecard prove a part, the attestation is out of reach: no count to show.
+  it('[D2] names a half-proven station "teilweise" when no value can be derived', () => {
+    const build = station(
+      videoflixStatus((status) => {
+        status.supplyChain.signals.repos.forEach((repo) => {
+          repo.attestation = { ...repo.attestation!, reachable: false, provenanceCount: null };
+        });
+      }),
+      'Signed Build',
+    );
+
+    expect(build.state).toBe('partial');
+    expect(build.value).toBe('teilweise');
   });
 
   it('drops rows whose source is missing instead of inventing values', () => {
