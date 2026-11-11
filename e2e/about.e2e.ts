@@ -74,13 +74,15 @@ test('[FB-06] die Linie füllt sich einmal, wenn der Weg ins Bild kommt, ohne La
   await page.goto('/');
   await expect(path(page)).toHaveAttribute('data-line', 'armed');
   expect(await drawn(page)).toBe(0);
-  const height = await page.locator('#ueber-mich').evaluate((section) => section.offsetHeight);
+  const height = await page
+    .locator('#ueber-mich')
+    .evaluate((section: HTMLElement) => section.offsetHeight);
   await path(page).scrollIntoViewIfNeeded();
   await expect.poll(() => drawn(page)).toBe(1);
   await expect(path(page)).toHaveAttribute('data-line', 'run');
-  expect(await page.locator('#ueber-mich').evaluate((section) => section.offsetHeight)).toBe(
-    height,
-  );
+  expect(
+    await page.locator('#ueber-mich').evaluate((section: HTMLElement) => section.offsetHeight),
+  ).toBe(height);
 });
 
 test.describe('ohne Bewegung', () => {
