@@ -78,7 +78,7 @@ describe('DeliverySteps', () => {
     const [code, , release] = (await renderSteps('neuro-check-in')).querySelectorAll('.step');
     expect(code.querySelector('.step-event')).toBeNull();
     expect(code.querySelector('.step-links')).toBeNull();
-    expect(release.querySelector('.step-event')?.textContent?.trim()).toBe('Version 1.11.2');
+    expect(release.querySelector('.step-event')).toBeNull();
     expect(release.querySelectorAll('.step-links a')).toHaveLength(1);
   });
 
@@ -110,10 +110,14 @@ describe('DeliverySteps', () => {
   });
 
   it('shows the counter and the time above the steps', async () => {
-    const element = await renderSteps('neuro-check-in');
+    const status = linkedStatus();
+    const element = await renderSteps('neuro-check-in', {
+      ...documentWith(status),
+      projects: { videoflix: status, portfolio: status, 'neuro-check-in': status },
+    });
     const signal = element.querySelector('.signal');
-    expect(signal?.querySelector('strong')?.textContent).toContain('1 von 3 öffentlich belegt');
-    expect(signal?.querySelector('span')?.textContent).toContain('Version 1.11.2');
+    expect(signal?.querySelector('strong')?.textContent).toContain('2 von 4 öffentlich belegt');
+    expect(signal?.querySelector('span')?.textContent).toContain('100 % (24 h)');
     const follows = signal!.compareDocumentPosition(element.querySelector('.step')!);
     expect(follows & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

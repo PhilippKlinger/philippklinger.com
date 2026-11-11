@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 
-// The ring at the pointer (spec 8.2). It only ever adds to the visible CTA.
+// The ring at the pointer (spec 8.2, 16.1). It only ever adds to the row, which is the link.
 declare global {
   interface Window {
     frameRequests: number;
@@ -18,8 +18,8 @@ const desktopOnly = (testInfo: TestInfo) =>
 // The router drops the trailing slash of the static URL after hydration.
 const detailPage = /\/projekte\/[a-z-]+\/?$/;
 const ring = (page: Page) => page.locator('app-cursor-cta');
-const projectCard = (page: Page) => page.locator('#projekte article.card').first();
-const reportCard = (page: Page) => page.locator('#projekte article.card').last();
+const projectRow = (page: Page) => page.locator('#projekte a.row').first();
+const reportRow = (page: Page) => page.locator('#projekte a.row').last();
 
 async function hoverCenter(page: Page, element: Locator): Promise<Point> {
   await element.scrollIntoViewIfNeeded();
@@ -100,9 +100,9 @@ async function expectNoFrames(page: Page): Promise<void> {
   expect(await frameRequests(page)).toBe(settled);
 }
 
-async function hoverProjectCard(page: Page): Promise<Point> {
-  const point = await hoverCenter(page, projectCard(page).locator('h3'));
-  await expectRingOn(page, 'Projekt ansehen');
+async function hoverProjectRow(page: Page): Promise<Point> {
+  const point = await hoverCenter(page, projectRow(page).locator('h3'));
+  await expectRingOn(page, 'Details');
   return point;
 }
 
@@ -116,35 +116,29 @@ test.describe('mit Maus', () => {
     await page.goto('/');
   });
 
-  test('[AK10] über der Karte erscheint der Ring und folgt dem Zeiger', async ({ page }) => {
-    await expectRingAt(page, await hoverProjectCard(page));
+  test('[AK10] über der Zeile erscheint der Ring und folgt dem Zeiger', async ({ page }) => {
+    await expectRingAt(page, await hoverProjectRow(page));
 
-    const next = await hoverCenter(page, projectCard(page).locator('.card-main > p'));
+    const next = await hoverCenter(page, projectRow(page).locator('.text'));
     await expectRingAt(page, next);
-    await expectRingOn(page, 'Projekt ansehen');
+    await expectRingOn(page, 'Details');
     await expectLabelFits(page);
   });
 
-  test('[AK10] Berichtskarte hat ihren eigenen Text', async ({ page }) => {
-    await hoverCenter(page, reportCard(page).locator('h3'));
-    await expectRingOn(page, 'Berichte ansehen');
+  test('[AK10] Berichtszeile hat ihren eigenen Text', async ({ page }) => {
+    await hoverCenter(page, reportRow(page).locator('h3'));
+    await expectRingOn(page, 'Zum Blog ↗');
     await expectLabelFits(page);
   });
 
-  test('[AK10] über einem Link ist der Ring aus', async ({ page }) => {
-    await hoverProjectCard(page);
-    await hoverCenter(page, projectCard(page).locator('a[data-card-cta]'));
-    await expectRingOff(page);
-  });
-
-  test('[AK10] außerhalb der Karten ist der Ring aus', async ({ page }) => {
-    await hoverProjectCard(page);
+  test('[AK10] außerhalb der Zeilen ist der Ring aus', async ({ page }) => {
+    await hoverProjectRow(page);
     await hoverCenter(page, page.locator('#projekte h2'));
     await expectRingOff(page);
   });
 
   test('[AK10] ausgeblendet läuft keine Schleife mehr', async ({ page }) => {
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
     await expectFramesRunning(page);
 
     await hoverCenter(page, page.locator('#projekte h2'));
@@ -155,60 +149,60 @@ test.describe('mit Maus', () => {
   test('[AK10] wird Bewegung abgeschaltet, ist der Ring aus und startet nicht neu', async ({
     page,
   }) => {
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expectRingOff(page);
     await expectNoFrames(page);
 
     await hoverCenter(page, page.locator('#projekte h2'));
-    await hoverCenter(page, reportCard(page).locator('h3'));
+    await hoverCenter(page, reportRow(page).locator('h3'));
     await expect(ring(page)).not.toHaveClass(/is-on/);
-    await expect(ring(page)).toHaveText('Projekt ansehen');
+    await expect(ring(page)).toHaveText('Details');
     await expectNoFrames(page);
   });
 
-  test('[AK10] Reduced Motion an und aus: die nächste Bewegung über der Karte bringt den Ring', async ({
+  test('[AK10] Reduced Motion an und aus: die nächste Bewegung über der Zeile bringt den Ring', async ({
     page,
   }) => {
-    const pointer = await hoverProjectCard(page);
+    const pointer = await hoverProjectRow(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expectRingOff(page);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
 
     await moveWithinElement(page, pointer);
-    await expectRingOn(page, 'Projekt ansehen');
+    await expectRingOn(page, 'Details');
   });
 
   test('[AK10] Scrollen unter dem ruhenden Zeiger schaltet den Ring passend', async ({ page }) => {
-    const pointer = await hoverProjectCard(page);
+    const pointer = await hoverProjectRow(page);
 
     await scrollUnderPointer(page, page.locator('#projekte h2'), pointer);
     await expectRingOff(page);
     await expectNoFrames(page);
 
-    await scrollUnderPointer(page, reportCard(page).locator('h3'), pointer);
-    await expectRingOn(page, 'Berichte ansehen');
+    await scrollUnderPointer(page, reportRow(page).locator('h3'), pointer);
+    await expectRingOn(page, 'Zum Blog ↗');
   });
 
   test('[AK10] Browser-Zurück unter dem ruhenden Zeiger: Ring aus, dann wieder an', async ({
     page,
   }) => {
-    const pointer = await hoverProjectCard(page);
+    const pointer = await hoverProjectRow(page);
     await page.mouse.click(pointer.x, pointer.y);
     await expect(page).toHaveURL(detailPage);
 
     await page.goBack();
-    await expect(projectCard(page)).toBeVisible();
+    await expect(projectRow(page)).toBeVisible();
     await expectRingOff(page);
     await expectNoFrames(page);
 
-    await hoverCenter(page, reportCard(page).locator('h3'));
-    await expectRingOn(page, 'Berichte ansehen');
+    await hoverCenter(page, reportRow(page).locator('h3'));
+    await expectRingOn(page, 'Zum Blog ↗');
   });
 
   // Playwright's browser never restores from the back/forward cache, so only the event is real here.
   test('[AK10] beim Verlassen der Seite geht der Ring aus', async ({ page }) => {
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
     await page.evaluate(() =>
       dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
     );
@@ -216,34 +210,34 @@ test.describe('mit Maus', () => {
     await expectNoFrames(page);
   });
 
-  test('[AK10] nach pagehide: die nächste Bewegung über der Karte bringt den Ring', async ({
+  test('[AK10] nach pagehide: die nächste Bewegung über der Zeile bringt den Ring', async ({
     page,
   }) => {
-    const pointer = await hoverProjectCard(page);
+    const pointer = await hoverProjectRow(page);
     await page.evaluate(() =>
       dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
     );
     await expectRingOff(page);
 
     await moveWithinElement(page, pointer);
-    await expectRingOn(page, 'Projekt ansehen');
+    await expectRingOn(page, 'Details');
   });
 
   test('[AK10] verlässt der Zeiger das Fenster, ist der Ring aus', async ({ page }) => {
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
     await page.mouse.move(-5, -5);
     await expectRingOff(page);
   });
 
   test('[AK10] Berührung auf einem Gerät mit Maus bringt keinen Ring', async ({ page }) => {
-    const title = projectCard(page).locator('h3');
+    const title = projectRow(page).locator('h3');
     await title.dispatchEvent('pointerover', { bubbles: true, pointerType: 'touch' });
     await expect(ring(page)).toHaveText('');
     await expectRingOff(page);
   });
 
   test('[AK10] Klick durch den Ring öffnet die Detailseite', async ({ page }) => {
-    const { x, y } = await hoverProjectCard(page);
+    const { x, y } = await hoverProjectRow(page);
     await expect(ring(page)).toHaveCSS('pointer-events', 'none');
 
     await page.mouse.click(x, y);
@@ -251,7 +245,7 @@ test.describe('mit Maus', () => {
   });
 
   test('[AK10] aria-hidden, kein Tab-Stopp', async ({ page }) => {
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
 
     await expect(ring(page)).toHaveAttribute('aria-hidden', 'true');
     await expect(ring(page)).not.toHaveAttribute('tabindex');
@@ -259,7 +253,7 @@ test.describe('mit Maus', () => {
   });
 
   test('[AK10] Tastatur braucht den Ring nicht', async ({ page }) => {
-    const cta = projectCard(page).locator('a[data-card-cta]');
+    const cta = projectRow(page);
     for (let tabs = 0; tabs < 40; tabs++) {
       await page.keyboard.press('Tab');
       if (await cta.evaluate((link) => link === document.activeElement)) break;
@@ -278,7 +272,7 @@ test('[AK10] Reduced Motion: kein Ring', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
 
-  await hoverCenter(page, projectCard(page).locator('h3'));
+  await hoverCenter(page, projectRow(page).locator('h3'));
   await expect(ring(page)).toHaveCount(1);
   await expect(ring(page)).toHaveText('');
   await expect(ring(page)).toBeHidden();
@@ -290,7 +284,7 @@ test('[AK10] Touch: kein Ring, CTA sichtbar', async ({ page }, testInfo) => {
 
   await expect(ring(page)).toHaveCount(1);
   await expect(ring(page)).toBeHidden();
-  await expect(projectCard(page).locator('a[data-card-cta]')).toBeVisible();
+  await expect(projectRow(page).locator('.cta-text')).toBeVisible();
 });
 
 // The dot that replaces the normal pointer (PK-36). Only an addition: without it the pointer stays.
@@ -382,7 +376,7 @@ test.describe('eigener Zeiger', () => {
     await hoverCenter(page, heading(page));
     await expectDotOn(page);
 
-    await hoverProjectCard(page);
+    await hoverProjectRow(page);
     await expectDotOff(page);
 
     await hoverCenter(page, heading(page));
@@ -391,7 +385,11 @@ test.describe('eigener Zeiger', () => {
   });
 
   test('[PK-36] über einem Link wird der Punkt zum Kreis', async ({ page }) => {
-    await hoverCenter(page, projectCard(page).locator('a[data-card-cta]'));
+    // A row of the list brings the ring instead, so the link is one outside the list.
+    await hoverCenter(
+      page,
+      page.locator('.hero').getByRole('link', { name: 'Kontakt', exact: true }),
+    );
     await expectDotOn(page);
     await expectDotSize(page, '20px');
     await expect(dot(page)).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
@@ -442,7 +440,7 @@ test.describe('eigener Zeiger', () => {
   test('[PK-36] auf der Startseite zeigt nichts mehr den Standardzeiger', async ({ page }) => {
     await hoverCenter(page, heading(page));
     await expect.poll(() => elementsWithPointer(page)).toEqual([]);
-    await expect(projectCard(page)).toHaveCSS('cursor', 'none');
+    await expect(projectRow(page)).toHaveCSS('cursor', 'none');
   });
 
   test('[PK-36] auf einer Detailseite zeigt nichts mehr den Standardzeiger', async ({ page }) => {
@@ -527,7 +525,7 @@ for (const [name, media] of [
     await expect(dot(page)).toHaveCount(1);
     await expect(dot(page)).toBeHidden();
     await expectNormalPointer(page);
-    await expect(projectCard(page)).toHaveCSS('cursor', 'pointer');
+    await expect(projectRow(page)).toHaveCSS('cursor', 'pointer');
   });
 }
 
@@ -548,8 +546,8 @@ test.describe('ohne JavaScript', () => {
     desktopOnly(testInfo);
     await page.goto('/');
 
-    await hoverCenter(page, projectCard(page).locator('h3'));
+    await hoverCenter(page, projectRow(page).locator('h3'));
     await expectDotOff(page);
-    await expect(projectCard(page)).toHaveCSS('cursor', 'pointer');
+    await expect(projectRow(page)).toHaveCSS('cursor', 'pointer');
   });
 });

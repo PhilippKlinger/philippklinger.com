@@ -46,15 +46,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Sprungziele (FB-03)', () => {
-  test('[FB-03] „Projekte ansehen“ im Hero landet am Inhalt, die erste Karte beginnt im Bild', async ({
+  test('[FB-03] „Projekte ansehen“ im Hero landet am Inhalt, die erste Zeile beginnt im Bild', async ({
     page,
   }) => {
     await page.locator('.hero').getByRole('link', { name: 'Projekte ansehen' }).click();
     await expectLandedOn(page, 'projekte');
-    const card = page.locator('#projekte .cards > li').first();
-    const box = await card.boundingBox();
+    const row = page.locator('#projekte .rows > li').first();
+    const box = await row.boundingBox();
     const viewport = page.viewportSize()?.height ?? 0;
-    expect(box && box.y < viewport / 2, 'erste Karte beginnt in der oberen Bildhälfte').toBe(true);
+    expect(box && box.y < viewport / 2, 'erste Zeile beginnt in der oberen Bildhälfte').toBe(true);
   });
 
   test('[FB-03] „Kontakt“ im Hero landet am Inhalt', async ({ page }) => {

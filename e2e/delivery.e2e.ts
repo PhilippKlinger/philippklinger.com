@@ -197,10 +197,10 @@ test.describe('Software Delivery', () => {
     ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
   });
 
-  test('[AK8] [AK17] von der Karte in höchstens 2 Klicks beim Lauf', async ({ page }) => {
+  test('[AK8] [AK17] von der Zeile in höchstens 2 Klicks beim Lauf', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/');
-    await page.getByRole('link', { name: 'Projektdetails ansehen: Videoflix' }).click();
+    await page.getByRole('link', { name: /Videoflix.*Details ansehen/ }).click();
     await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
     await expect(
       step(page, 'Tests & Security-Checks').locator('.step-links a').first(),
@@ -323,8 +323,8 @@ test.describe('Abruf von /status.json', () => {
   });
 
   test.describe('später Abruf nach einem Seitenwechsel im Browser', () => {
-    const homeCard = (page: Page, title: string) =>
-      page.locator('#projekte article.card').filter({ hasText: title });
+    const homeRow = (page: Page, title: string) =>
+      page.locator('#projekte a.row').filter({ hasText: title });
 
     /** Keeps the answer back until the test has left the VPS platform page. */
     async function holdStatus(page: Page, change: Change) {
@@ -343,20 +343,20 @@ test.describe('Abruf von /status.json', () => {
       await page.goto('/projekte/vps-plattform/');
       await expect(steps(page)).toHaveCount(3);
       await page.locator('main a.back').click();
-      await expect(page.locator('#projekte article.card')).toHaveCount(5);
+      await expect(page.locator('#projekte a.row')).toHaveCount(5);
       await expect(delivery(page)).toHaveCount(0);
     }
 
-    // The home page shows the VPS card itself, so without vps-plattform this notice is its own.
-    test('[AK6] die Startseite meldet nur, was ihre eigenen Karten betrifft', async ({ page }) => {
+    // The home page shows the VPS row itself, so without vps-plattform this notice is its own.
+    test('[AK6] die Startseite meldet nur, was ihre eigenen Zeilen betrifft', async ({ page }) => {
       const held = await holdStatus(page, beforeVps);
       await leavePlatformForHome(page);
       await expect(page.locator('#projekte .notice')).toBeEmpty();
       held.answer();
-      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
+      await expect(homeRow(page, 'VPS-Plattform').locator('.signal .state')).toHaveText(
         'Stand nicht abrufbar',
       );
-      await expect(homeCard(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
+      await expect(homeRow(page, 'Videoflix').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toHaveText(refreshFailed);
       expect(held.requests()).toBe(1);
     });
@@ -367,7 +367,7 @@ test.describe('Abruf von /status.json', () => {
       const held = await holdStatus(page, () => undefined);
       await leavePlatformForHome(page);
       held.answer();
-      await expect(homeCard(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
+      await expect(homeRow(page, 'VPS-Plattform').locator('.signal .state')).toHaveText('CI grün');
       await expect(page.getByRole('status')).toBeEmpty();
       expect(held.requests()).toBe(1);
     });
@@ -422,16 +422,14 @@ test.describe('Abruf von /status.json', () => {
     });
   });
 
-  for (const slug of ['neuro-check-in', 'developer-workspace-kit']) {
-    test(`[Spec 6.1] fester Inhalt fragt nichts ab: ${slug}`, async ({ page }) => {
-      const requests = await serveStatus(page);
-      await page.goto(`/projekte/${slug}/`);
-      await expect(steps(page)).toHaveCount(3);
-      await page.waitForLoadState('networkidle');
-      expect(requests()).toBe(0);
-      await expect(notice(page)).toBeEmpty();
-    });
-  }
+  test('[Spec 6.1] fester Inhalt fragt nichts ab: developer-workspace-kit', async ({ page }) => {
+    const requests = await serveStatus(page);
+    await page.goto('/projekte/developer-workspace-kit/');
+    await expect(steps(page)).toHaveCount(3);
+    await page.waitForLoadState('networkidle');
+    expect(requests()).toBe(0);
+    await expect(notice(page)).toBeEmpty();
+  });
 });
 
 test.describe('Vorschaubild', () => {
@@ -467,13 +465,15 @@ test.describe('Vorschaubild', () => {
 
 test.describe('Fester Inhalt', () => {
   test('[AK3] Neuro Check-in: Release mit Link, der Rest Code privat', async ({ page }) => {
+    await serveStatus(page);
     await page.goto('/projekte/neuro-check-in/');
-    await expect(signal(page)).toContainText('1 von 3 öffentlich belegt, Code privat');
-    await expect(signal(page)).toContainText('Version 1.11.2');
+    await expect(signal(page)).toContainText('2 von 4 öffentlich belegt, Code privat');
+    await expect(signal(page)).toContainText('100 % (24 h)');
+    await expect(step(page, 'Website').locator('.state-verified')).toHaveText('Belegt');
     await expect(step(page, 'Code').locator('.state-private')).toHaveText('Code privat');
     const release = step(page, 'Release im Play Store');
     await expect(release.locator('.state-verified')).toHaveText('Belegt');
-    await expect(release.locator('.step-event')).toHaveText('Version 1.11.2');
+    await expect(release.locator('.step-event')).toHaveCount(0);
     await expect(release.locator('.step-links a')).toHaveAttribute(
       'href',
       /^https:\/\/play\.google\.com\//,
@@ -483,7 +483,6 @@ test.describe('Fester Inhalt', () => {
   test('[AK3] Kit: alles Code privat, ohne leeren Link-Block', async ({ page }) => {
     await page.goto('/projekte/developer-workspace-kit/');
     await expect(signal(page)).toContainText('Öffentliches Repo folgt');
-    await expect(signal(page)).toContainText('Version 0.5.0');
     await expect(delivery(page).locator('.state-private')).toHaveCount(3);
     await expect(page.locator('main .links')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Links', exact: true })).toHaveCount(0);

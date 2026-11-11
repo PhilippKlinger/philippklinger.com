@@ -58,8 +58,6 @@ function privateStep(name: string, arrowToNext?: string): FixedStep {
   };
 }
 
-const neuroRelease = 'Version 1.11.2';
-
 export const deliveryPlans: Record<string, DeliveryPlan> = {
   videoflix: {
     statusKey: 'videoflix',
@@ -109,8 +107,9 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
     ],
   },
   'neuro-check-in': {
-    // Stays fixed until the decision of PK-35; the version follows the next release.
-    fixedSignal: { state: 'verified', status: 'Live im Play Store', when: neuroRelease },
+    statusKey: 'neuro-check-in',
+    // DRAFT
+    runningLabel: 'Website erreichbar',
     steps: [
       privateStep('Code', 'CI'),
       privateStep('Unit- & E2E-Tests', 'Release'),
@@ -118,7 +117,6 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         name: 'Release im Play Store',
         state: 'verified',
         sentence: 'Die App ist öffentlich im Play Store verfügbar.',
-        event: neuroRelease,
         links: [
           {
             label: 'Im Play Store ansehen',
@@ -126,6 +124,8 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
           },
         ],
       },
+      // DRAFT
+      { name: 'Website', sources: ['stability'], setUp: true, sentences: monitoringSentences },
     ],
   },
   // No signed build and no deployment step: the repositories build no images and the platform
@@ -159,7 +159,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
     ],
   },
   'developer-workspace-kit': {
-    fixedSignal: { state: 'private', status: 'Code privat', when: 'Version 0.5.0' },
+    fixedSignal: { state: 'private', status: 'Code privat', when: '' },
     footnote: 'Öffentliches Repo folgt',
     steps: [privateStep('Code', 'CI'), privateStep('CI', 'Release'), privateStep('Release')],
   },
