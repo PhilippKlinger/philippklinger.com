@@ -62,14 +62,6 @@ function stepView(measured: MeasuredStep, status: ProjectStatus): DeliveryStepVi
   return viewOf({ steps: [measured] }, status).steps[0];
 }
 
-const eventOf = (source: StepSource, change: Change = () => undefined) =>
-  stepView(step([source]), provenStatus(change)).event;
-
-const labelsOf = (source: StepSource, status: ProjectStatus, labels?: Record<string, string>) =>
-  viewOf({ repoLabels: labels, steps: [step([source])] }, status).steps[0].links.map(
-    (link) => link.label,
-  );
-
 function workflow(change: Partial<WorkflowSignal>): WorkflowSignal {
   return {
     repo,
@@ -188,10 +180,6 @@ describe('buildDeliveryView', () => {
       it.each(unknownResults)('%s is no proof, even with a date', (_name, change) => {
         expect(stepView(step(['restore']), provenStatus(change)).state).toBe('unavailable');
         expect(stepView(step(['restore'], false), provenStatus(change)).state).toBe('notSetUp');
-      });
-
-      it.each(unknownResults)('%s has no event text', (_name, change) => {
-        expect(eventOf('restore', change)).toBeNull();
       });
     });
 
@@ -369,14 +357,13 @@ describe('buildDeliveryView', () => {
       status.checks.signals.workflows.at(-1)!.conclusion = 'failure';
     };
 
-    it('tells a red deploy run with its own sentence and its event', () => {
+    it('tells a red deploy run with its own sentence', () => {
       const view = stepView(deployment(['live', 'deployRun']), provenStatus(redRun));
       expect(view.state).toBe('deviation');
       expect(view.sentence).toBe('run');
-      expect(view.event).toBe('Letztes Deployment nicht erfolgreich, 06.11., 11:42');
     });
 
-    it('keeps the sentence and the event of live when only live deviates', () => {
+    it('keeps the sentence of live when only live deviates', () => {
       const status = provenStatus((item) => {
         withDeployRun(item);
         liveAhead(item);
@@ -384,7 +371,6 @@ describe('buildDeliveryView', () => {
       const view = stepView(deployment(['deployRun', 'live']), status);
       expect(view.state).toBe('deviation');
       expect(view.sentence).toBe('live');
-      expect(view.event).toBe('Live: Commit 82dcf43, weicht von der letzten grünen CI ab');
     });
 
     it('follows the first source that deviates when both do', () => {
@@ -394,10 +380,8 @@ describe('buildDeliveryView', () => {
       });
       const liveFirst = stepView(deployment(['live', 'deployRun']), status);
       expect(liveFirst.sentence).toBe('live');
-      expect(liveFirst.event).toContain('weicht von der letzten grünen CI ab');
       const runFirst = stepView(deployment(['deployRun', 'live']), status);
       expect(runFirst.sentence).toBe('run');
-      expect(runFirst.event).toContain('Letztes Deployment nicht erfolgreich');
     });
 
     it('falls back to the sentence for deviation without an own one', () => {
@@ -431,352 +415,84 @@ describe('buildDeliveryView', () => {
     });
   });
 
-  describe('events (spec 6.3)', () => {
-    it('code: sums up merged pull requests and the protection', () => {
-      expect(eventOf('code', twoMoreRepos)).toBe(
-        '75 gemergte Pull Requests in 3 Repos, main geschützt',
-      );
+  // Which links back up "Belegt" (spec 5, 6.5): only those of the kind the step proves.
+  describe('public link per source', () => {
+    const stateOf = (sources: StepSource[], change: Change) =>
+      stepView(step(sources), provenStatus(change)).state;
+
+    it('counts the repository link of the code, not the pull requests', () => {
+      const pullRequests: StatusLink = {
+        kind: 'pull-requests',
+        source: repo,
+        url: 'https://github.com/r/pulls',
+      };
+      expect(stateOf(['code'], (item) => (item.code.links = [pullRequests]))).toBe('partial');
+      expect(stateOf(['code'], (item) => item.code.links.push(pullRequests))).toBe('verified');
     });
 
-    it('code: says so when a repository is not protected', () => {
-      const event = eventOf('code', (status) => {
-        status.code.signals.repos[0].rulesets![0].enforcement = 'disabled';
-      });
-      expect(event).toBe('28 gemergte Pull Requests in 1 Repo, main nicht durchgängig geschützt');
+    it('counts only the run of the tests workflow for the checks', () => {
+      const scan: Change = (item) => {
+        item.checks.signals.workflows.push(workflow({ workflow: 'CodeQL', kind: 'scan' }));
+        item.checks.links = [runLink(repo, 'CodeQL')];
+      };
+      expect(stateOf(['checks'], scan)).toBe('partial');
+      expect(
+        stateOf(['checks'], (item) => {
+          scan(item);
+          item.checks.links.push(runLink(repo, 'CI'));
+        }),
+      ).toBe('verified');
     });
 
-    it('code: makes no statement on a protection that is not known', () => {
-      const event = eventOf('code', (status) => {
-        Object.assign(status.code.signals.repos[0], { reachable: false, rulesets: null });
-      });
-      expect(event).toBe('28 gemergte Pull Requests in 1 Repo');
-    });
-
-    it('code: has no event without any repository data', () => {
-      expect(eventOf('code', noCode)).toBeNull();
-    });
-
-    it('checks: names the workflows and the latest run', () => {
-      const event = eventOf('checks', (status) => {
-        status.checks.signals.workflows = [
-          workflow({ completedAt: '2026-11-05T19:13:01Z' }),
-          workflow({ workflow: 'CodeQL', completedAt: '2026-11-05T19:30:20Z' }),
-          workflow({ workflow: 'Security Checks', completedAt: '2026-11-05T19:29:26Z' }),
-          workflow({ completedAt: '2026-11-05T19:32:49Z' }),
-        ];
-      });
-      expect(event).toBe('CI, CodeQL, Security Checks grün, 05.11., 20:32');
-    });
-
-    it('checks: names what is red', () => {
-      const event = eventOf('checks', (status) => {
-        status.checks.signals.workflows.push(
-          workflow({ workflow: 'CodeQL', conclusion: 'failure' }),
-        );
-      });
-      expect(event).toBe('CodeQL rot, 05.11., 20:33');
-    });
-
-    it('supply chain: names attestation and SBOM when verified', () => {
-      const event = eventOf('supplyChain', (status) => {
-        const [built] = status.supplyChain.signals.repos;
-        status.supplyChain.signals.repos.push({ ...built });
-      });
-      expect(event).toBe('Attestierung für beide Images, SBOM vorhanden');
-    });
-
-    it('supply chain: names SBOM and real scores when partial', () => {
-      const event = eventOf('supplyChain', (status) => {
-        noAttestation(status);
-        const [built] = status.supplyChain.signals.repos;
-        status.supplyChain.signals.repos[0].scorecard.score = 6.9;
-        status.supplyChain.signals.repos.push({
-          ...built,
-          scorecard: { reachable: true, score: 7.1, date: null },
-        });
-      });
-      expect(event).toBe('SBOM vorhanden, OpenSSF Scorecard 6,9 und 7,1 von 10');
-    });
-
-    it('supply chain: invents no score', () => {
-      const event = eventOf('supplyChain', (status) => {
-        noAttestation(status);
-        status.supplyChain.signals.repos[0].scorecard = {
-          reachable: false,
-          score: null,
-          date: null,
-        };
-      });
-      expect(event).toBe('SBOM vorhanden');
-    });
-
-    it('names the source commit of an image, and works without it', () => {
-      expect(eventOf('image')).toBe('Image gebaut für Commit 82dcf43');
-      const withoutSource = eventOf('image', (status) => {
-        delete status.supplyChain.signals.repos[0].attestation!.sourceSha;
-      });
-      expect(withoutSource).toBe('Image in GHCR vorhanden');
-    });
-
-    it('names no source commit without a digest', () => {
-      const event = eventOf('image', (status) => {
-        status.supplyChain.signals.repos[0].attestation!.subjectDigest = null;
-      });
-      expect(event).toBeNull();
-    });
-
-    it('live: names each component and the comparison', () => {
-      const event = eventOf('live', (status) => {
-        const [site] = status.live.signals.components;
-        status.live.signals.components = [
-          { ...site, component: 'backend', deployedSha: 'fe1dd3ec7e31' },
-          { ...site, component: 'frontend', deployedSha: 'abc1234def56' },
-        ];
-      });
-      expect(event).toBe(
-        'Live: Backend fe1dd3e, Frontend abc1234, gleicher Stand wie die letzte grüne CI',
-      );
-    });
-
-    it('live: leaves out the name of a single component', () => {
-      expect(eventOf('live')).toBe('Live: Commit 82dcf43, gleicher Stand wie die letzte grüne CI');
-    });
-
-    it('live: names a deviation', () => {
-      expect(eventOf('live', liveAhead)).toBe(
-        'Live: Commit 82dcf43, weicht von der letzten grünen CI ab',
-      );
-    });
-
-    it('live: stays silent on the comparison when one side is missing', () => {
-      const event = eventOf('live', (status) => {
-        status.live.signals.components[0].matchesLatestGreen = null;
-      });
-      expect(event).toBe('Live: Commit 82dcf43');
-    });
-
-    it('deploy run: names the result and the time', () => {
-      expect(eventOf('deployRun', withDeployRun)).toBe(
-        'Letztes Deployment erfolgreich, 06.11., 11:42',
-      );
-      const red = eventOf('deployRun', (status) => {
-        withDeployRun(status);
-        status.checks.signals.workflows.at(-1)!.conclusion = 'failure';
-      });
-      expect(red).toBe('Letztes Deployment nicht erfolgreich, 06.11., 11:42');
-    });
-
-    it('stability: names the availability of 30 days', () => {
-      const event = eventOf('stability', (status) => {
-        status.stability.signals.uptime30d = 0.999;
-      });
-      expect(event).toBe('Verfügbarkeit 30 Tage: 99,9 %');
-    });
-
-    it('stability: counts the services without a value', () => {
-      const event = eventOf('stability', (status) => {
-        Object.assign(status.stability.signals, {
-          uptime30d: null,
-          monitorsTotal: 3,
-          monitorsUp: 3,
-        });
-      });
-      expect(event).toBe('3 von 3 Diensten erreichbar');
-    });
-
-    it('restore: names the result and the date', () => {
-      const event = eventOf('restore', (status) => {
-        status.restore.signals.testedAt = '2026-11-01T00:00:00Z';
-      });
-      expect(event).toBe('Letzter Restore-Test erfolgreich, 01.11.2026');
-      expect(eventOf('restore', restoreFailed)).toBe(
-        'Letzter Restore-Test fehlgeschlagen, 04.11.2026',
-      );
-    });
-
-    it('formats event times in Europe/Berlin regardless of the machine', () => {
-      const event = eventOf('checks', (status) => {
-        status.checks.signals.workflows[0].completedAt = '2026-11-05T23:30:00Z';
-      });
-      expect(event).toBe('CI grün, 06.11., 00:30');
-    });
-  });
-
-  describe('links (spec 6.5)', () => {
-    it('names repositories after their role and drops the pull requests', () => {
-      const status = provenStatus((item) => {
-        item.code.links = [
-          { kind: 'repository', source: backend, url: 'https://github.com/b' },
-          { kind: 'pull-requests', source: backend, url: 'https://github.com/b/pulls' },
-          { kind: 'repository', source: frontend, url: 'https://github.com/f' },
-        ];
-      });
-      expect(labelsOf('code', status, repoLabels)).toEqual(['Backend', 'Frontend']);
-    });
-
-    it('calls a single repository "Repository"', () => {
-      const status = provenStatus((item) => {
-        item.code.links = [{ kind: 'repository', source: repo, url: 'https://github.com/r' }];
-      });
-      expect(labelsOf('code', status)).toEqual(['Repository']);
-    });
-
-    it('keeps https links only, at most 3 per step, proof kind first', () => {
-      const status = provenStatus((item) => {
-        item.supplyChain.links = [
-          { kind: 'scorecard', source: backend, url: 'https://scorecard.dev/b' },
-          { kind: 'sbom', source: backend, url: 'https://github.com/b/sbom' },
-          { kind: 'attestations', source: frontend, url: 'javascript:alert(1)' },
-          { kind: 'attestations', source: backend, url: 'https://github.com/b/att' },
-          { kind: 'sbom', source: frontend, url: 'https://github.com/f/sbom' },
-        ];
-      });
-      const { links } = viewOf({ repoLabels, steps: [step(['supplyChain'])] }, status).steps[0];
-      expect(links).toEqual([
-        { label: 'Attestierung Backend', url: 'https://github.com/b/att' },
-        { label: 'SBOM Backend', url: 'https://github.com/b/sbom' },
-        { label: 'SBOM Frontend', url: 'https://github.com/f/sbom' },
-      ]);
-    });
-
-    it('links only the tests workflow of each repo in the checks source', () => {
-      const status = provenStatus((item) => {
-        item.checks.signals.workflows = [
-          workflow({ repo: backend }),
-          workflow({ repo: backend, workflow: 'CodeQL', kind: 'scan' }),
-          workflow({ repo: frontend }),
-          workflow({ repo: frontend, workflow: 'CodeQL', kind: 'scan' }),
-        ];
-        item.checks.links = [
-          { ...runLink(backend, 'CI'), url: 'https://github.com/run/b' },
-          runLink(backend, 'CodeQL'),
-          { ...runLink(frontend, 'CI'), url: 'https://github.com/run/f' },
-          runLink(frontend, 'CodeQL'),
-        ];
-      });
-      const { links } = viewOf({ repoLabels, steps: [step(['checks'])] }, status).steps[0];
-      expect(links).toEqual([
-        { label: 'Lauf Backend', url: 'https://github.com/run/b' },
-        { label: 'Lauf Frontend', url: 'https://github.com/run/f' },
-      ]);
-    });
-
-    it('treats a run link without workflow name as a check', () => {
-      const status = provenStatus((item) => {
+    it('treats a run link without workflow name as a check, not as a deploy run', () => {
+      const unnamed: Change = (item) => {
         withDeployRun(item);
         item.checks.links = [{ kind: 'workflow-run', source: repo, url: 'https://github.com/o' }];
-      });
-      expect(labelsOf('checks', status)).toEqual(['Lauf']);
-      expect(labelsOf('deployRun', status)).toEqual([]);
+      };
+      expect(stateOf(['checks'], unnamed)).toBe('verified');
+      expect(stateOf(['deployRun'], unnamed)).toBe('partial');
     });
 
-    it('shows one run per repository of an older file', () => {
-      const status = provenStatus((item) => {
-        const unnamed = (id: number): StatusLink => ({
-          kind: 'workflow-run',
-          source: backend,
-          url: `https://github.com/run/${id}`,
-        });
-        item.checks.links = [unnamed(1), unnamed(2), unnamed(3)];
-      });
-      expect(labelsOf('checks', status, repoLabels)).toEqual(['Lauf Backend']);
+    it('counts the deploy run link for the deploy run', () => {
+      expect(stateOf(['deployRun'], withDeployRun)).toBe('verified');
     });
 
-    it('links the deploy run as "Deploy-Lauf" in the deployRun source', () => {
-      const status = provenStatus(withDeployRun);
-      const { links } = stepView(step(['deployRun']), status);
-      expect(links).toEqual([{ label: 'Deploy-Lauf', url: 'https://github.com/run/9' }]);
-      expect(labelsOf('checks', status)).toEqual(['Lauf']);
+    it('counts attestation, SBOM or scorecard links for the supply chain', () => {
+      for (const kind of ['attestations', 'sbom', 'scorecard'] as const) {
+        const only: Change = (item) => {
+          item.supplyChain.links = [{ kind, source: repo, url: 'https://github.com/s' }];
+        };
+        expect(stateOf(['supplyChain'], only), kind).toBe('verified');
+      }
+      const image: Change = (item) => {
+        item.supplyChain.links = [{ kind: 'image', source: repo, url: 'https://github.com/i' }];
+      };
+      expect(stateOf(['supplyChain'], image)).toBe('partial');
     });
 
-    it('names attestation and SBOM after their role', () => {
-      const status = provenStatus((item) => {
-        item.supplyChain.links = [
-          { kind: 'attestations', source: backend, url: 'https://github.com/a' },
-          { kind: 'sbom', source: backend, url: 'https://github.com/s' },
-        ];
-      });
-      expect(labelsOf('supplyChain', status, repoLabels)).toEqual([
-        'Attestierung Backend',
-        'SBOM Backend',
-      ]);
+    it('counts the image link for the image, not the SBOM', () => {
+      const sbom: StatusLink = { kind: 'sbom', source: repo, url: 'https://github.com/s' };
+      expect(stateOf(['image'], (item) => (item.supplyChain.links = [sbom]))).toBe('partial');
+      const image: StatusLink = { kind: 'image', source: repo, url: 'https://github.com/i' };
+      expect(stateOf(['image'], (item) => (item.supplyChain.links = [sbom, image]))).toBe(
+        'verified',
+      );
     });
 
-    it('shows one scorecard link when all lead to the same page, else with the role', () => {
-      const scorecard = (source: string, url: string): StatusLink => ({
-        kind: 'scorecard',
-        source,
-        url,
-      });
-      const same = provenStatus((item) => {
-        item.supplyChain.links = [
-          scorecard(backend, 'https://scorecard.dev/x'),
-          scorecard(frontend, 'https://scorecard.dev/x'),
-        ];
-      });
-      const different = provenStatus((item) => {
-        item.supplyChain.links = [
-          scorecard(backend, 'https://scorecard.dev/b'),
-          scorecard(frontend, 'https://scorecard.dev/f'),
-        ];
-      });
-      expect(labelsOf('supplyChain', same, repoLabels)).toEqual(['Scorecard']);
-      expect(labelsOf('supplyChain', different, repoLabels)).toEqual([
-        'Scorecard Backend',
-        'Scorecard Frontend',
-      ]);
+    it('counts the runbook alone for the restore test', () => {
+      const runbook: Change = (item) => {
+        item.restore.links = [{ kind: 'runbook', source: repo, url: 'https://github.com/b' }];
+      };
+      expect(stateOf(['restore'], runbook)).toBe('verified');
     });
 
-    it('links the image in GHCR', () => {
-      const status = provenStatus((item) => {
-        item.supplyChain.links = [
-          { kind: 'sbom', source: repo, url: 'https://github.com/s' },
-          { kind: 'image', source: repo, url: 'https://github.com/i' },
-        ];
-      });
-      expect(stepView(step(['image']), status).links).toEqual([
-        { label: 'Image in GHCR', url: 'https://github.com/i' },
-      ]);
-    });
-
-    it('names the component of a version endpoint when there are several', () => {
-      const status = provenStatus((item) => {
-        const [site] = item.live.signals.components;
-        item.live.signals.components = [
-          { ...site, component: 'backend' },
-          { ...site, component: 'frontend' },
-        ];
-        item.live.links = [
-          { kind: 'version-endpoint', source: 'backend', url: 'https://example.com/b' },
-          { kind: 'version-endpoint', source: 'frontend', url: 'https://example.com/f' },
-        ];
-      });
-      expect(labelsOf('live', status)).toEqual([
-        'Versions-Endpunkt Backend',
-        'Versions-Endpunkt Frontend',
-      ]);
-      expect(labelsOf('live', provenStatus())).toEqual(['Versions-Endpunkt']);
-    });
-
-    it('labels status page, restore test and runbook', () => {
-      const status = provenStatus((item) => {
-        item.restore.links.push({ kind: 'runbook', source: repo, url: 'https://github.com/b' });
-      });
-      expect(labelsOf('stability', status)).toEqual(['Statusseite']);
-      expect(labelsOf('restore', status)).toEqual(['Restore-Test', 'Runbook']);
-    });
-
-    it('joins the entries of several sources and takes the event of the first with data', () => {
-      const status = provenStatus(withDeployRun);
-      const joined = stepView(step(['deployRun', 'live']), status);
-      expect(joined.event).toBe('Letztes Deployment erfolgreich, 06.11., 11:42');
-      expect(joined.links.map((link) => link.label)).toEqual(['Deploy-Lauf', 'Versions-Endpunkt']);
-
-      status.live.signals.components[0].matchesLatestGreen = false;
-      expect(stepView(step(['deployRun', 'live']), status).state).toBe('deviation');
-
-      const noDeploy = stepView(step(['deployRun', 'live']), provenStatus());
-      expect(noDeploy.event).toContain('Live: Commit 82dcf43');
+    it('counts a link of any source of the step', () => {
+      const deployLinkOnly: Change = (item) => {
+        withDeployRun(item);
+        item.live.links = [];
+      };
+      expect(stateOf(['live'], deployLinkOnly)).toBe('partial');
+      expect(stateOf(['deployRun', 'live'], deployLinkOnly)).toBe('verified');
     });
   });
 
@@ -803,31 +519,14 @@ describe('buildDeliveryView', () => {
           arrowToNext: 'CI',
           state: 'private',
           sentence: 'Privat.',
-          event: null,
-          links: [],
         },
         {
           name: 'Release',
           arrowToNext: null,
           state: 'verified',
           sentence: 'Öffentlich verfügbar.',
-          event: 'Version 1.11.2',
-          links: [{ label: 'Store', url: 'https://example.com/store' }],
         },
       ]);
-    });
-
-    it('shows the private counter with at least one verified step', () => {
-      const view = buildDeliveryView({ steps: [hidden, hidden, release] }, null);
-      expect(view.counter).toBe('1 von 3 öffentlich belegt, Code privat');
-    });
-
-    it('uses the footnote when every step is private', () => {
-      const view = buildDeliveryView(
-        { steps: [hidden, hidden], footnote: 'Öffentliches Repo folgt' },
-        null,
-      );
-      expect(view.counter).toBe('Öffentliches Repo folgt');
     });
 
     it('shows the fixed signal', () => {
@@ -839,18 +538,6 @@ describe('buildDeliveryView', () => {
       expect(buildDeliveryView({ steps: [release], fixedSignal }, null).signal).toEqual(
         fixedSignal,
       );
-    });
-  });
-
-  describe('counter (spec 4.4)', () => {
-    it('does not count partial in the counter', () => {
-      const plan = { steps: [step(['code']), step(['restore']), step(['supplyChain'])] };
-      expect(viewOf(plan, provenStatus(noAttestation)).counter).toBe('2 von 3 belegt');
-    });
-
-    it('counts all steps of the plan, also without data', () => {
-      const plan = { steps: [step(['code']), step(['restore'], false)] };
-      expect(buildDeliveryView(plan, null).counter).toBe('0 von 2 belegt');
     });
   });
 
@@ -1011,15 +698,6 @@ function runLink(source: string, name: string): StatusLink {
   return { kind: 'workflow-run', source, url: `https://github.com/run/${name}`, workflow: name };
 }
 
-function twoMoreRepos(status: ProjectStatus): void {
-  const [first] = status.code.signals.repos;
-  status.code.signals.repos = [
-    { ...first, mergedPullRequests: 40 },
-    { ...first, mergedPullRequests: 30 },
-    { ...first, mergedPullRequests: 5 },
-  ];
-}
-
 function noLive(): ProjectStatus {
   const status = provenStatus();
   status.live = { reachable: false, signals: { components: [] }, links: [] };
@@ -1030,13 +708,7 @@ function textsOf(view: DeliveryView): (string | null)[] {
   return [
     view.signal.status,
     view.signal.when,
-    view.counter,
-    ...view.steps.flatMap((item) => [
-      item.name,
-      item.sentence,
-      item.event,
-      ...item.links.map((link) => link.label),
-    ]),
+    ...view.steps.flatMap((item) => [item.name, item.sentence]),
   ].filter((text) => text !== null);
 }
 

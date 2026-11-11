@@ -167,32 +167,38 @@
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-backend",
-            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015428"
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015428",
+            "workflow": "CI"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-backend",
-            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015572"
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015572",
+            "workflow": "CodeQL"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-backend",
-            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015439"
+            "url": "https://github.com/PhilippKlinger/videoflix-backend/actions/runs/42091015439",
+            "workflow": "Security Checks"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-frontend",
-            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332623"
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332623",
+            "workflow": "CI"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-frontend",
-            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332740"
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332740",
+            "workflow": "CodeQL"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/videoflix-frontend",
-            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332676"
+            "url": "https://github.com/PhilippKlinger/videoflix-frontend/actions/runs/42094332676",
+            "workflow": "Security Checks"
           }
         ]
       },
@@ -395,12 +401,14 @@
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/philippklinger.com",
-            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188762"
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188762",
+            "workflow": "CI"
           },
           {
             "kind": "workflow-run",
             "source": "PhilippKlinger/philippklinger.com",
-            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188903"
+            "url": "https://github.com/PhilippKlinger/philippklinger.com/actions/runs/42094188903",
+            "workflow": "CodeQL"
           }
         ]
       },

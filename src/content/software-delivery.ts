@@ -3,7 +3,6 @@
 // proves it and a public link backs it up.
 import {
   LinkKind,
-  LiveComponentSignal,
   ProjectKey,
   ProjectStatus,
   RepoCodeSignal,
@@ -63,8 +62,6 @@ export interface DeliveryPlan {
   statusKey?: ProjectKey;
   runningLabel?: string;
   fixedSignal?: DeliveryView['signal'];
-  /** Overrides the counter. */
-  footnote?: string;
   repoLabels?: Record<string, string>;
   steps: DeliveryStepPlan[];
 }
@@ -74,16 +71,12 @@ export interface DeliveryStepView {
   arrowToNext: string | null;
   state: StepState;
   sentence: string;
-  event: string | null;
-  /** At most 3. */
-  links: DeliveryLink[];
 }
 
 export interface DeliveryView {
   /** The state sets icon and color, so a red signal never looks like a green one. */
   signal: { state: StepState; status: string; when: string };
   steps: DeliveryStepView[];
-  counter: string;
 }
 
 /** One project out of status.json, so a page never carries the data of another project. */
@@ -98,7 +91,6 @@ type Status = ProjectStatus | null;
 type Snapshot = ProjectSnapshot | null;
 type Signal = DeliveryView['signal'];
 
-const LINK_LIMIT = 3;
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const REQUIRED_PROJECTS: RequiredProjectKey[] = ['videoflix', 'portfolio'];
 const OPTIONAL_PROJECTS: ProjectKey[] = ['vps-plattform', 'neuro-check-in'];
@@ -108,14 +100,12 @@ const OPERATING_SOURCES: StepSource[] = ['live', 'stability'];
 // DRAFT: all texts of Software Delivery, wording to be approved (PK-23).
 export const deliveryTexts = {
   title: 'Software Delivery',
-  intro:
-    'Vom Code bis in die Produktion, Schritt für Schritt, jeweils mit dem letzten Ereignis und dem Beleg.',
   refreshFailed: 'Der aktuelle Stand ist gerade nicht abrufbar.',
   stale: 'Dieser Stand ist älter als einen Tag.',
   howBuilt: 'Wie es gebaut ist',
   architecture: 'Architektur',
-  decisions: 'Entscheidungen',
-  failure: 'Ein echter Fehler',
+  decision: 'Entscheidung',
+  failure: 'Fehler',
   stateLabels: {
     verified: 'Belegt',
     partial: 'Teilweise',
@@ -131,30 +121,29 @@ const UNAVAILABLE_SENTENCE = 'Dieser Beleg ist gerade nicht abrufbar.';
 
 // Fixed time zone, so the prerendered page and the browser render the same text.
 const timeZone = 'Europe/Berlin';
-const dayTimeFormat = new Intl.DateTimeFormat('de-DE', {
+export const dayTimeFormat = new Intl.DateTimeFormat('de-DE', {
   timeZone,
   day: '2-digit',
   month: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
 });
-const dayFormat = new Intl.DateTimeFormat('de-DE', { timeZone, day: '2-digit', month: '2-digit' });
-const dateFormat = new Intl.DateTimeFormat('de-DE', {
+export const dayFormat = new Intl.DateTimeFormat('de-DE', {
   timeZone,
   day: '2-digit',
   month: '2-digit',
-  year: 'numeric',
 });
-const oneDecimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
+export const oneDecimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
 
-const shortSha = (sha: string) => sha.slice(0, 7);
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-const unique = <T>(values: T[]) => [...new Set(values)];
-const present = <T>(value: T | null | undefined): value is T =>
+export const shortSha = (sha: string) => sha.slice(0, 7);
+export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+export const unique = <T>(values: T[]) => [...new Set(values)];
+export const present = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
-const joinParts = (parts: (string | null)[]) => parts.filter(present).join(', ');
+export const percent = (share: number | null) =>
+  share === null ? null : `${oneDecimal.format(share * 100)} %`;
 
-function formatTime(format: Intl.DateTimeFormat, value: string | null): string | null {
+export function formatTime(format: Intl.DateTimeFormat, value: string | null): string | null {
   return value === null || Number.isNaN(Date.parse(value)) ? null : format.format(new Date(value));
 }
 
@@ -163,7 +152,7 @@ function latestTime(runs: WorkflowSignal[]): string | null {
   return times.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) ?? null;
 }
 
-function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSignal[] {
+export function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSignal[] {
   const isDeploy = (run: WorkflowSignal) => run.kind === 'deploy';
   return status.checks.signals.workflows.filter((run) =>
     wanted === 'deploy' ? isDeploy(run) : !isDeploy(run),
@@ -171,7 +160,7 @@ function runsOf(status: ProjectStatus, wanted: 'check' | 'deploy'): WorkflowSign
 }
 
 /** Older files still list repositories that build nothing; they have nothing to prove here. */
-const builtRepos = (status: ProjectStatus): RepoSupplyChainSignal[] =>
+export const builtRepos = (status: ProjectStatus): RepoSupplyChainSignal[] =>
   status.supplyChain.signals.repos.filter((repo) => repo.attestation !== null);
 
 function isProtected(repo: RepoCodeSignal): boolean {
@@ -184,7 +173,7 @@ function codeProof(repo: RepoCodeSignal): Proof {
   return repo.reachable ? repo.isPublic === true && isProtected(repo) : null;
 }
 
-function runProof(run: WorkflowSignal): Proof {
+export function runProof(run: WorkflowSignal): Proof {
   return run.reachable && run.conclusion !== null ? run.conclusion === 'success' : null;
 }
 
@@ -238,135 +227,8 @@ function stateOf(proofs: Proof[], setUp: boolean): StepState {
   return setUp ? 'unavailable' : 'notSetUp';
 }
 
-// DRAFT: event text, wording to be approved (PK-23).
-function protectionPhrase(status: ProjectStatus): string | null {
-  const proofs = proofsOf.code(status);
-  if (proofs.includes(false)) return 'main nicht durchgängig geschützt';
-  return proofs.includes(null) ? null : 'main geschützt';
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function codeEvent(status: ProjectStatus): string | null {
-  const repos = status.code.signals.repos.filter((repo) => repo.mergedPullRequests !== null);
-  if (repos.length === 0) return null;
-  const merged = repos.reduce((sum, repo) => sum + (repo.mergedPullRequests ?? 0), 0);
-  const where = repos.length === 1 ? '1 Repo' : `${repos.length} Repos`;
-  return joinParts([`${merged} gemergte Pull Requests in ${where}`, protectionPhrase(status)]);
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function checksEvent(status: ProjectStatus): string | null {
-  const known = runsOf(status, 'check').filter((run) => runProof(run) !== null);
-  if (known.length === 0) return null;
-  const red = known.filter((run) => runProof(run) === false);
-  const names = unique((red.length > 0 ? red : known).map((run) => run.workflow)).join(', ');
-  const result = `${names} ${red.length > 0 ? 'rot' : 'grün'}`;
-  return joinParts([result, formatTime(dayTimeFormat, latestTime(known))]);
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function deployEvent(status: ProjectStatus): string | null {
-  const known = runsOf(status, 'deploy').filter((run) => runProof(run) !== null);
-  if (known.length === 0) return null;
-  const result = known.every((run) => runProof(run)) ? 'erfolgreich' : 'nicht erfolgreich';
-  return joinParts([`Letztes Deployment ${result}`, formatTime(dayTimeFormat, latestTime(known))]);
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function attestationPhrase(repos: RepoSupplyChainSignal[]): string | null {
-  const attested = repos.filter((repo) => attestationProof(repo) === true).length;
-  if (attested === 0) return null;
-  if (attested < repos.length) return `Attestierung für ${attested} von ${repos.length} Images`;
-  return repos.length === 2 ? 'Attestierung für beide Images' : 'Attestierung vorhanden';
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function scorecardPhrase(repos: RepoSupplyChainSignal[]): string | null {
-  const scores = repos.map((repo) => repo.scorecard.score).filter(present);
-  if (scores.length === 0) return null;
-  return `OpenSSF Scorecard ${scores.map((score) => oneDecimal.format(score)).join(' und ')} von 10`;
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function supplyChainEvent(status: ProjectStatus): string | null {
-  const repos = builtRepos(status);
-  const sbom = repos.some((repo) => repo.sbom.reachable) ? 'SBOM vorhanden' : null;
-  const attestation = attestationPhrase(repos);
-  const proven = proofsOf.supplyChain(status).every((proof) => proof === true);
-  const parts = proven ? [attestation, sbom] : [attestation, sbom, scorecardPhrase(repos)];
-  return joinParts(parts) || null;
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-/** sourceSha counts only next to a digest: without one no image is known at all. */
-function imageEvent(status: ProjectStatus): string | null {
-  const image = builtRepos(status).find((repo) => repo.attestation?.subjectDigest);
-  if (!image) return null;
-  const sha = image.attestation?.sourceSha;
-  return sha ? `Image gebaut für Commit ${shortSha(sha)}` : 'Image in GHCR vorhanden';
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function liveComparison(components: LiveComponentSignal[]): string | null {
-  const results = components.map((part) => part.matchesLatestGreen);
-  if (results.includes(false)) return 'weicht von der letzten grünen CI ab';
-  return results.every((result) => result === true)
-    ? 'gleicher Stand wie die letzte grüne CI'
-    : null;
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function liveEvent(status: ProjectStatus): string | null {
-  const { components } = status.live.signals;
-  const known = components.filter((part) => part.deployedSha !== null);
-  if (known.length === 0) return null;
-  const name = (part: LiveComponentSignal) =>
-    components.length > 1 ? capitalize(part.component) : 'Commit';
-  const shas = known.map((part) => `${name(part)} ${shortSha(part.deployedSha ?? '')}`);
-  return `Live: ${joinParts([...shas, liveComparison(components)])}`;
-}
-
-const percent = (share: number) => `${oneDecimal.format(share * 100)} %`;
-
-// DRAFT: event text, wording to be approved (PK-23).
-function stabilityEvent({ reachable, signals }: ProjectStatus['stability']): string | null {
-  if (!reachable) return null;
-  const { uptime30d, monitorsTotal, monitorsUp } = signals;
-  if (uptime30d !== null) return `Verfügbarkeit 30 Tage: ${percent(uptime30d)}`;
-  if (monitorsTotal === null || monitorsUp === null) return null;
-  return `${monitorsUp} von ${monitorsTotal} Diensten erreichbar`;
-}
-
-// DRAFT: event text, wording to be approved (PK-23).
-function restoreEvent(signals: ProjectStatus['restore']['signals']): string | null {
-  const date = formatTime(dateFormat, signals.testedAt);
-  const proof = restoreProof(signals);
-  if (date === null || proof === null) return null;
-  return `Letzter Restore-Test ${proof ? 'erfolgreich' : 'fehlgeschlagen'}, ${date}`;
-}
-
-const eventOf: Record<StepSource, (status: ProjectStatus) => string | null> = {
-  code: codeEvent,
-  checks: checksEvent,
-  supplyChain: supplyChainEvent,
-  image: imageEvent,
-  live: liveEvent,
-  deployRun: deployEvent,
-  stability: (status) => stabilityEvent(status.stability),
-  restore: (status) => restoreEvent(status.restore.signals),
-};
-
-// DRAFT: all link labels below, wording to be approved (PK-23).
-const ofKind = (links: StatusLink[], kind: LinkKind) => links.filter((link) => link.kind === kind);
-
-function toLinks(links: StatusLink[], label: (link: StatusLink) => string): DeliveryLink[] {
-  return links.map((link) => ({ label: label(link), url: link.url }));
-}
-
-function withRole(text: string, plan: DeliveryPlan, link: StatusLink): string {
-  const role = plan.repoLabels?.[link.source];
-  return role ? `${text} ${role}` : text;
-}
+const ofKind = (links: StatusLink[], ...kinds: LinkKind[]) =>
+  links.filter((link) => kinds.includes(link.kind));
 
 /** A run link without a workflow name comes from an older file and counts as a check. */
 function runKind(link: StatusLink, status: ProjectStatus): WorkflowKind | null {
@@ -380,65 +242,25 @@ function runKind(link: StatusLink, status: ProjectStatus): WorkflowKind | null {
 
 function runLinks(status: ProjectStatus, kind: WorkflowKind): StatusLink[] {
   const runs = ofKind(status.checks.links, 'workflow-run');
-  const matching = runs.filter((link) => runKind(link, status) === kind);
-  return matching.filter(
-    (link, index) => matching.findIndex((other) => other.source === link.source) === index,
-  );
+  return runs.filter((link) => runKind(link, status) === kind);
 }
 
-function scorecardLinks(status: ProjectStatus, plan: DeliveryPlan): DeliveryLink[] {
-  const links = ofKind(status.supplyChain.links, 'scorecard');
-  const sameTarget = unique(links.map((link) => link.url)).length === 1;
-  return sameTarget
-    ? toLinks(links.slice(0, 1), () => 'Scorecard')
-    : toLinks(links, (link) => withRole('Scorecard', plan, link));
-}
-
-function supplyChainLinks(status: ProjectStatus, plan: DeliveryPlan): DeliveryLink[] {
-  const links = status.supplyChain.links;
-  return [
-    ...toLinks(ofKind(links, 'attestations'), (link) => withRole('Attestierung', plan, link)),
-    ...toLinks(ofKind(links, 'sbom'), (link) => withRole('SBOM', plan, link)),
-    ...scorecardLinks(status, plan),
-  ];
-}
-
-function liveLinks(status: ProjectStatus): DeliveryLink[] {
-  const several = status.live.signals.components.length > 1;
-  return toLinks(ofKind(status.live.links, 'version-endpoint'), (link) =>
-    several ? `Versions-Endpunkt ${capitalize(link.source)}` : 'Versions-Endpunkt',
-  );
-}
-
-function restoreLinks(status: ProjectStatus): DeliveryLink[] {
-  return [
-    ...toLinks(ofKind(status.restore.links, 'restore-test'), () => 'Restore-Test'),
-    ...toLinks(ofKind(status.restore.links, 'runbook'), () => 'Runbook'),
-  ];
-}
-
-// Pull requests, CodeQL and security checks stay out on purpose: the event names them (B7).
-const linksOf: Record<StepSource, (status: ProjectStatus, plan: DeliveryPlan) => DeliveryLink[]> = {
-  code: (status, plan) =>
-    toLinks(
-      ofKind(status.code.links, 'repository'),
-      (link) => plan.repoLabels?.[link.source] ?? 'Repository',
-    ),
-  checks: (status, plan) =>
-    toLinks(runLinks(status, 'tests'), (link) => withRole('Lauf', plan, link)),
-  supplyChain: supplyChainLinks,
-  image: (status) => toLinks(ofKind(status.supplyChain.links, 'image'), () => 'Image in GHCR'),
-  live: liveLinks,
-  deployRun: (status) => toLinks(runLinks(status, 'deploy'), () => 'Deploy-Lauf'),
-  stability: (status) =>
-    toLinks(ofKind(status.stability.links, 'status-page'), () => 'Statusseite'),
-  restore: restoreLinks,
+// Pull requests, CodeQL and security checks stay out on purpose (B7).
+const linksOf: Record<StepSource, (status: ProjectStatus) => StatusLink[]> = {
+  code: (status) => ofKind(status.code.links, 'repository'),
+  checks: (status) => runLinks(status, 'tests'),
+  supplyChain: (status) => ofKind(status.supplyChain.links, 'attestations', 'sbom', 'scorecard'),
+  image: (status) => ofKind(status.supplyChain.links, 'image'),
+  live: (status) => ofKind(status.live.links, 'version-endpoint'),
+  deployRun: (status) => runLinks(status, 'deploy'),
+  stability: (status) => ofKind(status.stability.links, 'status-page'),
+  restore: (status) => ofKind(status.restore.links, 'restore-test', 'runbook'),
 };
 
-function publicLinks(step: MeasuredStep, status: Status, plan: DeliveryPlan): DeliveryLink[] {
-  if (status === null) return [];
-  const links = step.sources.flatMap((source) => linksOf[source](status, plan));
-  return links.filter((link) => link.url.startsWith('https://')).slice(0, LINK_LIMIT);
+function hasPublicLink(step: MeasuredStep, status: Status): boolean {
+  if (status === null) return false;
+  const links = step.sources.flatMap((source) => linksOf[source](status));
+  return links.some((link) => link.url.startsWith('https://'));
 }
 
 /** "Belegt" needs a public link (spec 5). Without a sentence for partial it is not available. */
@@ -489,27 +311,18 @@ function proofsFor(step: MeasuredStep, status: Status): Proof[] {
   return status ? step.sources.flatMap((source) => proofsOf[source](status)) : [];
 }
 
-/** The source that disproves the step goes first, so sentence and event tell the same story. */
-function eventFor(step: MeasuredStep, status: Status): string | null {
-  if (status === null) return null;
-  const sources = [...disprovingSources(step, status), ...step.sources];
-  return sources.map((source) => eventOf[source](status)).find(present) ?? null;
-}
-
-function measuredView(step: MeasuredStep, status: Status, plan: DeliveryPlan): DeliveryStepView {
-  const links = publicLinks(step, status, plan);
-  const state = settledState(stateOf(proofsFor(step, status), step.setUp), step, links.length > 0);
+function measuredView(step: MeasuredStep, status: Status): DeliveryStepView {
+  const proven = stateOf(proofsFor(step, status), step.setUp);
+  const state = settledState(proven, step, hasPublicLink(step, status));
   return {
     name: step.name,
     arrowToNext: step.arrowToNext ?? null,
     state,
     sentence: sentenceOf(state, step, status),
-    event: eventFor(step, status),
-    links,
   };
 }
 
-const isMeasured = (step: DeliveryStepPlan): step is MeasuredStep => 'sources' in step;
+export const isMeasured = (step: DeliveryStepPlan): step is MeasuredStep => 'sources' in step;
 
 function fixedView(step: FixedStep): DeliveryStepView {
   return {
@@ -517,18 +330,7 @@ function fixedView(step: FixedStep): DeliveryStepView {
     arrowToNext: step.arrowToNext ?? null,
     state: step.state,
     sentence: step.sentence,
-    event: step.event ?? null,
-    links: step.links ?? [],
   };
-}
-
-// DRAFT: counter text, wording to be approved (PK-23).
-function counterOf(plan: DeliveryPlan, steps: DeliveryStepView[]): string {
-  if (plan.footnote) return plan.footnote;
-  const verified = steps.filter((step) => step.state === 'verified').length;
-  const hasPrivate = steps.some((step) => step.state === 'private');
-  const suffix = hasPrivate ? 'öffentlich belegt, Code privat' : 'belegt';
-  return `${verified} von ${steps.length} ${suffix}`;
 }
 
 function statesWith(
@@ -558,11 +360,12 @@ function operatingSignal(
 ): Signal | null {
   const states = statesWith(plan, steps, OPERATING_SOURCES);
   const isRunning = states.length > 0 && states.every((state) => state === 'verified');
+  const share = percent(uptime24h);
   if (plan.runningLabel && isRunning)
     return {
       state: 'verified',
       status: plan.runningLabel,
-      when: uptime24h === null ? stand : `${percent(uptime24h)} (24 h)`,
+      when: share === null ? stand : `${share} (24 h)`,
     };
   return states.includes('deviation')
     ? { state: 'deviation', status: 'Abweichung im Betrieb', when: stand }
@@ -610,9 +413,9 @@ function signalOf(plan: DeliveryPlan, steps: DeliveryStepView[], snapshot: Snaps
 export function buildDeliveryView(plan: DeliveryPlan, snapshot: Snapshot): DeliveryView {
   const status = snapshot?.status ?? null;
   const steps = plan.steps.map((step) =>
-    isMeasured(step) ? measuredView(step, status, plan) : fixedView(step),
+    isMeasured(step) ? measuredView(step, status) : fixedView(step),
   );
-  return { signal: signalOf(plan, steps, snapshot), steps, counter: counterOf(plan, steps) };
+  return { signal: signalOf(plan, steps, snapshot), steps };
 }
 
 type Check = (value: unknown) => boolean;

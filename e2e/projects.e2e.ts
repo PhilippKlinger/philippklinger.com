@@ -4,7 +4,22 @@ import { projects } from '../src/content/projects';
 // Project pages /projekte/<slug>/ (spec 7). The site-wide checks in
 // site, layout, seo and a11y cover them through the prerender manifest.
 
-const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
+// Breakpoint card of src/styles/_breakpoints.scss: head and cards side by side from here.
+const isBeside = (page: Page) => (page.viewportSize()?.width ?? 0) >= 960;
+
+/** [D9] Architecture, decision and failure; from 960 px in one row and of the same height. */
+async function expectThreeCards(page: Page) {
+  const cards = page.locator('main .how-built .card');
+  await expect(cards).toHaveCount(3);
+  if (!isBeside(page)) return;
+  const [first, ...rest] = await Promise.all(
+    (await cards.all()).map(async (card) => (await card.boundingBox())!),
+  );
+  for (const box of rest) {
+    expect(box.y).toBeCloseTo(first.y, 0);
+    expect(box.height).toBeCloseTo(first.height, 0);
+  }
+}
 
 for (const project of projects) {
   test.describe(`Projektseite ${project.slug}`, () => {
@@ -12,16 +27,27 @@ for (const project of projects) {
       await page.goto(`/projekte/${project.slug}/`);
     });
 
-    test('[Spec 7] zeigt Titel, Summary und alle Links', async ({ page }) => {
+    test('[D1] [D9] Kopf, Software Delivery und drei Karten in dieser Reihenfolge', async ({
+      page,
+    }) => {
       const main = page.locator('main');
-      await expect(main.locator('h1')).toHaveText(project.title);
-      await expect(main).toContainText(project.summary);
+      await expect(main.locator(':is(h1, h2)')).toHaveText([
+        project.title,
+        'Software Delivery',
+        'Wie es gebaut ist',
+      ]);
+      await expect(main.locator('.signal .state')).toBeVisible();
+      await expect(main.locator('.summary')).toHaveText(project.summary);
+      await expect(main.locator('.tech')).toHaveText(project.stack.join(' · '));
+      await expect(main.locator('.media')).toBeVisible();
       const links = main.locator('.links a');
       await expect(links).toHaveCount(project.links.length);
       for (const [index, link] of project.links.entries()) {
-        await expect(links.nth(index)).toHaveText(link.label);
+        await expect(links.nth(index)).toHaveAccessibleName(link.label);
         await expect(links.nth(index)).toHaveAttribute('href', link.url);
       }
+      if (project.links.length > 0) await expect(links.first()).toHaveClass(/button-primary/);
+      await expectThreeCards(page);
     });
 
     const preview = project.preview;
@@ -73,13 +99,16 @@ test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('Seite nicht gefunden');
 });
 
-test('[Design] Vorschau ab Tablet neben dem Text, mobil darunter', async ({ page }) => {
+test('[Spec 16.3] Bild 16:10 ab 960 px neben dem Text, darunter unter dem Text', async ({
+  page,
+}) => {
   await page.goto('/projekte/videoflix/');
   const text = (await page.locator('main .intro').boundingBox())!;
-  const image = (await page.locator('main img').boundingBox())!;
-  if (isMobile(page)) {
-    expect(image.y).toBeGreaterThanOrEqual(text.y + text.height);
+  const media = (await page.locator('main .media').boundingBox())!;
+  expect(media.height).toBeCloseTo((media.width * 10) / 16, 0);
+  if (isBeside(page)) {
+    expect(media.x).toBeGreaterThanOrEqual(text.x + text.width);
   } else {
-    expect(image.x).toBeGreaterThanOrEqual(text.x + text.width);
+    expect(media.y).toBeGreaterThanOrEqual(text.y + text.height);
   }
 });

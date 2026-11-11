@@ -1,0 +1,401 @@
+@use 'breakpoints' as bp;
+
+// The chain looks like the hero pipeline: nodes on one line, name and value per station.
+// Below the pipeline breakpoint it stands upright, as the hero does on the phone.
+
+:host {
+  --node: 1.375rem;
+  display: block;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+h2 {
+  font-size: var(--text-heading);
+  line-height: var(--leading-tight);
+}
+
+// Muted, not subtle: subtle falls below 4.5:1 on the brightest haze (contrast.e2e.ts).
+.stand {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.notice {
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+
+  // Stays in the accessibility tree: a live region must exist before its text arrives.
+  &:empty {
+    margin-top: 0;
+  }
+}
+
+.chain {
+  position: relative;
+}
+
+.rail {
+  position: relative;
+  display: grid;
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+// The line from the first node to the last one; the rail starts --space-lg below the chain.
+.track {
+  position: absolute;
+  top: calc(var(--space-lg) + var(--size-touch) / 2);
+  bottom: calc(var(--size-touch) / 2);
+  left: calc(var(--node) / 2 - var(--border-width) / 2);
+  width: var(--border-width);
+  background: var(--color-accent);
+}
+
+.tip {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--size-touch);
+  padding-block: var(--space-2xs);
+  color: var(--color-text-muted);
+}
+
+[role='tab'] {
+  cursor: pointer;
+
+  &:hover .name {
+    color: var(--color-text);
+  }
+}
+
+[aria-selected='true'] {
+  color: var(--color-text);
+
+  .name {
+    font-weight: var(--weight-bold);
+  }
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-sm);
+}
+
+.value {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+.via {
+  display: none;
+}
+
+.node {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-accent);
+
+  svg {
+    width: var(--space-snug);
+    height: var(--space-snug);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .body {
+    fill: currentColor;
+    stroke: none;
+  }
+}
+
+// States. A state is never told by color alone: tick, cross, dashed ring or the word in the value.
+[aria-selected='true'][data-state='verified'] .node {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+[data-state='partial'] {
+  .node {
+    border-color: var(--color-partial);
+    background: linear-gradient(to right, var(--color-partial) 50%, var(--color-bg) 50%);
+  }
+
+  .value {
+    color: var(--color-partial);
+  }
+}
+
+[data-state='deviation'] {
+  .node {
+    border-color: var(--color-error);
+  }
+
+  .node,
+  .value {
+    color: var(--color-error);
+  }
+}
+
+[data-state='unavailable'],
+[data-state='notSetUp'] {
+  .node {
+    border-color: var(--color-line-muted);
+  }
+
+  .value {
+    color: var(--color-text-muted);
+  }
+}
+
+[data-state='notSetUp'] .node {
+  border-style: dashed;
+}
+
+[data-state='private'] {
+  .node {
+    border-color: var(--color-text-subtle);
+    color: var(--color-text-subtle);
+  }
+
+  .value {
+    color: var(--color-text-muted);
+  }
+}
+
+// Click hint (D5): below the chain it points at, laid over the room above the field, so it never
+// moves the page. It takes no click; a tap goes to whatever lies beneath.
+.hint {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + var(--space-2xs));
+  right: 0;
+  left: calc(var(--node) + var(--space-snug));
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-compact);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--space-2xs));
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    visibility 0.3s;
+
+  &.on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  svg {
+    flex: none;
+    width: var(--space-sm);
+    height: var(--space-sm);
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+// A pointer clicks, a finger taps.
+.by-pointer {
+  display: none;
+}
+
+@media (hover: hover) {
+  .by-pointer {
+    display: inline;
+  }
+
+  .by-touch {
+    display: none;
+  }
+}
+
+// A ring around the node the hint points at. It pulses only for those who allow motion.
+.beckon .node::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--border-width));
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 50%;
+  opacity: 0.6;
+  transform: scale(1.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .beckon .node::after {
+    animation: ring 1.6s ease-out infinite;
+  }
+}
+
+@keyframes ring {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+.panels {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.private {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--size-touch);
+  margin-top: var(--space-lg);
+  font-family: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+@include bp.from(pipeline) {
+  .rail {
+    // The tabs measure their segment against the width of the rail.
+    container-type: inline-size;
+    // As in the hero: the last station sits on the right content edge.
+    grid-template-columns: repeat(var(--gaps), minmax(0, 1fr)) var(--node);
+  }
+
+  .track {
+    inset: calc(var(--space-lg) + var(--space-sm) + var(--node) / 2 - var(--border-width) / 2)
+      calc(var(--node) / 2) auto;
+    width: auto;
+    height: var(--border-width);
+  }
+
+  .tab {
+    // Distance from one node to the next.
+    --segment: calc((100cqi - var(--node)) / var(--gaps));
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-sm) var(--space-md) 0;
+  }
+
+  .cell {
+    flex: none;
+    flex-direction: column;
+  }
+
+  // The last two stations share the last segment, so their texts never run into each other.
+  .tab:nth-last-child(2) {
+    margin-right: calc(var(--segment) / 2 - var(--node));
+  }
+
+  .tab:last-child {
+    width: calc(var(--segment) / 2);
+    margin-left: calc(var(--node) - var(--segment) / 2);
+    align-items: flex-end;
+    padding-right: 0;
+
+    .cell {
+      align-items: flex-end;
+      text-align: right;
+    }
+  }
+
+  // Each transition sits in the middle of the segment from this node to the next one.
+  .via {
+    display: block;
+    position: absolute;
+    top: calc(var(--space-sm) - var(--space-md));
+    left: calc(var(--segment) / 2 + var(--node) / 2);
+    transform: translateX(-50%);
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+    // On the haze as well, so muted, not subtle.
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  // Points from the chosen station into its field.
+  [aria-selected='true'] > .tip {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    bottom: calc(-1 * var(--space-md) - var(--border-width));
+    left: calc(var(--node) / 2 - var(--space-xs));
+    width: var(--space-sm);
+    height: var(--space-sm);
+    border: solid var(--color-line);
+    border-width: var(--border-width) 0 0 var(--border-width);
+    background: var(--color-bg);
+    transform: rotate(45deg);
+  }
+
+  .tab:last-child > .tip {
+    left: auto;
+    right: calc(var(--node) / 2 - var(--space-xs));
+  }
+
+  // Under the second node, which starts one segment in.
+  .hint {
+    top: calc(100% - var(--space-sm));
+    left: calc((100% - var(--node)) / var(--gaps));
+
+    // Points up at the node.
+    &::before {
+      content: '';
+      position: absolute;
+      top: calc(var(--space-compact) / -2 - var(--border-width));
+      left: calc(var(--node) / 2 - var(--space-compact) / 2);
+      width: var(--space-compact);
+      height: var(--space-compact);
+      border: solid var(--color-accent);
+      border-width: var(--border-width) 0 0 var(--border-width);
+      background: var(--color-surface);
+      transform: rotate(45deg);
+    }
+  }
+}

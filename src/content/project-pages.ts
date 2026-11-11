@@ -1,11 +1,13 @@
 // DRAFT
-// Block "Wie es gebaut ist" of the project pages (spec 7). What has no source stays out.
+// Block "Wie es gebaut ist" of the project pages (spec 16.3). What has no source stays out.
+// Shortened for the cut of Block C from the texts before it, final wording in the text pass.
 
 export interface ProjectPageContent {
-  architecture: { summary: string; parts: { name: string; role: string }[] };
-  /** 2 to 3; exactly one in the cut of Block C (DECISIONS 2026-11-10). */
+  /** One sentence or two, then the parts in their order. */
+  architecture: { summary: string; parts: string[] };
+  /** Exactly one (spec 16.3, D9). */
   decisions: { title: string; reason: string; price: string }[];
-  failure: { title: string; what: string; found: string; changed: string };
+  failure: { title: string; found: string; changed: string };
 }
 
 /** Keyed by slug. A project without an entry shows no block. */
@@ -13,96 +15,31 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
   videoflix: {
     architecture: {
       summary:
-        'Angular-Frontend und Django-REST-API laufen als zwei Images hinter einem Edge-Proxy auf einer Origin; Konvertierung und Mailversand laufen als eigene RQ-Worker neben der API, und ein eigenes Deploy-Repo legt die laufenden Images per Digest fest.',
-      parts: [
-        {
-          name: 'Edge-Proxy (Caddy)',
-          role: 'TLS und Routing: /api/, /admin/, /static/ ans Backend, alles andere ans Frontend. Kein Dienst des Stacks veröffentlicht Ports.',
-        },
-        {
-          name: 'frontend (Angular 22, nginx)',
-          role: 'Liefert den statischen Build mit CSP aus. hls.js spielt die Streams ab.',
-        },
-        {
-          name: 'web (Gunicorn gthread, Django/DRF)',
-          role: 'API und Auth mit JWT im Cookie. Prüft Login und Sichtbarkeit und liefert HLS-Playlists und -Segmente aus.',
-        },
-        {
-          name: 'worker (RQ, ffmpeg)',
-          role: 'Konvertiert Uploads nacheinander nach HLS in 480p, 720p und 1080p. Genau ein Worker, ohne Route nach außen.',
-        },
-        {
-          name: 'mail-worker (RQ)',
-          role: 'Versendet Kontomails. Einziger Worker mit Route nach außen.',
-        },
-        {
-          name: 'db und redis (Postgres 18, Redis 8)',
-          role: 'Daten; Cache, Rate Limits und Job Queue. Beide im Netz internal ohne Route nach außen.',
-        },
-      ],
+        'Angular-Frontend und Django-API laufen als zwei Images hinter Caddy. Konvertierung mit ffmpeg und Mailversand laufen als eigene RQ-Worker; Datenbank und Redis haben keine Route nach außen.',
+      parts: ['Caddy', 'Frontend · API', 'Worker', 'Postgres · Redis'],
     },
     decisions: [
       {
         title: 'Eigenes Deploy-Repo, Images per Digest gepinnt',
         reason:
-          'Die App-Repos bauen und pushen nur nach GHCR. Das Deploy-Repo pinnt die Images per Digest und rollt sie aus: ein Commit entspricht einer laufenden Kombination. SSH-Zugang und Deploy-Secrets liegen nur dort.',
+          'Ein Commit im Deploy-Repo entspricht genau einer laufenden Kombination. SSH-Zugang und Deploy-Secrets liegen nur dort.',
         price:
-          'Ein drittes Repo. Weil das Ruleset keinen Direkt-Commit auf main erlaubt, steht der laufende Digest zunächst in einer gitignorierten compose.override.yaml, erst ein Pin-PR trägt ihn nach. Ein Rollback dreht Migrationen nicht zurück, ein älteres Backend-Image muss also mit dem neueren Schema arbeiten.',
-      },
-      {
-        title: 'HLS-Auslieferung durch Django statt direkt vom Proxy',
-        reason:
-          'Django prüft bei jedem Abruf Login und Eigentum. Fremde private Videos antworten mit 404, damit ihre Existenz nicht sichtbar wird. Die vorhandene Lösung wird richtig eingestellt, statt vorzeitig zu optimieren.',
-        price:
-          'Playlists und Segmente laufen durch Gunicorn. Dafür braucht es gthread, damit langsame Uploads und HLS-Requests sich nicht blockieren. X-Accel-Redirect kommt erst nach einer Messung, der Lasttest ist auf nach 1.0 verschoben. Die Grenze dieser Lösung ist also noch nicht gemessen.',
-      },
-      {
-        title: 'Eigener mail-worker, damit ffmpeg keinen Weg nach außen hat',
-        reason:
-          'ffmpeg verarbeitet nicht vertrauenswürdige Uploads und soll keine Route nach außen bekommen. Vorher liefen Mails im Request, ein SMTP-Ausfall ergab einen 500. Jetzt legt der Request nur die User-ID in die Queue mail.',
-        price:
-          'Ein Dienst mehr und ein Henne-Ei-Problem: Das alte Image kennt den Befehl nicht, das neue Image braucht den Dienst. Dienst und Backend-Digest kamen deshalb in einem Deploy-Commit.',
+          'Ein drittes Repo. Ein Rollback dreht Migrationen nicht zurück, ein älteres Backend-Image muss also mit dem neueren Schema arbeiten.',
       },
     ],
     failure: {
-      title: 'Der Dev-Stack lief erst nach Handgriffen, und erst ein Browser-Test zeigte es',
-      what: 'Vier Fehler im Dev-Stack: CRLF-Zeilenenden im Entrypoint unter Windows, postgres:latest statt einer festen Version, fest verdrahtetes SMTP, eine ungültige Absenderadresse in den Env-Vorlagen.',
+      title: 'Der Dev-Stack lief nur nach Handgriffen',
       found:
-        'Die ersten drei kamen bei der ersten Handprüfung im Browser hoch, den vierten fand der erste Lauf des neuen Playwright-Smoke-Tests.',
+        'Vier Fehler, etwa CRLF im Entrypoint unter Windows: Drei zeigte die erste Handprüfung im Browser, den vierten der erste Lauf des Playwright-Smoke-Tests.',
       changed:
-        '.gitattributes erzwingt LF für *.sh, Postgres ist auf Version 18 festgelegt, das E-Mail-Backend kommt aus der Umgebung, Mailpit läuft im Dev-Stack. Seit dem 05.11. läuft Playwright in der Frontend-CI gegen den Compose-Stack, und der Image-Job hängt davon ab.',
+        'LF per .gitattributes, Postgres fest auf 18, E-Mail-Backend aus der Umgebung. Seit dem 05.11. läuft Playwright in der Frontend-CI gegen den Compose-Stack.',
     },
   },
   'neuro-check-in': {
     architecture: {
       summary:
-        'Neuro Check-in ist eine Android-App mit React Native, Expo und TypeScript, deren Daten offline in SQLite liegen; es gibt keinen Account und kein eigenes Backend.',
-      parts: [
-        {
-          name: 'App-Schicht',
-          role: 'Screens und Routen dateibasiert mit Expo Router, PDF-Export über expo-print und expo-sharing.',
-        },
-        {
-          name: 'Datenschicht',
-          role: 'SQLite-Service-Layer mit parametrisierten Statements und versioniertem Schema (user_version). Die Migration läuft komplett in einer Transaktion, secure_delete ist an.',
-        },
-        {
-          name: 'Notifications',
-          role: 'Lokale Erinnerungen über expo-notifications. Das lokale Expo-Modul exact-alarm liest canScheduleExactAlarms(), die Freigabe wird just-in-time abgefragt.',
-        },
-        {
-          name: 'Observability',
-          role: 'Sentry mit rekursivem beforeSend-Scrubber und Breadcrumb-Filter, damit keine Check-in-Inhalte das Gerät verlassen. In Development ist Sentry aus.',
-        },
-        {
-          name: 'CI und E2E',
-          role: 'GitHub Actions: Secret-Scan, Audit-Gate, Lint, Typecheck, Jest mit Coverage-Schwelle, Expo Doctor, Bundle-Check. Dazu Maestro-Black-Box-Tests gegen einen Release-Build auf dem Android-Emulator.',
-        },
-        {
-          name: 'Website',
-          role: 'Getrenntes Repo, statische Astro-Ausgabe, geprüft mit Playwright, axe und Lighthouse CI. Kein zweiter Build, Production erhält genau die geprüften Dateien.',
-        },
-      ],
+        'Android-App mit React Native, Expo und TypeScript, ohne Account und ohne eigenes Backend. Die Daten liegen offline in SQLite mit versioniertem Schema, Erinnerungen laufen lokal. Sentry filtert, damit keine Check-in-Inhalte das Gerät verlassen.',
+      parts: ['Expo Router', 'SQLite', 'Notifications', 'Sentry'],
     },
     decisions: [
       {
@@ -112,51 +49,23 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
         price:
           'ATD hat keine Statusleiste und kein Benachrichtigungsfeld. Flows mit Tag notification-shade brauchen deshalb einen zweiten Emulator und ein eigenes Skript, das das Feld per adb öffnet.',
       },
-      {
-        title: 'Audit-Gate per Allowlist statt gesenktem Level',
-        reason:
-          'npm audit kennt keine Ausnahmen, und ein gesenktes Gate wird still schwächer. Ein eigenes Gate-Skript blockt jeden high- oder critical-Fund, außer er steht mit Begründung und Ablaufdatum in der Allowlist.',
-        price:
-          'Ein abgelaufener Eintrag macht die CI rot und erzwingt eine neue Prüfung. Bis dahin bleibt ein bekannter Fund akzeptiert: zod 3 in @expo/cli, nur Tooling, bis 31.01.2027.',
-      },
-      {
-        title: 'Privates Repo, Merge-Sicherung per Hook statt Branch-Schutz',
-        reason:
-          'Gezeigt werden soll das fertige Produkt, nicht der Code. GitHub Free bietet für private Repos keinen Branch-Schutz und keine Rulesets (HTTP 403). Der Hook merge-guard blockiert gh pr merge, bis alle Checks grün und die Pflicht-Checks vorhanden sind. Kann er nicht prüfen, blockiert er.',
-        price:
-          'Ein Merge über die GitHub-Weboberfläche umgeht den Hook, dort gilt dieselbe Regel von Hand. CodeQL fällt im Free-Plan ebenfalls weg.',
-      },
     ],
     failure: {
       title: 'Notification-Einstieg ohne Zurück: CI grün, Fehler unverändert',
-      what: 'Beim Öffnen über eine Erinnerung lag die Check-in-Auswahl ohne Home darunter im Stack, router.back() und „Abbrechen“ hatten kein Ziel. Der erste Fix verankerte den Root-Stack per unstable_settings.anchor = "(tabs)", abgesichert durch einen Regex-Guard-Test. Beim Kaltstart griff er nicht: Die Navigation läuft dort, bevor der Root-Stack gemountet ist, und expo-router 58 setzt den Anchor dann nur mit withAnchor.',
       found:
-        'Der Gerätetest zum SDK-58-Upgrade brachte den Befund, der Gerätetest nach dem ersten Fix zeigte: Fehler unverändert. Die Annahme war nie am Bibliotheks-Code geprüft worden, der Guard-Test war schon vor dem Fix grün.',
+        'Der Gerätetest zeigte: Über eine Erinnerung geöffnet, hatte „Abbrechen“ kein Ziel. Auch nach dem ersten Fix, denn beim Kaltstart griff er nicht; sein Guard-Test war schon vor dem Fix grün.',
       changed:
-        'Die Navigation liegt in openCheckInFromNotification und übergibt withAnchor: true. Ein Verhaltenstest mit dem echten expo-router deckt Kalt- und Warmstart ab und war vor dem Fix rot. Neue Regel: Ein Regressionstest muss den Bug vor dem Fix rot reproduzieren und Verhalten statt Quelltext prüfen. Der E2E-Flow S4 prüft den Einstieg heute im Release-Build mit echtem Kaltstart.',
+        'Die Navigation übergibt withAnchor: true, ein Verhaltenstest mit dem echten expo-router war vorher rot. Neue Regel: Ein Regressionstest reproduziert den Bug vor dem Fix.',
     },
   },
-  // DRAFT: written in the cut of Block C. Sources: compose files, CI workflows, rulesets and
-  // .trivyignore.yaml of vps-edge, vps-monitoring and videoflix-deploy; PRs vps-edge #5,
-  // videoflix-deploy #32 and vps-monitoring #1 with their first CI runs of 10.11.
+  // Sources: compose files, CI workflows, rulesets and .trivyignore.yaml of vps-edge,
+  // vps-monitoring and videoflix-deploy; PRs vps-edge #5, videoflix-deploy #32 and
+  // vps-monitoring #1 with their first CI runs of 10.11.
   'vps-plattform': {
     architecture: {
       summary:
-        'Projekt-Stacks wie videoflix-deploy bleiben eigenständig und öffnen selbst keine Ports.',
-      parts: [
-        {
-          name: 'Edge-Proxy (Caddy)',
-          role: 'Einziger Container mit offenen Ports: TLS, Sicherheits-Header, eine Datei je Projekt. Von Kuma nur die öffentliche Statusseite.',
-        },
-        {
-          name: 'Monitoring (Uptime Kuma)',
-          role: 'Ohne Root und Docker-Socket, Dashboard nur per SSH-Tunnel. Im internen Netz sieht Kuma nur Caddy.',
-        },
-        {
-          name: 'CI-Gates',
-          role: 'Startet jeden Stack, prüft diese Zusagen und scannt die Images mit Trivy. Rulesets machen die Checks zur Pflicht.',
-        },
-      ],
+        'Caddy ist der einzige Container mit offenen Ports. Uptime Kuma läuft ohne Root und Docker-Socket, das Dashboard nur per SSH-Tunnel. Projekt-Stacks wie videoflix-deploy öffnen selbst keine Ports. Die CI startet jeden Stack, prüft diese Zusagen und scannt die Images mit Trivy.',
+      parts: ['Caddy', 'Projekt-Stacks · Uptime Kuma'],
     },
     decisions: [
       {
@@ -169,9 +78,8 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
     ],
     failure: {
       title: 'Der erste Trivy-Lauf fand eine kritische CVE im Proxy',
-      what: 'CVE-2026-111497, ein Out-of-Bounds-Write im Brotli-Decoder, steckte im gepinnten Caddy 2.11.7 und im Postgres-Image von Videoflix.',
       found:
-        'Am 10.11. im ersten Lauf der neuen CI: Der Trivy-Schritt brach beide Pull Requests ab.',
+        'CVE-2026-111497 im gepinnten Caddy 2.11.7 und im Postgres-Image von Videoflix: Der Trivy-Schritt der neuen CI brach am 10.11. beide Pull Requests ab.',
       changed:
         'Caddy 2.11.9 und ein neuer Postgres-Digest, noch vor dem Merge. Funde ohne Image mit Fix stehen befristet in .trivyignore.yaml.',
     },
@@ -180,42 +88,10 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
   'developer-workspace-kit': {
     architecture: {
       summary:
-        'Das Developer Workspace Kit ist ein Node.js-Plugin für Claude Code und sein eigener Marketplace; kit.mjs erledigt das Mechanische deterministisch, Claude übernimmt Einordnung, Rückfragen und Texte.',
-      parts: [
-        {
-          name: '/kit:init',
-          role: 'Starter-Skill: erkennt Projektart und Stack eines Ordners. Startet nur auf ausdrücklichen Befehl (disable-model-invocation).',
-        },
-        {
-          name: 'kit.mjs',
-          role: 'CLI ohne Abhängigkeiten: detect, nest, scaffold, verify, finalize, sync u. a.',
-        },
-        {
-          name: 'templates/',
-          role: 'Vorlagen in vier Teilen: core, vier Profile, neun Module, Nutzer-Ebene.',
-        },
-        {
-          name: '.claude/workspace.json',
-          role: 'Einzige Steuerdatei je Workspace. Hooks, status.mjs, /kickoff und /handoff lesen nur sie.',
-        },
-        {
-          name: 'Hooks',
-          role: 'Sechs Hooks im Workspace, u. a. boundary-guard und secret-guard. Node in Exec-Form, ohne Shell dazwischen.',
-        },
-        {
-          name: 'Statusline und Credits-Guard',
-          role: 'Nutzer-Ebene: Nur die Statusline bekommt die rate_limits. Sie schreibt usage.json, der Guard liest sie.',
-        },
-      ],
+        'Node.js-Plugin für Claude Code und sein eigener Marketplace. kit.mjs erledigt das Mechanische deterministisch, Claude übernimmt Einordnung, Rückfragen und Texte. Jeder Workspace hat genau eine Steuerdatei.',
+      parts: ['/kit:init', 'kit.mjs', 'templates', 'workspace.json'],
     },
     decisions: [
-      {
-        title: 'Kopie statt Verweis',
-        reason:
-          'Hooks und Skills liegen sichtbar und anpassbar im jeweiligen Workspace. Das Plugin selbst bringt keine Hooks mit.',
-        price:
-          'Bestehende Workspaces bleiben auf ihrer Kopie, bis /kit:sync sie hebt. Dafür brauchte es ein eigenes Feature, und uncommittete Kit-Dateien stoppen den Lauf, weil Git das Sicherheitsnetz ist.',
-      },
       {
         title: 'Durchgesetzte Grenzen, jede Shell-Regel doppelt',
         reason:
@@ -223,20 +99,13 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
         price:
           'Jede Regel steht doppelt, und auf macOS und Linux ist die PowerShell-Variante wirkungslos. Exotische Lesewege wie node -e readFileSync sind nicht geprüft.',
       },
-      {
-        title: '/review und /secure als Hülle um die eingebauten Befehle',
-        reason:
-          'Beide Skills wurden zuerst zugunsten von /code-review und /security-review entfernt. Der Abgleich in zwei bestehenden Workspaces zeigte, dass /secure Gesamt-Audit und Datenschutz abdeckte, was der eingebaute Befehl nicht leistet. Daher kombinieren statt ersetzen.',
-        price:
-          'Die Entscheidung wurde am selben Tag revidiert. Ein Fork kann das Startverzeichnis nicht wechseln: Aus dem Workspace-Root prüfen beide den Diff per git -C und nennen den eingebauten Lauf als offen.',
-      },
     ],
     failure: {
       title: 'Ein lesender Audit-Skill durfte mehr als lesen',
-      what: 'Die allowed-tools der Skills waren zu breit. „node *scripts/status.mjs*“ passte auch auf „node -e“. „git -C * log“ und „git -C * branch“ erlaubten „--output=“ und „-c diff.external=“. „node --test“ führte im lesenden Audit /bestandsaufnahme fremden Code aus.',
-      found: 'Durch das Kit-eigene /secure in der Release-Prüfung vor v0.1.0.',
+      found:
+        'Das Kit-eigene /secure fand vor v0.1.0 zu breite Freigaben: „node *scripts/status.mjs*“ passte auch auf „node -e“, „git -C * log“ erlaubte „--output=“.',
       changed:
-        'Die Freigaben sind exakt an das jeweilige Skript im Skill-Verzeichnis gebunden. /bestandsaufnahme hat keine „git -C“- und „node --test“-Freigabe mehr, das Inventar liefert stattdessen unmergedBranches. Tests halten das fest.',
+        'Die Freigaben sind exakt an das jeweilige Skript im Skill-Verzeichnis gebunden, /bestandsaufnahme hat keine „git -C“-Freigabe mehr. Tests halten das fest.',
     },
   },
 };

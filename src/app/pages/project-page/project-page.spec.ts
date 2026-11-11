@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { deliveryPlans } from '../../../content/delivery-plans';
 import { projectPageContent, ProjectPageContent } from '../../../content/project-pages';
 import { portfolioProject, Project, projects } from '../../../content/projects';
-import { deliveryTexts } from '../../../content/software-delivery';
+import { buildDeliveryView, deliveryTexts } from '../../../content/software-delivery';
 import { PROJECT_PAGE_CONTENT, ProjectPage } from './project-page';
 
 const bySlug = (slug: string) => projects.find((project) => project.slug === slug)!;
@@ -13,22 +13,10 @@ const texts = (nodes: Iterable<Element>) => [...nodes].map((node) => node.textCo
 const sampleContent: ProjectPageContent = {
   architecture: {
     summary: 'Beispiel-Architektur in einem Satz.',
-    parts: [
-      { name: 'Frontend', role: 'Rolle Frontend' },
-      { name: 'API', role: 'Rolle API' },
-    ],
+    parts: ['Frontend', 'API'],
   },
-  decisions: [
-    { title: 'Entscheidung A', reason: 'Grund A', price: 'Preis A' },
-    { title: 'Entscheidung B', reason: 'Grund B', price: 'Preis B' },
-    { title: 'Entscheidung C', reason: 'Grund C', price: 'Preis C' },
-  ],
-  failure: {
-    title: 'Der Fehler',
-    what: 'Was schief lief',
-    found: 'Wie er auffiel',
-    changed: 'Was anders wurde',
-  },
+  decisions: [{ title: 'Entscheidung A', reason: 'Grund A', price: 'Preis A' }],
+  failure: { title: 'Der Fehler', found: 'Wie er auffiel', changed: 'Was anders wurde' },
 };
 
 async function renderPage(project: Project, content: ProjectPageContent | null = null) {
@@ -58,13 +46,37 @@ describe('ProjectPage', () => {
     expect((await renderPage(project)).querySelectorAll('h1')).toHaveLength(1);
   });
 
-  it.each(projects)('has the quiet links of "$title"', async (project) => {
-    const links = [...(await renderPage(project)).querySelectorAll('.links a')];
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(
-      project.links.map((link) => link.url),
-    );
-    expect(texts(links)).toEqual(project.links.map((link) => link.label));
+  it.each([...projects, portfolioProject])(
+    'shows the status line of the list on "$title"',
+    async (project) => {
+      const { signal } = buildDeliveryView(deliveryPlans[project.slug], null);
+      const line = (await renderPage(project)).querySelector('.signal');
+      expect(line?.querySelector(`app-state-badge .state-${signal.state}`)).not.toBeNull();
+      expect(line?.querySelector('app-state-badge')?.textContent?.trim()).toBe(signal.status);
+      expect(line?.querySelector('.signal-when')?.textContent?.trim() ?? '').toBe(signal.when);
+    },
+  );
+
+  it.each(projects)('shows the stack of "$title" in one line', async (project) => {
+    const tech = (await renderPage(project)).querySelector('.tech');
+    expect(tech?.textContent?.trim()).toBe(project.stack.join(' · '));
   });
+
+  it.each(projects)(
+    'has the links of "$title" as buttons, the first one filled',
+    async (project) => {
+      const links = [...(await renderPage(project)).querySelectorAll('.links a')];
+      expect(links.map((link) => link.getAttribute('href'))).toEqual(
+        project.links.map((link) => link.url),
+      );
+      expect(texts(links.map((link) => link.querySelector('.link-label')!))).toEqual(
+        project.links.map((link) => link.label),
+      );
+      expect(links.map((link) => link.classList.contains('button-primary'))).toEqual(
+        project.links.map((_link, index) => index === 0),
+      );
+    },
+  );
 
   it('shows no empty link block for a project without links', async () => {
     const page = await renderPage(bySlug('developer-workspace-kit'));
@@ -72,11 +84,20 @@ describe('ProjectPage', () => {
     expect(texts(page.querySelectorAll('h2'))).not.toContain('Links');
   });
 
-  it.each(projects)('shows the software delivery steps of "$title"', async (project) => {
-    const page = await renderPage(project);
-    expect(texts(page.querySelectorAll('app-delivery-steps .step h3'))).toEqual(
-      deliveryPlans[project.slug].steps.map((step) => step.name),
-    );
+  it.each(projects.filter((project) => project.slug !== 'developer-workspace-kit'))(
+    'shows the software delivery chain of "$title"',
+    async (project) => {
+      const page = await renderPage(project);
+      expect(texts(page.querySelectorAll('app-delivery-chain .tab .name'))).toEqual(
+        deliveryPlans[project.slug].steps.map((step) => step.name),
+      );
+    },
+  );
+
+  it('shows the chain of the kit as one private line', async () => {
+    const page = await renderPage(bySlug('developer-workspace-kit'));
+    expect(page.querySelector('app-delivery-chain .private')).not.toBeNull();
+    expect(page.querySelector('app-delivery-chain .tab')).toBeNull();
   });
 
   it('shows neither label, proof nor stack any more', async () => {
@@ -105,41 +126,43 @@ describe('ProjectPage', () => {
     expect(TestBed.inject(PROJECT_PAGE_CONTENT)).toBe(projectPageContent);
   });
 
-  it('shows the architecture as parts with their role and the summary', async () => {
+  it('shows three cards: architecture, decision and failure', async () => {
     const page = await renderPage(bySlug('vps-plattform'), sampleContent);
-    const block = page.querySelector('.block-architecture')!;
-    expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.architecture);
-    expect(texts(block.querySelectorAll('.part strong'))).toEqual(['Frontend', 'API']);
-    expect(texts(block.querySelectorAll('.part span'))).toEqual(['Rolle Frontend', 'Rolle API']);
-    expect(block.textContent).toContain(sampleContent.architecture.summary);
+    expect(texts(page.querySelectorAll('.how-built .card h3'))).toEqual([
+      deliveryTexts.architecture,
+      deliveryTexts.decision,
+      deliveryTexts.failure,
+    ]);
   });
 
-  it('shows 2 to 3 decisions with reason and price', async () => {
+  it('shows the architecture as the summary and then its parts in order', async () => {
     const page = await renderPage(bySlug('vps-plattform'), sampleContent);
-    const block = page.querySelector('.block-decisions')!;
-    expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.decisions);
-    const decisions = [...block.querySelectorAll('.decision')];
-    expect(decisions).toHaveLength(3);
-    sampleContent.decisions.forEach(({ title, reason, price }, index) => {
-      expect(decisions[index].querySelector('h4')?.textContent).toContain(title);
-      expect(decisions[index].textContent).toContain(reason);
-      expect(decisions[index].textContent).toContain(price);
-    });
+    const card = page.querySelector('.card-architecture')!;
+    expect(card.querySelector('p')?.textContent).toContain(sampleContent.architecture.summary);
+    expect(texts(card.querySelectorAll('.parts li'))).toEqual(['Frontend', 'API']);
   });
 
-  it('shows the failure with what, found and changed', async () => {
+  it('shows the decision with title, reason and price', async () => {
     const page = await renderPage(bySlug('vps-plattform'), sampleContent);
-    const block = page.querySelector('.block-failure')!;
-    expect(block.querySelector('h3')?.textContent).toContain(deliveryTexts.failure);
-    const { title, what, found, changed } = sampleContent.failure;
-    expect(block.querySelector('h4')?.textContent).toContain(title);
-    for (const text of [what, found, changed]) expect(block.textContent).toContain(text);
+    const card = page.querySelector('.card-decision')!;
+    const [{ title, reason, price }] = sampleContent.decisions;
+    expect(card.querySelector('h4')?.textContent).toContain(title);
+    expect(texts(card.querySelectorAll('dd'))).toEqual([reason, price]);
+  });
+
+  it('shows the failure with title, found and changed', async () => {
+    const page = await renderPage(bySlug('vps-plattform'), sampleContent);
+    const card = page.querySelector('.card-failure')!;
+    const { title, found, changed } = sampleContent.failure;
+    expect(card.querySelector('h4')?.textContent).toContain(title);
+    expect(texts(card.querySelectorAll('dt'))).toEqual(['Gefunden', 'Geändert']);
+    expect(texts(card.querySelectorAll('dd'))).toEqual([found, changed]);
   });
 
   it('shows the portfolio page without the content blocks', async () => {
     const page = await renderPage(portfolioProject);
     expect(page.querySelector('.how-built')).toBeNull();
-    expect(page.querySelectorAll('app-delivery-steps .step')).toHaveLength(5);
+    expect(page.querySelectorAll('app-delivery-chain .tab')).toHaveLength(5);
   });
 
   it('shows the preview with its size when there is one', async () => {
@@ -151,10 +174,10 @@ describe('ProjectPage', () => {
     expect(image?.getAttribute('alt')).toBe('');
   });
 
-  it('shows no image for a project without a preview', async () => {
+  it('shows a placeholder hidden from screen readers without a preview', async () => {
     const page = await renderPage({ ...bySlug('vps-plattform'), preview: undefined });
     expect(page.querySelector('img')).toBeNull();
-    expect(page.querySelector('.media')).toBeNull();
+    expect(page.querySelector('.media .placeholder')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('leads back to the project list', async () => {

@@ -1,17 +1,22 @@
+import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { deliveryPlans } from '../src/content/delivery-plans';
 import { projects } from '../src/content/projects';
 import type { StatusDocument } from '../src/content/status';
+import { pages } from './support/site';
 
-// Software Delivery on the project pages (spec 5, 6, 7). A real snapshot of status.json from the
-// preview, with a time set per test. The local build has no snapshot of its own, so what shows up
-// after loading came from the request these tests answer.
+// Software Delivery on the project pages (spec 5, 6, 16.3). A real snapshot of status.json from
+// the preview, with a time set per test. The local build has no snapshot of its own, so what shows
+// up after loading came from the request these tests answer.
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
 // The file the server keeps after the deploy until status.yml runs again: conduit, no VPS.
 const beforeVpsText = readFileSync('e2e/fixtures/status-before-vps.json', 'utf8');
 const refreshFailed = 'Der aktuelle Stand ist gerade nicht abrufbar.';
 const stale = 'Dieser Stand ist älter als einen Tag.';
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PIPELINE_BREAKPOINT = 1100;
+const wcag = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 type Change = (document: StatusDocument) => void;
 
@@ -58,12 +63,23 @@ async function serveBuildSnapshot(page: Page, change: Change): Promise<void> {
   });
 }
 
-const delivery = (page: Page) => page.locator('app-delivery-steps');
+const delivery = (page: Page) => page.locator('app-delivery-chain');
 const notice = (page: Page) => delivery(page).locator('[role="status"]');
-const signal = (page: Page) => delivery(page).locator('.signal');
-const steps = (page: Page) => delivery(page).locator('.step');
-const step = (page: Page, name: string) =>
-  steps(page).filter({ has: page.locator('h3', { hasText: new RegExp(`^${name}$`) }) });
+// The same items before and after hydration: a list first, then tabs.
+const stations = (page: Page) => delivery(page).locator('.tab');
+const station = (page: Page, name: string) =>
+  stations(page).filter({ has: page.locator('.name', { hasText: new RegExp(`^${name}$`) }) });
+const valueOf = (page: Page, name: string) => station(page, name).locator('.value');
+const panel = (page: Page) => delivery(page).getByRole('tabpanel');
+const statesOf = (page: Page) =>
+  stations(page).evaluateAll((items) => items.map((item) => item.getAttribute('data-state')));
+
+/** Waits until hydration has turned the list into tabs, then opens one station. */
+async function choose(page: Page, name: string): Promise<void> {
+  await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+  await station(page, name).click();
+  await expect(station(page, name)).toHaveAttribute('aria-selected', 'true');
+}
 
 const stepNames = {
   videoflix: [
@@ -83,68 +99,142 @@ const beforeVps: Change = (document) => {
   document.projects = (JSON.parse(beforeVpsText) as StatusDocument).projects;
 };
 
+/** Pages whose chain waits for status.json; only they show a stand. */
+const hasStatus = (path: string) => !!deliveryPlans[path.split('/')[2]]?.statusKey;
+
+/**
+ * Brings the chain into view and lets more than the 2.5 s of D5 pass on the page clock. The own
+ * observer only settles once the page's observer has reported: it is older, so it is told first.
+ */
+async function dwellOnChain(page: Page): Promise<void> {
+  await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+  const rail = delivery(page).locator('.rail');
+  await rail.scrollIntoViewIfNeeded();
+  await rail.evaluate(
+    (element) =>
+      new Promise<void>((resolve) => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            if (entries.at(-1)!.intersectionRatio < 0.6) return;
+            observer.disconnect();
+            resolve();
+          },
+          { threshold: 0.6 },
+        );
+        observer.observe(element);
+      }),
+  );
+  await page.clock.runFor(3000);
+}
+
+/** Neither a tick for what is not proven nor an empty frame where data is missing (D8). */
+async function expectNoFalseProof(page: Page, ticks: number): Promise<void> {
+  await expect(delivery(page).locator('.tick')).toHaveCount(ticks);
+  await expect(delivery(page).locator('table:not(:has(td))')).toHaveCount(0);
+}
+
+/** From the pipeline breakpoint on one row ending at the right content edge, below upright. */
+async function expectLayout(page: Page): Promise<void> {
+  const nodes: DOMRect[] = await stations(page)
+    .locator('.node')
+    .evaluateAll((items) => items.map((item) => item.getBoundingClientRect().toJSON()));
+  const edge = (await panel(page).boundingBox())!;
+  const [first, ...rest] = nodes;
+  if (page.viewportSize()!.width >= PIPELINE_BREAKPOINT) {
+    for (const node of rest) expect(Math.abs(node.y - first.y), 'one row').toBeLessThanOrEqual(1);
+    const end = rest.at(-1)!.right - (edge.x + edge.width);
+    expect(Math.abs(end), 'last node on the right edge').toBeLessThanOrEqual(1);
+  } else {
+    for (const node of rest)
+      expect(Math.abs(node.x - first.x), 'one column').toBeLessThanOrEqual(1);
+    rest.forEach((node, index) => expect(node.y, 'top to bottom').toBeGreaterThan(nodes[index].y));
+  }
+}
+
 test.describe('Software Delivery', () => {
-  test('[AK3] Videoflix zeigt den Stand der Testdaten ehrlich', async ({ page }) => {
+  test('[AK3] [D2] [D3] Videoflix: eine Station je Schritt, Zustand mit Zeichen und Wort', async ({
+    page,
+  }) => {
     await serveStatus(page);
     await page.goto('/projekte/videoflix/');
-    await expect(signal(page)).toContainText('2 von 6 belegt');
-    await expect(signal(page)).toContainText('zuletzt 05.11.');
-    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.videoflix);
-    await expect(delivery(page).locator('.step-arrow')).toHaveText([
-      'CI',
-      'Image',
-      'Deploy',
-      'Betrieb',
-      'Backup',
+    await expect(delivery(page).getByRole('tab')).toHaveCount(6);
+    await expect(stations(page).locator('.name')).toHaveText(stepNames.videoflix);
+    await expect(stations(page).locator('.value')).toHaveText([
+      '75 merged PRs',
+      '6 von 6 passing',
+      'teilweise',
+      'nicht abrufbar',
+      'noch nicht eingerichtet',
+      'noch nicht eingerichtet',
     ]);
-    await expect(step(page, 'Code').locator('.state')).toHaveText('Belegt');
-    await expect(step(page, 'Signed Build').locator('.state')).toHaveText('Teilweise');
-    await expect(step(page, 'Signed Build')).toContainText('die Signatur fehlt noch');
-    await expect(step(page, 'Deployment').locator('.state')).toHaveText('Nicht abrufbar');
-    await expect(step(page, 'Restore-Test').locator('.state')).toHaveText(
-      'Noch nicht eingerichtet',
-    );
+    await expect
+      .poll(() => statesOf(page))
+      .toEqual(['verified', 'verified', 'partial', 'unavailable', 'notSetUp', 'notSetUp']);
+    await expect(stations(page).locator('.tick')).toHaveCount(2);
+    await expect(delivery(page).locator('.via')).toHaveText([
+      '→ CI',
+      '→ Image',
+      '→ Deploy',
+      '→ Betrieb',
+      '→ Backup',
+    ]);
+    await expect(delivery(page).locator('.stand')).toContainText('· 3 Repos');
+    await expectLayout(page);
+    // "Belegt" with its public proof: the run of every workflow in its cell (AK5).
+    await choose(page, 'Tests & Security-Checks');
+    const runs = panel(page).locator('a');
+    await expect(runs).toHaveCount(6);
+    for (const link of await runs.all()) {
+      await expect(link).toHaveAttribute(
+        'href',
+        /\/videoflix-(backend|frontend)\/actions\/runs\/\d+$/,
+      );
+    }
+    await choose(page, 'Signed Build');
+    await expect(panel(page)).toContainText('die Signatur fehlt noch');
     await expect(notice(page)).toBeEmpty();
   });
 
   test('[AK3] die Website hat keinen Restore-Schritt', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/projekte/portfolio/');
-    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.portfolio);
-    await expect(signal(page)).toContainText('4 von 5 belegt');
+    await expect(stations(page).locator('.name')).toHaveText(stepNames.portfolio);
+    await expect(delivery(page).locator('.stand')).toContainText('· 1 Repo');
     await expect(page.locator('main .how-built')).toHaveCount(0);
   });
 
-  test('[AK4] eine Abweichung erscheint als Abweichung und zählt nicht', async ({ page }) => {
+  test('[AK4] eine Abweichung erscheint als Abweichung, mit Kreuz und Wort', async ({ page }) => {
     await serveStatus(page, (document) => {
       document.projects.portfolio.live.signals.components[0].matchesLatestGreen = false;
     });
     await page.goto('/projekte/portfolio/');
-    await expect(step(page, 'Deployment').locator('.state-deviation')).toHaveText('Abweichung');
-    await expect(step(page, 'Deployment')).toContainText('weicht vom zuletzt geprüften Commit ab');
-    await expect(signal(page)).toContainText('3 von 5 belegt');
+    const deployment = station(page, 'Deployment');
+    await expect(deployment).toHaveAttribute('data-state', 'deviation');
+    await expect(deployment.locator('.cross')).toBeVisible();
+    await expect(deployment.locator('.value')).toHaveText('live ≠ geprüfter Stand');
+    await choose(page, 'Deployment');
+    await expect(panel(page)).toContainText('weicht vom zuletzt geprüften Commit ab');
+    await expect(panel(page).getByRole('img', { name: 'failed' })).toBeVisible();
   });
 
   test('[Plan VPS E4] VPS-Plattform: Code, CI & Security-Checks, Betrieb', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/projekte/vps-plattform/');
-    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames['vps-plattform']);
-    await expect(delivery(page).locator('.step-arrow')).toHaveText(['CI', 'Betrieb']);
-    await expect(signal(page)).toContainText('2 von 3 belegt');
-    await expect(step(page, 'Code').locator('.state')).toHaveText('Belegt');
-    const ci = step(page, 'CI & Security-Checks');
-    await expect(ci.locator('.state')).toHaveText('Belegt');
-    await expect(ci).toContainText(
+    await expect(stations(page).locator('.name')).toHaveText(stepNames['vps-plattform']);
+    await expect(delivery(page).locator('.via')).toHaveText(['→ CI', '→ Betrieb']);
+    await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'notSetUp']);
+    await choose(page, 'CI & Security-Checks');
+    await expect(panel(page)).toContainText(
       'Jede Änderung startet die echte Konfiguration und wird auf Schwachstellen geprüft.',
     );
-    await expect(ci.locator('.step-links a')).toHaveText(['Lauf Edge-Proxy', 'Lauf Monitoring']);
-    for (const link of await ci.locator('.step-links a').all()) {
+    const runs = panel(page).locator('a');
+    await expect(runs).toHaveCount(6);
+    for (const link of await runs.all()) {
       await expect(link).toHaveAttribute('href', /\/vps-(edge|monitoring)\/actions\/runs\/\d+$/);
     }
     await expect(delivery(page)).not.toContainText(/getestet/);
     // Plan VPS E5: no Kuma slug of its own yet.
-    await expect(step(page, 'Betrieb').locator('.state')).toHaveText('Noch nicht eingerichtet');
-    await expect(steps(page).last()).toHaveClass(/step-open/);
+    await expect(valueOf(page, 'Betrieb')).toHaveText('noch nicht eingerichtet');
   });
 
   test('[Spec 6.4] grüner Deploy-Lauf ohne Live-Nachweis wird genau so benannt', async ({
@@ -163,48 +253,31 @@ test.describe('Software Delivery', () => {
       });
     });
     await page.goto('/projekte/videoflix/');
-    const deployment = step(page, 'Deployment');
-    await expect(deployment).toContainText(
+    await expect(station(page, 'Deployment')).toHaveAttribute('data-state', 'partial');
+    await choose(page, 'Deployment');
+    await expect(panel(page)).toContainText(
       'Der letzte Deploy-Lauf war erfolgreich, der laufende Stand ist nicht abrufbar.',
     );
-    await expect(deployment.locator('.state')).toHaveText('Teilweise');
-    await expect(deployment.locator('.step-event')).toContainText('06.11., 11:42');
+    await expect(panel(page).locator('tbody tr')).toContainText(['Deploy-Lauf']);
+    await expect(panel(page)).toContainText('06.11., 11:42');
   });
 
-  test('[Spec 6.1] veralteter Stand wird benannt', async ({ page }) => {
+  test('[Spec 6.1] [D8] veralteter Stand wird benannt', async ({ page }) => {
     await serveStatus(page, (document) => {
       document.generatedAt = '2026-01-01T00:00:00Z';
     });
     await page.goto('/projekte/videoflix/');
     await expect(notice(page)).toHaveText(stale);
-    await expect(steps(page)).toHaveCount(6);
+    await expect(stations(page)).toHaveCount(6);
   });
 
-  test('[AK8] Artefakte sind direkte Links ab 44 px, höchstens 3 je Schritt', async ({ page }) => {
-    await serveStatus(page);
-    await page.goto('/projekte/videoflix/');
-    await expect(signal(page)).toContainText('2 von 6 belegt');
-    for (const item of await steps(page).all()) {
-      const links = item.locator('.step-links a');
-      expect(await links.count()).toBeLessThanOrEqual(3);
-      for (const link of await links.all()) {
-        await expect(link).toHaveAttribute('href', /^https:\/\//);
-        expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-      }
-    }
-    await expect(
-      step(page, 'Tests & Security-Checks').locator('.step-links a').first(),
-    ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
-  });
-
-  test('[AK8] [AK17] von der Zeile in höchstens 2 Klicks beim Lauf', async ({ page }) => {
+  test('[AK8] [AK17] von der Zeile über die Station beim Lauf', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/');
-    await page.getByRole('link', { name: /Videoflix.*Details ansehen/ }).click();
-    await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
-    await expect(
-      step(page, 'Tests & Security-Checks').locator('.step-links a').first(),
-    ).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
+    await page.getByRole('link', { name: /VPS-Plattform.*Details ansehen/ }).click();
+    await expect(page).toHaveURL(/\/projekte\/vps-plattform\/?$/);
+    await choose(page, 'CI & Security-Checks');
+    await expect(panel(page).locator('a').first()).toHaveAttribute('href', /\/actions\/runs\/\d+$/);
   });
 
   test('[Spec 6.1] der Stand kommt von der eigenen Domain', async ({ page, baseURL }) => {
@@ -218,7 +291,135 @@ test.describe('Software Delivery', () => {
     await page.locator('footer').getByRole('link', { name: 'So ist diese Seite gebaut' }).click();
     await expect(page).toHaveURL(/\/projekte\/portfolio\/?$/);
     await expect(page.locator('main h1')).toBeVisible();
-    await expect(steps(page)).toHaveCount(5);
+    await expect(stations(page)).toHaveCount(5);
+  });
+});
+
+test.describe('Kette bedienen', () => {
+  test('[D4] ein Tab-Stopp, Pfeile, Pos1 und Ende, dann Feld und sein erster Link; axe', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Tastatur auf einer Breite genügt');
+    await serveStatus(page);
+    await page.goto('/projekte/vps-plattform/');
+    const tabs = delivery(page).getByRole('tab');
+    await expect(tabs).toHaveCount(3);
+    await expect(delivery(page).locator('[role="tab"][tabindex="0"]')).toHaveCount(1);
+
+    // Tab from the start of main until the focus enters the chain, whatever the page head holds.
+    // A click on the heading would focus main (tabindex -1, skip link target), not set a start.
+    await page.locator('main').focus();
+    const inChain = () =>
+      page.evaluate(() => !!document.activeElement?.closest('app-delivery-chain'));
+    for (let press = 0; press < 40 && !(await inChain()); press++) {
+      await page.keyboard.press('Tab');
+    }
+    await expect(tabs.first()).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(tabs.nth(1)).toBeFocused();
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(tabs.last()).toBeFocused();
+    await expect(tabs.last()).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Home');
+    await expect(tabs.first()).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+
+    await page.keyboard.press('Tab');
+    await expect(panel(page)).toBeFocused();
+    await expect(panel(page)).toHaveAccessibleName(/^CI & Security-Checks/);
+    await page.keyboard.press('Tab');
+    await expect(panel(page).locator('a').first()).toBeFocused();
+
+    const { violations } = await new AxeBuilder({ page })
+      .include('app-delivery-chain')
+      .withTags(wcag)
+      .analyze();
+    expect(violations.map((violation) => violation.id)).toEqual([]);
+  });
+
+  test('[D5] Klick-Hinweis an der Kette, nach der ersten Wahl nie mehr, ruhig ohne Bewegung', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop',
+      'Zeiten und Speicher hängen nicht an der Breite',
+    );
+    await page.clock.install();
+    await serveStatus(page);
+    await page.goto('/projekte/vps-plattform/');
+    const hint = delivery(page).locator('.hint');
+    const ring = stations(page).nth(1).locator('.node');
+    const animations = () => ring.evaluate((node) => node.getAnimations({ subtree: true }).length);
+    await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+    await expect(hint).toBeHidden();
+
+    await dwellOnChain(page);
+    await expect(hint).toBeVisible();
+    await expect(hint).toHaveAttribute('aria-hidden', 'true');
+    await expect(hint.getByText('Klick dich durch die Stationen')).toBeVisible();
+    await expect(hint.getByText('Tippe auf eine Station')).toBeHidden();
+    await expect.poll(animations, 'Puls am zweiten Knoten').toBeGreaterThan(0);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect.poll(animations, 'ruhiger Ring').toBe(0);
+    await expect(hint).toBeVisible();
+
+    await stations(page).last().click();
+    await expect(hint).toBeHidden();
+    await page.reload();
+    await dwellOnChain(page);
+    await expect(hint).toBeHidden();
+  });
+
+  test('[D6] Zeiger auf einen Commit hebt ihn überall im Feld hervor', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Maus auf einer Breite genügt');
+    await serveStatus(page);
+    await page.goto('/projekte/portfolio/');
+    await choose(page, 'Deployment');
+    const shas = panel(page).locator('[data-sha]');
+    await expect(shas).toHaveCount(2);
+    await expect(panel(page).locator('th')).toContainText(['letzter grüner CI-Lauf']);
+    await shas.first().hover();
+    const sha = await shas.first().getAttribute('data-sha');
+    await expect(panel(page).locator(`[data-sha="${sha}"][data-match]`)).toHaveCount(2);
+    await expect(panel(page).locator('[data-sha][tabindex], a [data-sha]')).toHaveCount(0);
+  });
+
+  test('[D7] [AK8] 320 px: kein horizontales Scrollen auf allen Detailseiten, je Station', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'Breite stellt der Test selbst ein');
+    await serveStatus(page);
+    await page.setViewportSize({ width: 320, height: 844 });
+    const scrolls = () =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+    for (const path of pages.filter((each) => each.startsWith('/projekte/'))) {
+      await page.goto(path);
+      await page.waitForFunction(
+        () => !document.querySelector('app-delivery-chain .tab:not([role])'),
+      );
+      // A measured page fills its tables from status.json; measure only once the data is in.
+      if (hasStatus(path)) await expect(delivery(page).locator('.stand')).toBeVisible();
+      for (const item of await stations(page).all()) {
+        await item.click();
+        await expect(item).toHaveAttribute('aria-selected', 'true');
+        // Opened, so the verify command is measured too.
+        for (const summary of await panel(page).locator('details.verify summary').all()) {
+          await summary.click();
+        }
+        const label = `${path} ${await item.locator('.name').innerText()}`;
+        expect(await scrolls(), label).toBe(false);
+        for (const link of await panel(page).locator('a').all()) {
+          await expect(link, label).toHaveAttribute('href', /^https:\/\//);
+          expect((await link.boundingBox())!.height, label).toBeGreaterThanOrEqual(44);
+        }
+      }
+      expect(await scrolls(), path).toBe(false);
+    }
   });
 });
 
@@ -226,20 +427,18 @@ test.describe('Abruf von /status.json', () => {
   test('[Spec 6.1] der Abruf ersetzt den vorgerenderten Stand', async ({ page }) => {
     await serveStatus(page, (document) => markWithPullRequests(document, 4711));
     await page.goto('/projekte/videoflix/');
-    await expect(step(page, 'Code').locator('.step-event')).toContainText(
-      '4711 gemergte Pull Requests',
-    );
-    await expect(step(page, 'Code').locator('.state')).toHaveText('Belegt');
-    await expect(step(page, 'Code').locator('.step-links a').first()).toHaveAttribute(
+    await expect(valueOf(page, 'Code')).toHaveText('4711 merged PRs');
+    await expect(station(page, 'Code')).toHaveAttribute('data-state', 'verified');
+    await expect(panel(page).locator('a').first()).toHaveAttribute(
       'href',
-      'https://github.com/PhilippKlinger/videoflix-backend',
+      'https://github.com/PhilippKlinger/videoflix-backend/pulls?q=is%3Apr+is%3Amerged',
     );
   });
 
   test('[Spec 6.1] die Seite fragt genau einmal', async ({ page }) => {
     const requests = await serveStatus(page);
     await page.goto('/projekte/videoflix/');
-    await expect(signal(page)).toContainText('2 von 6 belegt');
+    await expect(valueOf(page, 'Code')).toHaveText('75 merged PRs');
     await page.waitForLoadState('networkidle');
     expect(requests()).toBe(1);
   });
@@ -251,7 +450,7 @@ test.describe('Abruf von /status.json', () => {
     });
     await serveStatus(page, (document) => markWithPullRequests(document, 2000));
     await page.goto('/projekte/videoflix/');
-    await expect(step(page, 'Code').locator('.step-event')).toContainText('2000 gemergte');
+    await expect(valueOf(page, 'Code')).toHaveText('2000 merged PRs');
     await expect(notice(page)).toBeEmpty();
   });
 
@@ -267,7 +466,7 @@ test.describe('Abruf von /status.json', () => {
     await page.goto('/projekte/videoflix/');
     // The notice appears only after the request is done, so the file had its chance by then.
     await expect(notice(page)).toHaveText(stale);
-    await expect(step(page, 'Code').locator('.step-event')).toContainText('1000 gemergte');
+    await expect(valueOf(page, 'Code')).toHaveText('1000 merged PRs');
   });
 
   for (const [name, respond] of [
@@ -276,14 +475,16 @@ test.describe('Abruf von /status.json', () => {
     ['HTML statt JSON', { status: 200, contentType: 'text/html', body: '<!doctype html>' }],
     ['anderes Schema', { status: 200, json: { schemaVersion: 2, generatedAt: 'x', projects: {} } }],
   ] as const) {
-    test(`[AK6] ${name}: freundlicher Hinweis, Schritte bleiben vollständig`, async ({ page }) => {
+    test(`[AK6] [D8] ${name}: freundlicher Hinweis, Kette bleibt vollständig`, async ({ page }) => {
       const errors: Error[] = [];
       page.on('pageerror', (error) => errors.push(error));
       await page.route('**/status.json', (route) => route.fulfill(respond));
       await page.goto('/projekte/videoflix/');
       await expect(notice(page)).toHaveText(refreshFailed);
-      await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.videoflix);
-      await expect(steps(page).first().locator('.state')).toHaveText('Nicht abrufbar');
+      await expect(stations(page).locator('.name')).toHaveText(stepNames.videoflix);
+      await expect(valueOf(page, 'Code')).toHaveText('nicht abrufbar');
+      await expect(station(page, 'Code')).toHaveAttribute('data-state', 'unavailable');
+      await expectNoFalseProof(page, 0);
       expect(errors).toEqual([]);
     });
   }
@@ -294,7 +495,7 @@ test.describe('Abruf von /status.json', () => {
     });
     await page.goto('/projekte/videoflix/');
     await expect(notice(page)).toHaveText(refreshFailed);
-    await expect(steps(page)).toHaveCount(6);
+    await expect(stations(page)).toHaveCount(6);
   });
 
   test('[WCAG 4.1.3] die Hinweiszeile steht vor dem Abruf im Accessibility-Baum', async ({
@@ -319,7 +520,7 @@ test.describe('Abruf von /status.json', () => {
     await page.route('**/status.json', (route) => route.abort());
     await page.goto('/projekte/videoflix/');
     await expect(notice(page)).toHaveText(refreshFailed);
-    await expect(steps(page)).toHaveCount(6);
+    await expect(stations(page)).toHaveCount(6);
   });
 
   test.describe('später Abruf nach einem Seitenwechsel im Browser', () => {
@@ -341,7 +542,7 @@ test.describe('Abruf von /status.json', () => {
 
     async function leavePlatformForHome(page: Page): Promise<void> {
       await page.goto('/projekte/vps-plattform/');
-      await expect(steps(page)).toHaveCount(3);
+      await expect(stations(page)).toHaveCount(3);
       await page.locator('main a.back').click();
       await expect(page.locator('#projekte a.row')).toHaveCount(5);
       await expect(delivery(page)).toHaveCount(0);
@@ -380,7 +581,7 @@ test.describe('Abruf von /status.json', () => {
       await expect(page.locator('#projekte .notice')).toHaveText(refreshFailed);
       await page.goBack();
       await expect(page.locator('main h1')).toHaveText('Videoflix');
-      await expect(signal(page)).toContainText('2 von 6 belegt');
+      await expect(valueOf(page, 'Code')).toContainText('merged PRs');
       await expect(notice(page)).toBeEmpty();
     });
 
@@ -399,25 +600,22 @@ test.describe('Abruf von /status.json', () => {
 
   // Rollout: until the next status.yml run the server serves the file of the old collector.
   test.describe('alter Stand mit conduit, ohne vps-plattform', () => {
-    test('[AK6] die VPS-Seite meldet es und bleibt vollständig', async ({ page }) => {
+    test('[AK6] [D8] die VPS-Seite meldet es und bleibt vollständig', async ({ page }) => {
       const errors: Error[] = [];
       page.on('pageerror', (error) => errors.push(error));
       await serveStatus(page, beforeVps);
       await page.goto('/projekte/vps-plattform/');
       await expect(notice(page)).toHaveText(refreshFailed);
-      await expect(delivery(page).locator('.step h3')).toHaveText(stepNames['vps-plattform']);
-      await expect(step(page, 'CI & Security-Checks').locator('.state')).toHaveText(
-        'Nicht abrufbar',
-      );
-      await expect(step(page, 'Betrieb').locator('.state')).toHaveText('Noch nicht eingerichtet');
-      await expect(signal(page)).toContainText('0 von 3 belegt');
+      await expect(stations(page).locator('.name')).toHaveText(stepNames['vps-plattform']);
+      await expect.poll(() => statesOf(page)).toEqual(['unavailable', 'unavailable', 'notSetUp']);
+      await expectNoFalseProof(page, 0);
       expect(errors).toEqual([]);
     });
 
     test('[AK6] Videoflix zeigt denselben Stand normal', async ({ page }) => {
       await serveStatus(page, beforeVps);
       await page.goto('/projekte/videoflix/');
-      await expect(signal(page)).toContainText('2 von 6 belegt');
+      await expect(valueOf(page, 'Code')).toContainText('merged PRs');
       await expect(notice(page)).toBeEmpty();
     });
   });
@@ -425,7 +623,12 @@ test.describe('Abruf von /status.json', () => {
   test('[Spec 6.1] fester Inhalt fragt nichts ab: developer-workspace-kit', async ({ page }) => {
     const requests = await serveStatus(page);
     await page.goto('/projekte/developer-workspace-kit/');
-    await expect(steps(page)).toHaveCount(3);
+    await expect(page.locator('main h1')).toBeVisible();
+    // [D1] Order of the blocks and the links: projects.e2e.ts checks them for every page.
+    await expect(delivery(page).locator('.private')).toHaveText(
+      'Code privat. Die Läufe zeige ich im Gespräch.',
+    );
+    await expect(stations(page)).toHaveCount(0);
     await page.waitForLoadState('networkidle');
     expect(requests()).toBe(0);
     await expect(notice(page)).toBeEmpty();
@@ -448,7 +651,7 @@ test.describe('Vorschaubild', () => {
       await expect(image).toBeVisible();
       expect(await image.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(0);
       const before = (await image.boundingBox())!;
-      const stepsBefore = (await delivery(page).boundingBox())!;
+      const chainBefore = (await delivery(page).boundingBox())!;
       expect(before.height).toBeCloseTo((before.width * preview.height) / preview.width, 0);
 
       deliver();
@@ -456,9 +659,9 @@ test.describe('Vorschaubild', () => {
         .poll(() => image.evaluate((el: HTMLImageElement) => el.naturalWidth))
         .toBe(preview.width);
       const after = (await image.boundingBox())!;
-      const stepsAfter = (await delivery(page).boundingBox())!;
+      const chainAfter = (await delivery(page).boundingBox())!;
       expect(after.height).toBeCloseTo(before.height, 0);
-      expect(stepsAfter.y).toBeCloseTo(stepsBefore.y, 0);
+      expect(chainAfter.y).toBeCloseTo(chainBefore.y, 0);
     });
   }
 });
@@ -467,45 +670,43 @@ test.describe('Fester Inhalt', () => {
   test('[AK3] Neuro Check-in: Release mit Link, der Rest Code privat', async ({ page }) => {
     await serveStatus(page);
     await page.goto('/projekte/neuro-check-in/');
-    await expect(signal(page)).toContainText('2 von 4 öffentlich belegt, Code privat');
-    await expect(signal(page)).toContainText('100 % (24 h)');
-    await expect(step(page, 'Website').locator('.state-verified')).toHaveText('Belegt');
-    await expect(step(page, 'Code').locator('.state-private')).toHaveText('Code privat');
-    const release = step(page, 'Release im Play Store');
-    await expect(release.locator('.state-verified')).toHaveText('Belegt');
-    await expect(release.locator('.step-event')).toHaveCount(0);
-    await expect(release.locator('.step-links a')).toHaveAttribute(
+    // The status line comes from the uptime of the website, the release has no fixed version.
+    await expect(page.locator('main .intro .signal')).toContainText('100 % (24 h)');
+    await expect.poll(() => statesOf(page)).toEqual(['private', 'private', 'verified', 'verified']);
+    await expect(valueOf(page, 'Code')).toHaveText('Code privat');
+    await expect(station(page, 'Code').locator('.lock')).toBeVisible();
+    await expect(valueOf(page, 'Release im Play Store')).toHaveText('öffentlich');
+    await expect(valueOf(page, 'Website')).toHaveText('1 von 1 up');
+    await choose(page, 'Release im Play Store');
+    await expect(panel(page).locator('a')).toHaveAttribute(
       'href',
       /^https:\/\/play\.google\.com\//,
     );
-  });
-
-  test('[AK3] Kit: alles Code privat, ohne leeren Link-Block', async ({ page }) => {
-    await page.goto('/projekte/developer-workspace-kit/');
-    await expect(signal(page)).toContainText('Öffentliches Repo folgt');
-    await expect(delivery(page).locator('.state-private')).toHaveCount(3);
-    await expect(page.locator('main .links')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Links', exact: true })).toHaveCount(0);
   });
 });
 
 test.describe('Ohne JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('[AK7] vollständig lesbar ohne JavaScript', async ({ page }) => {
+  test('[AK7] [D4] alle Stationen mit Wert und Feld untereinander', async ({ page }) => {
     await page.goto('/projekte/videoflix/');
     await expect(page.locator('main h1')).toHaveText('Videoflix');
-    await expect(signal(page)).toContainText('von 6 belegt');
-    await expect(delivery(page).locator('.step h3')).toHaveText(stepNames.videoflix);
-    await expect(delivery(page).locator('.state')).toHaveCount(6);
-    await expect(delivery(page).locator('.step-sentence')).toHaveCount(6);
+    await expect(stations(page).locator('.name')).toHaveText(stepNames.videoflix);
+    for (const value of await stations(page).locator('.value').all()) {
+      await expect(value).toBeVisible();
+    }
+    const fields = delivery(page).locator('.panel');
+    await expect(fields).toHaveCount(6);
+    for (const field of await fields.all()) await expect(field).toBeVisible();
+    await expect(delivery(page).locator('[role="tab"], [role="tablist"]')).toHaveCount(0);
     await expect(page.locator('main .links a')).toHaveCount(2);
     await expect(page.locator('main a.back')).toHaveAttribute('href', '/#projekte');
   });
 
   test('[AK7] fester Inhalt samt Beleg ohne JavaScript', async ({ page }) => {
     await page.goto('/projekte/neuro-check-in/');
-    await expect(step(page, 'Release im Play Store').locator('.step-links a')).toBeVisible();
+    const release = delivery(page).locator('.panel').filter({ hasText: 'Release im Play Store' });
+    await expect(release.locator('a')).toBeVisible();
     await expect(notice(page)).toBeEmpty();
   });
 });

@@ -7,7 +7,7 @@ import { pages } from './support/site';
 const fixtureText = readFileSync('e2e/fixtures/status.json', 'utf8');
 const projectPages = pages.filter((path) => path.startsWith('/projekte/'));
 const narrowest = 320;
-const boxes = '.card, .row, .step, .block, .part, footer .footer';
+const boxes = '.card, .row, .panel, .block, .part, footer .footer';
 
 /** Real snapshot with a fresh time, so every step shows its longest real label. */
 async function serveStatus(page: Page): Promise<void> {
@@ -20,6 +20,8 @@ async function open(page: Page, path: string): Promise<void> {
   await serveStatus(page);
   await page.goto(path);
   await page.evaluate(() => document.fonts.ready);
+  // After hydration the chain shows one field, so its links stay where they were measured.
+  await page.waitForFunction(() => !document.querySelector('app-delivery-chain .tab:not([role])'));
 }
 
 /** The project width, and on the phone the narrowest width as well. */
@@ -36,7 +38,7 @@ async function atEachWidth(page: Page, check: (width: number) => Promise<void>):
   }
 }
 
-/** Elements that leave the content box of their nearest card, row or step, or clip their text. */
+/** Elements that leave the content box of their nearest card, row or panel, or clip their text. */
 function outsideTheirBox(page: Page, selector: string): Promise<string[]> {
   return page.evaluate((boxSelector) => {
     const name = (el: Element) =>
@@ -80,7 +82,7 @@ test.describe('Responsive', () => {
     test(`[AK15] alle Links in Zeilen und Schritten ab 44 px: ${path}`, async ({ page }) => {
       await open(page, path);
       const links = page.locator(
-        '#projekte a.row, app-delivery-steps a, .project .back, .project .links a',
+        '#projekte a.row, app-delivery-chain .panel:not([hidden]) a, .project .back, .project .links a',
       );
       expect(await links.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
@@ -100,11 +102,12 @@ test.describe('Responsive', () => {
       page,
     }) => {
       await open(page, path);
-      const states = page.locator('.step-head .state');
+      // On a project page the value of a station carries its state, the kit has one private line.
+      const states = page.locator('.tab .value, app-delivery-chain .private');
       expect(await states.count()).toBeGreaterThan(0);
       await atEachWidth(page, async (width) => {
-        const offenders = await outsideTheirBox(page, '.step');
-        const stateOffenders = offenders.filter((entry) => /\.state\b|^svg/.test(entry));
+        const offenders = await outsideTheirBox(page, '.tab');
+        const stateOffenders = offenders.filter((entry) => /\.value\b|^svg/.test(entry));
         expect(stateOffenders, `bei ${width} px`).toEqual([]);
       });
     });
