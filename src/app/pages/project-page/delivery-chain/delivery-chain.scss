@@ -21,10 +21,11 @@ h2 {
   line-height: var(--leading-tight);
 }
 
+// Muted, not subtle: subtle falls below 4.5:1 on the brightest haze (contrast.e2e.ts).
 .stand {
   font-family: var(--font-code);
   font-size: var(--text-sm);
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
 }
 
 .notice {
@@ -350,7 +351,8 @@ h2 {
     font-family: var(--font-code);
     font-size: var(--text-sm);
     line-height: var(--leading-tight);
-    color: var(--color-text-subtle);
+    // On the haze as well, so muted, not subtle.
+    color: var(--color-text-muted);
     white-space: nowrap;
   }
 
