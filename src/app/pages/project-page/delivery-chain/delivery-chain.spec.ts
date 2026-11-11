@@ -92,7 +92,7 @@ describe('DeliveryChain', () => {
     localStorage.removeItem(HINT_KEY);
   });
 
-  it('renders all stations before hydration', async () => {
+  it('[D4] renders all stations before hydration', async () => {
     const fixture = await renderPrerendered('videoflix', documentWith(linkedStatus()));
     const element = fixture.nativeElement as HTMLElement;
     const plan = deliveryPlans['videoflix'];
@@ -108,13 +108,13 @@ describe('DeliveryChain', () => {
   });
 
   // A click before the list has become tabs is no choice of the reader and keeps the click hint.
-  it('takes a click as a choice only once the list has become tabs', async () => {
+  it('[D5] takes a click as a choice only once the list has become tabs', async () => {
     const fixture = await renderPrerendered('vps-plattform');
     (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.tab')[1].click();
     expect(fixture.componentInstance.selected()).toBe(0);
   });
 
-  it('adds the click hint in the browser, hidden from screen readers and not yet shown', async () => {
+  it('[D5] adds the click hint in the browser, hidden from screen readers and not yet shown', async () => {
     const element = await renderChain('vps-plattform');
     const hint = element.querySelector('.hint');
 
@@ -127,7 +127,7 @@ describe('DeliveryChain', () => {
     expect(element.querySelector('.beckon')).toBeNull();
   });
 
-  it('remembers the first choice of a station for the next visit', async () => {
+  it('[D5] remembers the first choice of a station for the next visit', async () => {
     const element = await renderChain('vps-plattform');
     expect(localStorage.getItem(HINT_KEY)).toBeNull();
 
@@ -135,7 +135,7 @@ describe('DeliveryChain', () => {
     expect(localStorage.getItem(HINT_KEY)).toBe('1');
   });
 
-  it('turns into tabs with one field after the first render', async () => {
+  it('[D4] turns into tabs with one field after the first render', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
 
     expect(element.querySelector('[role="tablist"]')).not.toBeNull();
@@ -151,7 +151,7 @@ describe('DeliveryChain', () => {
     expect(shownPanels(element)).toHaveLength(1);
   });
 
-  it('selects the next tab with ArrowRight and wraps', async () => {
+  it('[D4] selects the next tab with ArrowRight and wraps', async () => {
     const element = await renderChain('vps-plattform');
     const [first, second, last] = tabs(element);
     first.focus();
@@ -175,7 +175,7 @@ describe('DeliveryChain', () => {
     ]);
   });
 
-  it('labels the panel with the selected tab', async () => {
+  it('[D4] labels the panel with the selected tab', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
     tabs(element)[1].click();
     TestBed.tick();
@@ -190,7 +190,7 @@ describe('DeliveryChain', () => {
     );
   });
 
-  it('shows name, value and transition per station from the chain view', async () => {
+  it('[D2] shows name, value and transition per station from the chain view', async () => {
     const status = linkedStatus();
     const element = await renderChain('videoflix', documentWith(status));
     const view = buildChainView(deliveryPlans['videoflix'], { generatedAt, status });
@@ -206,7 +206,7 @@ describe('DeliveryChain', () => {
     });
   });
 
-  it('marks a state with a sign, never with color alone', async () => {
+  it('[D2] marks a state with a sign, never with color alone', async () => {
     const status = linkedStatus();
     status.live.signals.components[0].matchesLatestGreen = false;
     const element = await renderChain('videoflix', documentWith(status));
@@ -219,7 +219,7 @@ describe('DeliveryChain', () => {
     expect(byName('Code').querySelector('.visually-hidden')?.textContent).toContain('Belegt');
   });
 
-  it('offers the verify command for the attested image', async () => {
+  it('[D3] offers the verify command for the attested image', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
     tabs(element)[2].click();
     TestBed.tick();
@@ -231,7 +231,7 @@ describe('DeliveryChain', () => {
     );
   });
 
-  it('highlights every equal commit under the pointer, without a tab stop', async () => {
+  it('[D6] highlights every equal commit under the pointer, without a tab stop', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
     tabs(element)[3].click();
     TestBed.tick();
@@ -264,7 +264,7 @@ describe('DeliveryChain', () => {
     expect((await renderChain('videoflix')).querySelector('.stand')).toBeNull();
   });
 
-  it('keeps every station without data, with no tick and no table', async () => {
+  it('[D8] keeps every station without data, with no tick and no table', async () => {
     const element = await renderChain('videoflix');
 
     expect(tabs(element)).toHaveLength(6);
@@ -303,7 +303,7 @@ describe('DeliveryChain', () => {
   });
 
   // Without a server behind it the real request fails, no mock involved.
-  it('tells about a failed request on a measured page', async () => {
+  it('[D8] tells about a failed request on a measured page', async () => {
     const element = await renderChain('videoflix');
     await vi.waitFor(() => expect(statusLine(element)).toBe(deliveryTexts.refreshFailed));
   });

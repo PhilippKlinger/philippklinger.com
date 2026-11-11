@@ -48,7 +48,7 @@ describe('ChainPanel', () => {
     );
   });
 
-  it('shows the table with its heads, a label per stacked value and the links in their row', () => {
+  it('[D7] shows the table with its heads, a label per stacked value and the links in their row', () => {
     const panel = render(station());
 
     expect(texts(panel.querySelectorAll('th'))).toEqual(['Repo', 'CI', 'Commit']);
@@ -59,7 +59,7 @@ describe('ChainPanel', () => {
     expect(cells[2].querySelector('[data-sha]')?.getAttribute('data-sha')).toBe('82dcf43');
   });
 
-  it('marks the commit under the pointer', () => {
+  it('[D6] marks the commit under the pointer', () => {
     expect(render(station()).querySelector('[data-match]')).toBeNull();
     TestBed.resetTestingModule();
     expect(render(station(), '82dcf43').querySelector('[data-sha][data-match]')).not.toBeNull();

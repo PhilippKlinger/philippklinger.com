@@ -15,7 +15,7 @@ describe('ChainHint', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('shows 2.5 s after the chain comes into view', () => {
+  it('[D5] shows 2.5 s after the chain comes into view', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(2499);
@@ -25,7 +25,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('hides after 6 s', () => {
+  it('[D5] hides after 6 s', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(2500 + 5999);
@@ -35,7 +35,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('shows again 10 s after the first showing hid, once', () => {
+  it('[D5] shows again 10 s after the first showing hid, once', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(8500);
@@ -51,7 +51,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('postpones the second showing by activity while hidden', () => {
+  it('[D5] postpones the second showing by activity while hidden', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(15000);
@@ -63,7 +63,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('keeps showing on activity while shown', () => {
+  it('[D5] keeps showing on activity while shown', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(2500);
@@ -74,7 +74,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('arms no timer on activity after destroy', () => {
+  it('[D5] arms no timer on activity after destroy', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(8500);
@@ -83,7 +83,7 @@ describe('ChainHint', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('never shows after the first choice, also in a new instance with the same storage', () => {
+  it('[D5] never shows after the first choice, also in a new instance with the same storage', () => {
     const storage = memoryStorage();
     const hint = new ChainHint(storage);
     hint.inView(true);
@@ -102,7 +102,7 @@ describe('ChainHint', () => {
     next.destroy();
   });
 
-  it('works without storage', () => {
+  it('[D5] works without storage', () => {
     const throwing = {
       getItem: () => {
         throw new Error('blocked');
@@ -122,7 +122,7 @@ describe('ChainHint', () => {
     }
   });
 
-  it('hides and cancels timers when the chain leaves the view', () => {
+  it('[D5] hides and cancels timers when the chain leaves the view', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(2500);
@@ -133,7 +133,7 @@ describe('ChainHint', () => {
     hint.destroy();
   });
 
-  it('keeps the 6 s hide when the chain is reported in view again while shown', () => {
+  it('[D5] keeps the 6 s hide when the chain is reported in view again while shown', () => {
     const hint = new ChainHint(memoryStorage());
     hint.inView(true);
     vi.advanceTimersByTime(2500);
