@@ -124,6 +124,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
           },
         ],
       },
+      // DRAFT
       { name: 'Website', sources: ['stability'], setUp: true, sentences: monitoringSentences },
     ],
   },

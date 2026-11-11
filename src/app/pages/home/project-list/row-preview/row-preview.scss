@@ -8,13 +8,13 @@ $cta-column: 13rem;
 $hidden-scale: 0.96;
 $fade: 0.15s ease;
 
-// Fixed beside the pointer, below the ring (z-index 40); clicks go through to the row. Touch and
+// Fixed beside the pointer, below the ring (z-index 40) and the header (z-index 10); clicks go through to the row. Touch and
 // stacked rows show the small image in the row instead, so this one stays out there.
 :host {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 20;
+  z-index: 9;
   display: none;
   width: $follow-width;
   aspect-ratio: 16 / 10;
