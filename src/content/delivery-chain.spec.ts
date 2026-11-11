@@ -156,7 +156,7 @@ describe('buildChainView', () => {
     expect(code.value).toBe('121 merged PRs');
     expect(code.table?.head).toEqual(['Repo', 'Merged PRs', '']);
     expect(code.table?.rows[0]).toEqual([
-      { text: 'videoflix-backend' },
+      { text: 'Backend' },
       { text: '42' },
       { text: 'PRs', url: `${github}/videoflix-backend/pulls?q=is%3Apr+is%3Amerged` },
     ]);

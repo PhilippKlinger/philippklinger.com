@@ -136,10 +136,10 @@ function valueOfCode(status: ProjectStatus): string | null {
   return counts.length > 0 ? `${sum(counts)} merged PRs` : null;
 }
 
-function tableOfCode(status: ProjectStatus): ChainTable | null {
+function tableOfCode(status: ProjectStatus, { plan }: Context): ChainTable | null {
   const repos = status.code.signals.repos.filter((repo) => repo.mergedPullRequests !== null);
   const rows = repos.map((repo) => [
-    { text: repoName(repo.repo) },
+    { text: labelOf(plan, repo.repo) },
     { text: String(repo.mergedPullRequests) },
     linkCell(linkOf(status.code.links, 'pull-requests', repo.repo), 'PRs'),
   ]);
