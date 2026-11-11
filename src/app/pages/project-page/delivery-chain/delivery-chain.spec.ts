@@ -175,6 +175,21 @@ describe('DeliveryChain', () => {
     ]);
   });
 
+  // A Tab right after the arrow key must not reach the field that is about to be hidden.
+  // No press() here: its TestBed.tick() would render in between and hide the race.
+  it('[D4] shows the field of a tab already when the tab takes the focus', async () => {
+    const element = await renderChain('vps-plattform');
+    const [first, second] = tabs(element);
+    first.focus();
+    let shownOnFocus: string[] = [];
+    second.addEventListener('focus', () => (shownOnFocus = shownPanels(element).map((p) => p.id)));
+
+    first.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+    );
+    expect(shownOnFocus).toEqual(['chain-panel-1']);
+  });
+
   it('[D4] labels the panel with the selected tab', async () => {
     const element = await renderChain('videoflix', documentWith(linkedStatus()));
     tabs(element)[1].click();
