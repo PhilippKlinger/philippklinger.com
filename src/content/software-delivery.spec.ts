@@ -529,19 +529,6 @@ describe('buildDeliveryView', () => {
       ]);
     });
 
-    it('shows the private counter with at least one verified step', () => {
-      const view = buildDeliveryView({ steps: [hidden, hidden, release] }, null);
-      expect(view.counter).toBe('1 von 3 öffentlich belegt, Code privat');
-    });
-
-    it('uses the footnote when every step is private', () => {
-      const view = buildDeliveryView(
-        { steps: [hidden, hidden], footnote: 'Öffentliches Repo folgt' },
-        null,
-      );
-      expect(view.counter).toBe('Öffentliches Repo folgt');
-    });
-
     it('shows the fixed signal', () => {
       const fixedSignal = {
         state: 'verified' as const,
@@ -551,18 +538,6 @@ describe('buildDeliveryView', () => {
       expect(buildDeliveryView({ steps: [release], fixedSignal }, null).signal).toEqual(
         fixedSignal,
       );
-    });
-  });
-
-  describe('counter (spec 4.4)', () => {
-    it('does not count partial in the counter', () => {
-      const plan = { steps: [step(['code']), step(['restore']), step(['supplyChain'])] };
-      expect(viewOf(plan, provenStatus(noAttestation)).counter).toBe('2 von 3 belegt');
-    });
-
-    it('counts all steps of the plan, also without data', () => {
-      const plan = { steps: [step(['code']), step(['restore'], false)] };
-      expect(buildDeliveryView(plan, null).counter).toBe('0 von 2 belegt');
     });
   });
 
@@ -733,7 +708,6 @@ function textsOf(view: DeliveryView): (string | null)[] {
   return [
     view.signal.status,
     view.signal.when,
-    view.counter,
     ...view.steps.flatMap((item) => [item.name, item.sentence]),
   ].filter((text) => text !== null);
 }

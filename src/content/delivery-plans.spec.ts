@@ -335,13 +335,12 @@ describe('deliveryPlans', () => {
     }
   });
 
-  it('fixes signal and footnote of the Kit', () => {
+  it('fixes the signal of the Kit', () => {
     const plan = deliveryPlans['developer-workspace-kit'];
     expect(plan.fixedSignal).toEqual({
       state: 'private',
       status: 'Code privat',
       when: '',
     });
-    expect(plan.footnote).toBe('Öffentliches Repo folgt');
   });
 });

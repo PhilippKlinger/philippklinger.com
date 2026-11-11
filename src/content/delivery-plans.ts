@@ -160,7 +160,6 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
   },
   'developer-workspace-kit': {
     fixedSignal: { state: 'private', status: 'Code privat', when: '' },
-    footnote: 'Öffentliches Repo folgt',
     steps: [privateStep('Code', 'CI'), privateStep('CI', 'Release'), privateStep('Release')],
   },
   // The site itself: no own data, so a restore test does not exist instead of being "not planned".

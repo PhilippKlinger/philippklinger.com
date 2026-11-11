@@ -62,8 +62,6 @@ export interface DeliveryPlan {
   statusKey?: ProjectKey;
   runningLabel?: string;
   fixedSignal?: DeliveryView['signal'];
-  /** Overrides the counter. */
-  footnote?: string;
   repoLabels?: Record<string, string>;
   steps: DeliveryStepPlan[];
 }
@@ -79,7 +77,6 @@ export interface DeliveryView {
   /** The state sets icon and color, so a red signal never looks like a green one. */
   signal: { state: StepState; status: string; when: string };
   steps: DeliveryStepView[];
-  counter: string;
 }
 
 /** One project out of status.json, so a page never carries the data of another project. */
@@ -335,15 +332,6 @@ function fixedView(step: FixedStep): DeliveryStepView {
   };
 }
 
-// DRAFT: counter text, wording to be approved (PK-23).
-function counterOf(plan: DeliveryPlan, steps: DeliveryStepView[]): string {
-  if (plan.footnote) return plan.footnote;
-  const verified = steps.filter((step) => step.state === 'verified').length;
-  const hasPrivate = steps.some((step) => step.state === 'private');
-  const suffix = hasPrivate ? 'öffentlich belegt, Code privat' : 'belegt';
-  return `${verified} von ${steps.length} ${suffix}`;
-}
-
 function statesWith(
   plan: DeliveryPlan,
   steps: DeliveryStepView[],
@@ -425,7 +413,7 @@ export function buildDeliveryView(plan: DeliveryPlan, snapshot: Snapshot): Deliv
   const steps = plan.steps.map((step) =>
     isMeasured(step) ? measuredView(step, status) : fixedView(step),
   );
-  return { signal: signalOf(plan, steps, snapshot), steps, counter: counterOf(plan, steps) };
+  return { signal: signalOf(plan, steps, snapshot), steps };
 }
 
 type Check = (value: unknown) => boolean;
