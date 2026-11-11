@@ -6,21 +6,32 @@
 
   <div class="overview">
     <div class="intro">
+      <p class="signal">
+        <app-state-badge [state]="statusLine().state" [label]="statusLine().status" />
+        @if (statusLine().when; as when) {
+          <span class="signal-when">{{ when }}</span>
+        }
+      </p>
       <h1>{{ project().title }}</h1>
       <p class="summary">{{ project().summary }}</p>
+      <p class="tech">{{ tech() }}</p>
       @if (project().links.length > 0) {
         <ul class="links">
-          @for (link of project().links; track link.url) {
+          @for (link of project().links; track link.url; let first = $first) {
             <li>
-              <a [href]="link.url">{{ link.label }}</a>
+              <a class="button" [class.button-primary]="first" [href]="link.url">
+                <span class="link-label">{{ link.label }}</span>
+                <span aria-hidden="true">↗</span>
+              </a>
             </li>
           }
         </ul>
       }
     </div>
 
-    @if (project().preview; as preview) {
-      <div class="media">
+    <!-- 16:10 frame; the image keeps its own ratio inside, so its height is reserved. -->
+    <div class="media">
+      @if (project().preview; as preview) {
         <!-- Above the fold, so no lazy loading. Empty alt: the text says it all. -->
         <img
           [src]="preview.src"
@@ -29,8 +40,11 @@
           alt=""
           fetchpriority="high"
         />
-      </div>
-    }
+      } @else {
+        <!-- Until Philipp delivers the image; decoration only. -->
+        <div class="placeholder" aria-hidden="true"></div>
+      }
+    </div>
   </div>
 
   <app-delivery-chain [slug]="project().slug" />
@@ -38,43 +52,36 @@
   @if (built(); as built) {
     <section class="how-built" aria-labelledby="how-built-title">
       <h2 id="how-built-title">{{ deliveryTexts.howBuilt }}</h2>
-      <div class="blocks">
-        <section class="block block-architecture">
+      <div class="cards">
+        <section class="card card-architecture">
           <h3>{{ deliveryTexts.architecture }}</h3>
+          <p>{{ built.architecture.summary }}</p>
           <ol class="parts">
-            @for (part of built.architecture.parts; track part.name) {
+            @for (part of built.architecture.parts; track part) {
               <li>
-                <div class="part">
-                  <strong>{{ part.name }}</strong>
-                  <span>{{ part.role }}</span>
-                </div>
+                <span class="part">{{ part }}</span>
               </li>
             }
           </ol>
-          <p>{{ built.architecture.summary }}</p>
         </section>
 
-        <section class="block block-decisions">
-          <h3>{{ deliveryTexts.decisions }}</h3>
+        <section class="card card-decision">
+          <h3>{{ deliveryTexts.decision }}</h3>
           @for (decision of built.decisions; track decision.title) {
-            <div class="decision">
-              <h4>{{ decision.title }}</h4>
-              <dl>
-                <dt>{{ blockTexts.reason }}</dt>
-                <dd>{{ decision.reason }}</dd>
-                <dt>{{ blockTexts.price }}</dt>
-                <dd>{{ decision.price }}</dd>
-              </dl>
-            </div>
+            <h4>{{ decision.title }}</h4>
+            <dl>
+              <dt>{{ blockTexts.reason }}</dt>
+              <dd>{{ decision.reason }}</dd>
+              <dt>{{ blockTexts.price }}</dt>
+              <dd>{{ decision.price }}</dd>
+            </dl>
           }
         </section>
 
-        <section class="block block-failure">
+        <section class="card card-failure">
           <h3>{{ deliveryTexts.failure }}</h3>
           <h4>{{ built.failure.title }}</h4>
           <dl>
-            <dt>{{ blockTexts.what }}</dt>
-            <dd>{{ built.failure.what }}</dd>
             <dt>{{ blockTexts.found }}</dt>
             <dd>{{ built.failure.found }}</dd>
             <dt>{{ blockTexts.changed }}</dt>
