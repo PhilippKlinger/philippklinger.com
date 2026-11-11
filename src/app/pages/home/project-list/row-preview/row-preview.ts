@@ -110,7 +110,6 @@ export class RowPreview {
 
   private startFollowing(): void {
     this.host.classList.remove('is-anchored');
-    this.host.style.top = '';
     if (this.frameId) return;
     // Starts at the pointer like the ring, so with the same easing both move as one.
     this.position = this.pointer;
@@ -121,12 +120,12 @@ export class RowPreview {
   private anchorIn(row: HTMLElement): void {
     this.stopFollowing();
     this.host.classList.add('is-anchored');
-    this.host.style.translate = '';
     // Now absolute, so its offset parent is the list that holds the rows. Rects, not offsetTop:
     // equal rows have fractional heights, and a rounded value would sit off the middle.
     const list = this.host.offsetParent?.getBoundingClientRect().top ?? 0;
     const { top, height } = row.getBoundingClientRect();
-    this.host.style.top = `${top - list + height / 2}px`;
+    // Moved by translate, not top: a changed top counts as a layout shift, a transform does not.
+    this.host.style.translate = `0 calc(${top - list + height / 2}px - 50%)`;
   }
 
   private stopFollowing(): void {

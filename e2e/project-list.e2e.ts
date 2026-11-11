@@ -354,6 +354,14 @@ test.describe('Vorschaubild', () => {
   }, testInfo) => {
     onlyIn(testInfo, 'desktop');
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(() => {
+      window.layoutShift = 0;
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries() as unknown as LayoutShift[]) {
+          if (!entry.hadRecentInput) window.layoutShift += entry.value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
     await openHydrated(page);
     const neuro = row(page, 'Neuro Check-in');
     await neuro.scrollIntoViewIfNeeded();
@@ -371,6 +379,13 @@ test.describe('Vorschaubild', () => {
       await twoFrames(page);
       expect(await boxOf(preview(page))).toEqual(before);
     }
+    // Moving on to other rows re-anchors the image; mouse movement is no input that excuses a shift.
+    for (const other of [links(page).nth(0), links(page).nth(1), neuro]) {
+      const box = await boxOf(other);
+      await page.mouse.move(box.x + box.width * 0.3, box.y + box.height / 2);
+      await twoFrames(page);
+    }
+    expect(await page.evaluate(() => window.layoutShift)).toBeLessThan(0.01);
   });
 
   test('[L5] Touch und gestapelte Zeilen: kleines Bild links in jeder Zeile', async ({
