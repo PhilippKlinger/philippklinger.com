@@ -26,12 +26,12 @@ export const focusAreas: FocusArea[] = [
     title: 'CI/CD & Security',
     description:
       'Jede Änderung über Pull Request, mit Quality Gates, automatisierten Tests und Security-Checks.',
-    tools: ['GitHub Actions', 'Docker / Compose', 'CodeQL', 'gitleaks', 'Dependabot'],
+    tools: ['GitHub Actions', 'Docker / Compose', 'CodeQL', 'gitleaks', 'Trivy', 'Dependabot'],
   },
   {
     title: 'Operations',
     description:
       'Linux-Server einrichten, per Monitoring überwachen und aus Backups wiederherstellen.',
-    tools: ['Linux', 'Proxmox', 'Caddy', 'Sentry', 'Uptime Kuma', 'Backups'],
+    tools: ['Linux', 'NGINX', 'Caddy', 'Sentry', 'Uptime Kuma', 'Backups'],
   },
 ];
