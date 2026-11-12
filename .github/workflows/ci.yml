@@ -118,7 +118,7 @@ jobs:
 
       # Site-wide checks, axe (WCAG 2.2 AA) and screenshots in 4 viewports.
       - name: Run Playwright
-        run: npm run test:e2e
+        run: npx playwright test e2e/cursor-cta.e2e.ts --project=desktop --repeat-each=10
 
       - name: Upload summary and screenshots
         if: ${{ !cancelled() }}

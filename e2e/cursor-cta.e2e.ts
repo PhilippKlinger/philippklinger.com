@@ -353,9 +353,11 @@ test.describe('eigener Zeiger', () => {
     await page.goto('/');
   });
 
+  // No check for the normal pointer before the first move: on the Linux runner every new
+  // document gets a trusted pointerover at (0,0) without any input (PK-49), and moving the
+  // pointer out does not reliably undo it. The test "außerhalb des Fensters" covers the
+  // normal pointer once the pointer is outside.
   test('[PK-36] der Punkt folgt dem Zeiger ohne Verzögerung', async ({ page }) => {
-    await expectNormalPointer(page);
-
     const first = await hoverCenter(page, heading(page));
     await expectDotOn(page);
     await expectDotSize(page, '10px');
