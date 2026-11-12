@@ -350,11 +350,12 @@ const addFields = (page: Page) =>
 test.describe('eigener Zeiger', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     desktopOnly(testInfo);
-    // Headless Chromium in CI treats the pointer as resting at (0,0) and sends a trusted
-    // pointerover to the header shortly after load (PK-49). Like a real mouse in the window,
-    // that brings the dot. These tests start with no pointer in the window, so put it outside.
-    await page.mouse.move(-5, -5);
     await page.goto('/');
+    // Since Playwright 1.62 (Chromium RenderDocument) every new document starts with the
+    // pointer at (0,0); in CI the header there gets a trusted pointerover shortly after load
+    // (PK-49). Like a real mouse in the window, that brings the dot. These tests start with
+    // no pointer in the window, so it moves out after the navigation, not before.
+    await page.mouse.move(-10, -10);
   });
 
   test('[PK-36] der Punkt folgt dem Zeiger ohne Verzögerung', async ({ page }) => {
