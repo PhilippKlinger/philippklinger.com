@@ -256,6 +256,14 @@ jobs:
         run: |
           set -Eeuo pipefail
           check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
+          # Right after the upload the host served the old files for a short time (12.11.),
+          # so the checks start once the site reports exactly this commit.
+          for attempt in $(seq 1 12); do
+            served=$(curl -fsS "$SITE/version.json" | jq -r .sha || true)
+            test "$served" = "$GITHUB_SHA" && break
+            test "$attempt" -lt 12 || { echo "::error::site still serves ${served:-nothing}"; exit 1; }
+            sleep 10
+          done
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
@@ -275,4 +283,7 @@ jobs:
           check "http not redirected" "$(curl -sSI http://philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
           check "robots.txt missing" "$(curl -sSI "$SITE/robots.txt")" '^HTTP/[0-9.]+ 200'
           check "sitemap missing" "$(curl -sSI "$SITE/sitemap.xml")" '^HTTP/[0-9.]+ 200'
+          # F-24: the cards read this file; Status uploads it, the mirror never deletes it.
+          curl -fsS "$SITE/status.json" | jq -e '.schemaVersion == 1' > /dev/null \
+            || { echo "::error::status.json missing or not readable"; exit 1; }
           echo "Production answers as expected."
