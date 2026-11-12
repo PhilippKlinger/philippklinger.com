@@ -22,6 +22,8 @@ RewriteRule ^imprint/?$ /impressum/ [R=301,L]
 RewriteRule ^navigation/?$ / [R=301,L]
 # The folder only exists through the project pages; NE keeps the "#" unescaped.
 RewriteRule ^projekte/?$ /#projekte [R=301,NE,L]
+# The kit page was live under its old name on 12.11. before it became Buildorder.
+RewriteRule ^projekte/developer-workspace-kit/?$ /projekte/buildorder/ [R=301,L]
 
 # The CSR shell of the build is not part of the site.
 RewriteRule ^index\.csr\.html$ - [R=404,L]

@@ -194,6 +194,15 @@ for (const path of ['/projekte', '/projekte/']) {
   });
 }
 
+// The kit page was live under its old address before it became Buildorder (kit2).
+test('[Hosting] die alte Kit-Seite leitet auf Buildorder um', async ({ request }) => {
+  for (const path of ['/projekte/developer-workspace-kit', '/projekte/developer-workspace-kit/']) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(301);
+    expect(response.headers()['location']).toBe('/projekte/buildorder/');
+  }
+});
+
 test('[Hosting] eine echte Projektseite bleibt erreichbar', async ({ request }) => {
   const response = await request.get('/projekte/videoflix/', { maxRedirects: 0 });
   expect(response.status()).toBe(200);

@@ -31,5 +31,5 @@ export const about = {
   // Short titles of the CV stations, one line each on the path.
   path: ['Techniker Maschinenbau', 'Field Service Engineer', 'Software Engineer'],
   // The approved AI sentence lives here instead of the hero (Grill 2026-11-04).
-  text: `Als Field Service Engineer habe ich an komplexen Fahrzeugprüfsystemen Fehler analysiert und behoben und weltweit Inbetriebnahmen neuer Prüfanlagen unterstützt. Heute entwickle ich Fullstack-Anwendungen mit Tests, Security-Checks und Deployment als festem Teil der Arbeit und baue eigene Werkzeuge wie meine Android-App und das Developer Workspace Kit. ${profile.aiNote} Mein Ziel ist Software, die ein Team verstehen, weiterentwickeln und betreiben kann.`,
+  text: `Als Field Service Engineer habe ich an komplexen Fahrzeugprüfsystemen Fehler analysiert und behoben und weltweit Inbetriebnahmen neuer Prüfanlagen unterstützt. Heute entwickle ich Fullstack-Anwendungen mit Tests, Security-Checks und Deployment als festem Teil der Arbeit und baue eigene Werkzeuge wie meine Android-App und das Claude-Code-Plugin Buildorder. ${profile.aiNote} Mein Ziel ist Software, die ein Team verstehen, weiterentwickeln und betreiben kann.`,
 };

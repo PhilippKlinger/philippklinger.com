@@ -89,19 +89,23 @@ export const projects: Project[] = [
     // No preview until Philipp confirms the screenshot of the status page (plan E7).
   },
   {
-    slug: 'developer-workspace-kit',
-    title: 'Developer Workspace Kit',
+    slug: 'buildorder',
+    title: 'Buildorder',
+    // DRAFT: no version in the text, the release page and the measured CI stay current (kit2).
     summary:
-      'Node.js-Plugin für Claude Code zur geführten, automatisierten Einrichtung neuer und bestehender Fullstack- und DevSecOps-Workspaces; konfigurierbare Projektregeln, Skills, Hooks und CI/CD-Vorlagen für Agentic Coding.',
+      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentliches Pre-Release.',
     // DRAFT: meta description, shortened from the summary.
     description:
-      'Developer Workspace Kit: Node.js-Plugin für Claude Code zur geführten Einrichtung von Fullstack- und DevSecOps-Workspaces mit Regeln, Skills und Hooks.',
+      'Buildorder: Plugin für Claude Code, das Workspace, Doc-Map, Hooks und eine CI-Pipeline mit Security-Checks einrichtet. Öffentliches Pre-Release.',
     stack: ['Node.js', 'Claude Code', 'GitHub Actions'],
     chips: ['Node.js', 'Claude Code', 'GitHub Actions'],
-    // No link until a public repository exists (PK-25).
-    links: [],
-    // DRAFT: placeholder image until a real terminal capture exists
-    preview: { src: 'images/projects/developer-workspace-kit.webp', width: 640, height: 336 },
+    // DRAFT: link labels.
+    links: [
+      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/buildorder' },
+      { label: 'Releases', url: 'https://github.com/PhilippKlinger/buildorder/releases' },
+    ],
+    // DRAFT: placeholder image until a real terminal capture exists (kit5)
+    preview: { src: 'images/projects/buildorder.webp', width: 640, height: 336 },
   },
 ];
 

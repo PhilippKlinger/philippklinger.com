@@ -92,6 +92,7 @@ const stepNames = {
   ],
   portfolio: ['Code', 'Tests & Security-Checks', 'Signed Build', 'Deployment', 'Monitoring'],
   'vps-plattform': ['Code', 'CI & Security-Checks', 'Betrieb'],
+  buildorder: ['Code', 'Tests & Security-Checks', 'Release'],
 };
 
 /** Keeps the fresh time, so only the projects are those of the old collector. */
@@ -216,6 +217,27 @@ test.describe('Software Delivery', () => {
     await choose(page, 'Deployment');
     await expect(panel(page)).toContainText('weicht vom zuletzt geprüften Commit ab');
     await expect(panel(page).getByRole('img', { name: 'failed' })).toBeVisible();
+  });
+
+  // kit2: public since the MVP, code and CI measured, the release links its page.
+  test('[kit2] Buildorder: Code und CI gemessen, Release verlinkt', async ({ page }) => {
+    await serveStatus(page);
+    await page.goto('/projekte/buildorder/');
+    await expect(page.locator('main h1')).toHaveText('Buildorder');
+    await expect(stations(page).locator('.name')).toHaveText(stepNames.buildorder);
+    await expect(delivery(page).locator('.via')).toHaveText(['→ CI', '→ Release']);
+    await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'verified']);
+    await choose(page, 'Tests & Security-Checks');
+    const runs = panel(page).locator('a');
+    await expect(runs).toHaveCount(2);
+    for (const link of await runs.all()) {
+      await expect(link).toHaveAttribute('href', /\/buildorder\/actions\/runs\/\d+$/);
+    }
+    await choose(page, 'Release');
+    await expect(panel(page).locator('a')).toHaveAttribute(
+      'href',
+      'https://github.com/PhilippKlinger/buildorder/releases',
+    );
   });
 
   test('[Plan VPS E4] VPS-Plattform: Code, CI & Security-Checks, Betrieb', async ({ page }) => {
@@ -596,18 +618,6 @@ test.describe('Abruf von /status.json', () => {
       await expect(valueOf(page, 'Code')).toContainText('merged PRs');
       await expect(notice(page)).toBeEmpty();
     });
-
-    test('[Spec 6.1] der Hinweis der Startseite folgt nicht auf festen Inhalt', async ({
-      page,
-    }) => {
-      await page.route('**/status.json', (route) => route.fulfill({ status: 500, body: 'error' }));
-      await page.goto('/projekte/developer-workspace-kit/');
-      await page.locator('main a.back').click();
-      await expect(page.locator('#projekte .notice')).toHaveText(refreshFailed);
-      await page.goBack();
-      await expect(page.locator('main h1')).toHaveText('Developer Workspace Kit');
-      await expect(notice(page)).toBeEmpty();
-    });
   });
 
   // Rollout: until the next status.yml run the server serves the file of the old collector.
@@ -632,20 +642,6 @@ test.describe('Abruf von /status.json', () => {
       await expect(valueOf(page, 'Code')).toContainText('merged PRs');
       await expect(notice(page)).toBeEmpty();
     });
-  });
-
-  test('[Spec 6.1] fester Inhalt fragt nichts ab: developer-workspace-kit', async ({ page }) => {
-    const requests = await serveStatus(page);
-    await page.goto('/projekte/developer-workspace-kit/');
-    await expect(page.locator('main h1')).toBeVisible();
-    // [D1] Order of the blocks and the links: projects.e2e.ts checks them for every page.
-    await expect(delivery(page).locator('.private')).toHaveText(
-      'Code privat. Die Läufe zeige ich im Gespräch.',
-    );
-    await expect(stations(page)).toHaveCount(0);
-    await page.waitForLoadState('networkidle');
-    expect(requests()).toBe(0);
-    await expect(notice(page)).toBeEmpty();
   });
 });
 

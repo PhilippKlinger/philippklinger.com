@@ -764,6 +764,122 @@
         },
         "links": []
       }
+    },
+    "buildorder": {
+      "code": {
+        "reachable": true,
+        "signals": {
+          "repos": [
+            {
+              "repo": "PhilippKlinger/buildorder",
+              "reachable": true,
+              "isPublic": true,
+              "defaultBranch": "main",
+              "mergedPullRequests": 6,
+              "rulesets": [
+                {
+                  "enforcement": "active",
+                  "target": "branch",
+                  "appliesToDefaultBranch": true,
+                  "ruleTypes": [
+                    "deletion",
+                    "non_fast_forward",
+                    "pull_request",
+                    "required_status_checks"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "repository",
+            "source": "PhilippKlinger/buildorder",
+            "url": "https://github.com/PhilippKlinger/buildorder"
+          },
+          {
+            "kind": "pull-requests",
+            "source": "PhilippKlinger/buildorder",
+            "url": "https://github.com/PhilippKlinger/buildorder/pulls?q=is%3Apr+is%3Amerged"
+          }
+        ]
+      },
+      "checks": {
+        "reachable": true,
+        "signals": {
+          "workflows": [
+            {
+              "repo": "PhilippKlinger/buildorder",
+              "workflow": "CI",
+              "file": "ci.yml",
+              "kind": "tests",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "814a76b750f39efa9e674a97ceda0b3b00c73cab",
+              "completedAt": "2026-11-10T15:16:52Z"
+            },
+            {
+              "repo": "PhilippKlinger/buildorder",
+              "workflow": "Scorecard",
+              "file": "scorecard.yml",
+              "kind": "scan",
+              "reachable": true,
+              "conclusion": "success",
+              "headSha": "814a76b750f39efa9e674a97ceda0b3b00c73cab",
+              "completedAt": "2026-11-10T15:16:51Z"
+            }
+          ]
+        },
+        "links": [
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/buildorder",
+            "url": "https://github.com/PhilippKlinger/buildorder/actions/runs/42842549004",
+            "workflow": "CI"
+          },
+          {
+            "kind": "workflow-run",
+            "source": "PhilippKlinger/buildorder",
+            "url": "https://github.com/PhilippKlinger/buildorder/actions/runs/42842549043",
+            "workflow": "Scorecard"
+          }
+        ]
+      },
+      "supplyChain": {
+        "reachable": false,
+        "signals": {
+          "repos": []
+        },
+        "links": []
+      },
+      "live": {
+        "reachable": false,
+        "signals": {
+          "components": []
+        },
+        "links": []
+      },
+      "stability": {
+        "reachable": false,
+        "signals": {
+          "monitorsTotal": null,
+          "monitorsUp": null,
+          "uptime24h": null,
+          "uptime30d": null,
+          "lastHeartbeatAt": null,
+          "oldestVisibleHeartbeatAt": null
+        },
+        "links": []
+      },
+      "restore": {
+        "reachable": false,
+        "signals": {
+          "testedAt": null,
+          "result": null
+        },
+        "links": []
+      }
     }
   }
 }

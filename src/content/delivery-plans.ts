@@ -158,9 +158,37 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
       { name: 'Betrieb', sources: ['stability'], setUp: true, sentences: monitoringSentences },
     ],
   },
-  'developer-workspace-kit': {
-    fixedSignal: { state: 'private', status: 'Code privat', when: '' },
-    steps: [privateStep('Code', 'CI'), privateStep('CI', 'Release'), privateStep('Release')],
+  // Public since the MVP: code and CI are measured; the release links the page, not a version.
+  buildorder: {
+    statusKey: 'buildorder',
+    steps: [
+      {
+        name: 'Code',
+        arrowToNext: 'CI',
+        sources: ['code'],
+        setUp: true,
+        sentences: codeSentences,
+      },
+      {
+        name: 'Tests & Security-Checks',
+        arrowToNext: 'Release',
+        sources: ['checks'],
+        setUp: true,
+        sentences: checkSentences,
+      },
+      // DRAFT
+      {
+        name: 'Release',
+        state: 'verified',
+        sentence: 'Vorab-Versionen sind öffentlich auf GitHub veröffentlicht.',
+        links: [
+          {
+            label: 'Releases ansehen',
+            url: 'https://github.com/PhilippKlinger/buildorder/releases',
+          },
+        ],
+      },
+    ],
   },
   // The site itself: no own data, so a restore test does not exist instead of being "not planned".
   portfolio: {

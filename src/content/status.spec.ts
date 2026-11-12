@@ -213,6 +213,7 @@ function onlyProject(source: ProjectSource): StatusSources {
       portfolio: noSource,
       'vps-plattform': source,
       'neuro-check-in': noSource,
+      buildorder: noSource,
     },
   };
 }
@@ -265,6 +266,7 @@ describe('collectStatus', () => {
     expect(status.schemaVersion).toBe(STATUS_SCHEMA_VERSION);
     expect(status.generatedAt).toBe('2026-11-05T12:00:00.000Z');
     expect(Object.keys(status.projects).sort()).toEqual([
+      'buildorder',
       'neuro-check-in',
       'portfolio',
       'videoflix',
@@ -787,6 +789,7 @@ describe('collectStatus for a built image and the deploy run', () => {
     const withLater = { ...sources, projects: { ...sources.projects, later: noSource } };
     const { projects } = await collect(fakeFetch().fetch, withLater);
     expect(Object.keys(projects).sort()).toEqual([
+      'buildorder',
       'later',
       'neuro-check-in',
       'portfolio',
@@ -1087,7 +1090,27 @@ describe('statusSources', () => {
       'portfolio',
       'vps-plattform',
       'neuro-check-in',
+      'buildorder',
     ]);
+  });
+
+  // The plugin builds no image and runs nowhere: its repository, CI and Scorecard are the proof.
+  it('measures Buildorder in its repository, with CI and Scorecard', () => {
+    expect(statusSources.projects.buildorder).toEqual({
+      repos: [
+        {
+          name: 'PhilippKlinger/buildorder',
+          ciWorkflow: 'ci.yml',
+          workflows: [
+            { name: 'CI', file: 'ci.yml', kind: 'tests' },
+            { name: 'Scorecard', file: 'scorecard.yml', kind: 'scan' },
+          ],
+        },
+      ],
+      versionEndpoints: [],
+      uptime: null,
+      restoreTest: null,
+    });
   });
 
   // Plan VPS platform E3 to E5: videoflix-deploy already counts for Videoflix, nothing is built.

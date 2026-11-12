@@ -96,5 +96,21 @@ export const statusSources: StatusSources = {
       uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'neuro-check-in' },
       restoreTest: null,
     },
+    // The plugin builds no image and runs nowhere: its repository, CI and Scorecard are the proof.
+    buildorder: {
+      repos: [
+        {
+          name: `${owner}/buildorder`,
+          ciWorkflow: 'ci.yml',
+          workflows: [
+            { name: 'CI', file: 'ci.yml', kind: 'tests' },
+            { name: 'Scorecard', file: 'scorecard.yml', kind: 'scan' },
+          ],
+        },
+      ],
+      versionEndpoints: [],
+      uptime: null,
+      restoreTest: null,
+    },
   },
 };

@@ -7,7 +7,7 @@ describe('projects', () => {
       'videoflix',
       'neuro-check-in',
       'vps-plattform',
-      'developer-workspace-kit',
+      'buildorder',
     ]);
   });
 
@@ -79,9 +79,19 @@ describe('projects', () => {
     expect(JSON.stringify(projects)).not.toMatch(/conduit/i);
   });
 
-  it('shows the Kit without links until a public repository exists', () => {
-    const kit = projects.find((project) => project.slug === 'developer-workspace-kit');
-    expect(kit?.links).toEqual([]);
+  // No version in the text: the release page and the measured CI stay current by themselves.
+  it('links Buildorder to its repository and its release page', () => {
+    const buildorder = projects.find((project) => project.slug === 'buildorder');
+    expect(buildorder?.title).toBe('Buildorder');
+    expect(buildorder?.links).toEqual([
+      { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/buildorder' },
+      { label: 'Releases', url: 'https://github.com/PhilippKlinger/buildorder/releases' },
+    ]);
+  });
+
+  it('no longer names the private kit', () => {
+    const buildorder = JSON.stringify(projects.find((project) => project.slug === 'buildorder'));
+    expect(buildorder).not.toMatch(/Developer Workspace Kit|kit\.mjs|\/kit:init|v\d+\.\d+/);
   });
 
   it.each(projects)('every link of "$title" is https', (project) => {
@@ -98,7 +108,7 @@ describe('projects', () => {
     ['videoflix', ['CI/CD', 'Docker', 'Security-Checks', 'SBOM', 'Monitoring']],
     ['neuro-check-in', ['React Native', 'TypeScript', 'SQLite', 'E2E-Tests']],
     ['vps-plattform', ['Docker Compose', 'Caddy', 'Uptime Kuma', 'GitHub Actions', 'Trivy']],
-    ['developer-workspace-kit', ['Node.js', 'Claude Code', 'GitHub Actions']],
+    ['buildorder', ['Node.js', 'Claude Code', 'GitHub Actions']],
   ])('"%s" has the chips of the spec', (slug, chips) => {
     expect(projects.find((project) => project.slug === slug)?.chips).toEqual(chips);
   });
@@ -117,8 +127,8 @@ describe('projects', () => {
       'Gemeinsame Infrastruktur für die Projekte auf einem VPS, als Code beschrieben: Edge-Proxy mit TLS und Sicherheits-Headern, Monitoring mit öffentlicher Statusseite und eine CI, die bei jeder Änderung die echte Konfiguration startet und auf Sicherheitszusagen prüft.',
     ],
     [
-      'developer-workspace-kit',
-      'Node.js-Plugin für Claude Code zur geführten, automatisierten Einrichtung neuer und bestehender Fullstack- und DevSecOps-Workspaces; konfigurierbare Projektregeln, Skills, Hooks und CI/CD-Vorlagen für Agentic Coding.',
+      'buildorder',
+      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentliches Pre-Release.',
     ],
   ])('"%s" has the text of the spec', (slug, summary) => {
     expect(projects.find((project) => project.slug === slug)?.summary).toBe(summary);

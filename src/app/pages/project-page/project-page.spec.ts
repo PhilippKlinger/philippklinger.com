@@ -79,25 +79,16 @@ describe('ProjectPage', () => {
   );
 
   it('shows no empty link block for a project without links', async () => {
-    const page = await renderPage(bySlug('developer-workspace-kit'));
+    const page = await renderPage({ ...bySlug('buildorder'), links: [] });
     expect(page.querySelector('.links')).toBeNull();
     expect(texts(page.querySelectorAll('h2'))).not.toContain('Links');
   });
 
-  it.each(projects.filter((project) => project.slug !== 'developer-workspace-kit'))(
-    'shows the software delivery chain of "$title"',
-    async (project) => {
-      const page = await renderPage(project);
-      expect(texts(page.querySelectorAll('app-delivery-chain .tab .name'))).toEqual(
-        deliveryPlans[project.slug].steps.map((step) => step.name),
-      );
-    },
-  );
-
-  it('shows the chain of the kit as one private line', async () => {
-    const page = await renderPage(bySlug('developer-workspace-kit'));
-    expect(page.querySelector('app-delivery-chain .private')).not.toBeNull();
-    expect(page.querySelector('app-delivery-chain .tab')).toBeNull();
+  it.each(projects)('shows the software delivery chain of "$title"', async (project) => {
+    const page = await renderPage(project);
+    expect(texts(page.querySelectorAll('app-delivery-chain .tab .name'))).toEqual(
+      deliveryPlans[project.slug].steps.map((step) => step.name),
+    );
   });
 
   it('shows neither label, proof nor stack any more', async () => {

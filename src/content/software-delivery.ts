@@ -93,7 +93,7 @@ type Signal = DeliveryView['signal'];
 
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const REQUIRED_PROJECTS: RequiredProjectKey[] = ['videoflix', 'portfolio'];
-const OPTIONAL_PROJECTS: ProjectKey[] = ['vps-plattform', 'neuro-check-in'];
+const OPTIONAL_PROJECTS: ProjectKey[] = ['vps-plattform', 'neuro-check-in', 'buildorder'];
 const STATIONS: StationKey[] = ['code', 'checks', 'supplyChain', 'live', 'stability', 'restore'];
 const OPERATING_SOURCES: StepSource[] = ['live', 'stability'];
 
