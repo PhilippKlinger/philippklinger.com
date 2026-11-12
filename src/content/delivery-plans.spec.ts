@@ -142,7 +142,7 @@ describe('deliveryPlans', () => {
   });
 
   // AK18: at the go-live no measured step waits for its source; only the Kit stays private.
-  it('every measured step is set up', () => {
+  it('[AK18] every measured step is set up', () => {
     expect(measuredSteps.filter((step) => !step.setUp).map((step) => step.name)).toEqual([]);
   });
 
