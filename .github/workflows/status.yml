@@ -2,7 +2,8 @@
 # to the site's own domain, so the browser never has to call a third party.
 # A source that cannot be reached is a normal result inside the file and keeps the run green.
 # Red means something else: the document failed its validation or the upload failed.
-# Preview only for now: production has a required reviewer, which every hourly run would wait for.
+# Goes to the preview and to the main domain. The main domain has its own environment and FTP user
+# without a reviewer: the production environment would make every hourly run wait for approval.
 name: Status
 
 on:
@@ -16,19 +17,28 @@ permissions:
 
 jobs:
   status:
-    name: Collect and upload status
+    name: Collect and upload status (${{ matrix.environment }})
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      # A failed upload to one site must not stop the other one.
+      fail-fast: false
+      matrix:
+        include:
+          - environment: preview
+            site: https://preview.philipp-klinger.com
+          - environment: production-status
+            site: https://philipp-klinger.com
     # Not the deploy group on purpose: a pending job in a group replaces the pending one
     # before it, so an hourly run could cancel a waiting deploy. The two cannot collide,
     # because the deploy excludes status.json from its mirror.
     concurrency:
-      group: status-preview
+      group: status-${{ matrix.environment }}
       cancel-in-progress: false
     environment:
-      name: preview
-      url: https://preview.philipp-klinger.com/status.json
+      name: ${{ matrix.environment }}
+      url: ${{ matrix.site }}/status.json
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,7 +93,7 @@ jobs:
       # The upload only counts if the site really serves this run's file.
       - name: Check uploaded file
         env:
-          SITE: https://preview.philipp-klinger.com
+          SITE: ${{ matrix.site }}
         run: |
           set -Eeuo pipefail
           expected=$(jq -r .generatedAt status.json)
