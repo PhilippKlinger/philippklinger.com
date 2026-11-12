@@ -164,12 +164,13 @@ test.describe('Software Delivery', () => {
       '6 von 6 passing',
       'teilweise',
       'nicht abrufbar',
-      'noch nicht eingerichtet',
+      // PK-42: monitoring is set up, a silent Kuma is a fault, not a gap.
+      'nicht abrufbar',
       'noch nicht eingerichtet',
     ]);
     await expect
       .poll(() => statesOf(page))
-      .toEqual(['verified', 'verified', 'partial', 'unavailable', 'notSetUp', 'notSetUp']);
+      .toEqual(['verified', 'verified', 'partial', 'unavailable', 'unavailable', 'notSetUp']);
     await expect(stations(page).locator('.tick')).toHaveCount(2);
     await expect(delivery(page).locator('.via')).toHaveText([
       '→ CI',
@@ -222,7 +223,7 @@ test.describe('Software Delivery', () => {
     await page.goto('/projekte/vps-plattform/');
     await expect(stations(page).locator('.name')).toHaveText(stepNames['vps-plattform']);
     await expect(delivery(page).locator('.via')).toHaveText(['→ CI', '→ Betrieb']);
-    await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'notSetUp']);
+    await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'unavailable']);
     await choose(page, 'CI & Security-Checks');
     await expect(panel(page)).toContainText(
       'Jede Änderung startet die echte Konfiguration und wird auf Schwachstellen geprüft.',
@@ -233,8 +234,18 @@ test.describe('Software Delivery', () => {
       await expect(link).toHaveAttribute('href', /\/vps-(edge|monitoring)\/actions\/runs\/\d+$/);
     }
     await expect(delivery(page)).not.toContainText(/getestet/);
-    // Plan VPS E5: no Kuma slug of its own yet.
-    await expect(valueOf(page, 'Betrieb')).toHaveText('noch nicht eingerichtet');
+    // Plan VPS E5: own Kuma slug since 12.11., silent here in the fixture.
+    await expect(valueOf(page, 'Betrieb')).toHaveText('nicht abrufbar');
+  });
+
+  test('[Plan VPS E5] VPS-Plattform: Betrieb belegt mit den Werten der Statusseite', async ({
+    page,
+  }) => {
+    await serveStatus(page, (document) => {
+      document.projects['vps-plattform'].stability = document.projects['neuro-check-in'].stability;
+    });
+    await page.goto('/projekte/vps-plattform/');
+    await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'verified']);
   });
 
   test('[Spec 6.4] grüner Deploy-Lauf ohne Live-Nachweis wird genau so benannt', async ({
@@ -607,7 +618,9 @@ test.describe('Abruf von /status.json', () => {
       await page.goto('/projekte/vps-plattform/');
       await expect(notice(page)).toHaveText(refreshFailed);
       await expect(stations(page).locator('.name')).toHaveText(stepNames['vps-plattform']);
-      await expect.poll(() => statesOf(page)).toEqual(['unavailable', 'unavailable', 'notSetUp']);
+      await expect
+        .poll(() => statesOf(page))
+        .toEqual(['unavailable', 'unavailable', 'unavailable']);
       await expectNoFalseProof(page, 0);
       expect(errors).toEqual([]);
     });

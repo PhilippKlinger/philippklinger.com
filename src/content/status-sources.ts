@@ -84,8 +84,8 @@ export const statusSources: StatusSources = {
         { name: `${owner}/vps-monitoring`, ciWorkflow: 'ci.yml', workflows: [...standardChecks] },
       ],
       versionEndpoints: [],
-      // No status page slug of its own yet: stays "not set up" until one exists.
-      uptime: null,
+      // Holds only the monitor "Statusseite" until the go-live (q11).
+      uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'vps-plattform' },
       restoreTest: null,
     },
     // The website of the Neuro check-in: only reachability counts, the repositories belong to

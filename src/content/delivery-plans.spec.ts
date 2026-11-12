@@ -134,24 +134,31 @@ describe('deliveryPlans', () => {
     expect(await findForbiddenTerm(JSON.stringify(deliveryPlans), [TOPIC_A, TOPIC_B])).toBe(false);
   });
 
-  // Plan VPS platform E5: no status page of its own yet, so operation waits for its Kuma slug.
-  it('the VPS platform starts its operation as not set up', () => {
+  // Plan VPS platform E5: the Kuma slug exists since 12.11., so operation counts as set up.
+  it('the VPS platform measures its operation as set up', () => {
     const operation = deliveryPlans['vps-plattform'].steps.at(-1) as MeasuredStep;
-    expect(operation.setUp).toBe(false);
+    expect(operation.setUp).toBe(true);
     expect(operation.sources).toEqual(['stability']);
   });
 
-  it('shows the operation of the VPS platform as not set up while the data is silent', () => {
+  it('shows the operation of the VPS platform as unavailable while the data is silent', () => {
     const { steps } = buildDeliveryView(deliveryPlans['vps-plattform'], null);
-    expect(steps.map((item) => item.state)).toEqual(['unavailable', 'unavailable', 'notSetUp']);
+    expect(steps.map((item) => item.state)).toEqual(['unavailable', 'unavailable', 'unavailable']);
   });
 
+  // PK-42: Uptime Kuma delivers for both slugs, so a silent source is a fault, not a gap.
   it.each([
     ['videoflix', 'Monitoring'],
-    ['videoflix', 'Restore-Test'],
     ['portfolio', 'Monitoring'],
-  ])('"%s" starts "%s" as not set up', (slug, name) => {
+  ])('"%s" measures "%s" as set up', (slug, name) => {
     const step = deliveryPlans[slug].steps.find((item) => item.name === name) as MeasuredStep;
+    expect(step.setUp).toBe(true);
+  });
+
+  it('Videoflix still starts its restore test as not set up', () => {
+    const step = deliveryPlans['videoflix'].steps.find(
+      (item) => item.name === 'Restore-Test',
+    ) as MeasuredStep;
     expect(step.setUp).toBe(false);
   });
 

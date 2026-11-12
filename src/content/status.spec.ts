@@ -1091,14 +1091,15 @@ describe('statusSources', () => {
   });
 
   // Plan VPS platform E3 to E5: videoflix-deploy already counts for Videoflix, nothing is built.
-  it('measures the VPS platform in both of its repositories, without image or status page', () => {
+  // Its own status page holds only the monitor "Statusseite" until the go-live (q11).
+  it('measures the VPS platform in both of its repositories and on its status page', () => {
     expect(statusSources.projects['vps-plattform']).toEqual({
       repos: [
         { name: 'PhilippKlinger/vps-edge', ciWorkflow: 'ci.yml', workflows: platformChecks },
         { name: 'PhilippKlinger/vps-monitoring', ciWorkflow: 'ci.yml', workflows: platformChecks },
       ],
       versionEndpoints: [],
-      uptime: null,
+      uptime: { baseUrl: 'https://status.philipp-klinger.com', slug: 'vps-plattform' },
       restoreTest: null,
     });
   });
