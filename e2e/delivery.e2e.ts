@@ -242,7 +242,8 @@ test.describe('Software Delivery', () => {
     page,
   }) => {
     await serveStatus(page, (document) => {
-      document.projects['vps-plattform'].stability = document.projects['neuro-check-in'].stability;
+      document.projects['vps-plattform']!.stability =
+        document.projects['neuro-check-in']!.stability;
     });
     await page.goto('/projekte/vps-plattform/');
     await expect.poll(() => statesOf(page)).toEqual(['verified', 'verified', 'verified']);
