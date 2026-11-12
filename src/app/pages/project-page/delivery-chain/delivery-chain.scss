@@ -60,10 +60,6 @@ h2 {
   background: var(--color-accent);
 }
 
-.tip {
-  display: none;
-}
-
 .tab {
   position: relative;
   display: flex;
@@ -104,7 +100,9 @@ h2 {
   color: var(--color-accent);
 }
 
-.via {
+// Transition labels and the pointer into the field exist only on the horizontal chain.
+.via,
+.tip {
   display: none;
 }
 
@@ -156,10 +154,10 @@ h2 {
 
 [data-state='deviation'] {
   .node {
-    border-color: var(--color-error);
+    color: var(--color-error);
+    border-color: currentColor;
   }
 
-  .node,
   .value {
     color: var(--color-error);
   }
@@ -170,7 +168,11 @@ h2 {
   .node {
     border-color: var(--color-line-muted);
   }
+}
 
+[data-state='unavailable'],
+[data-state='notSetUp'],
+[data-state='private'] {
   .value {
     color: var(--color-text-muted);
   }
@@ -180,15 +182,9 @@ h2 {
   border-style: dashed;
 }
 
-[data-state='private'] {
-  .node {
-    border-color: var(--color-text-subtle);
-    color: var(--color-text-subtle);
-  }
-
-  .value {
-    color: var(--color-text-muted);
-  }
+[data-state='private'] .node {
+  border-color: var(--color-text-subtle);
+  color: var(--color-text-subtle);
 }
 
 // Click hint (D5): below the chain it points at, laid over the room above the field, so it never
@@ -216,8 +212,8 @@ h2 {
   visibility: hidden;
   transform: translateY(var(--space-2xs));
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease,
+    opacity 0.3s,
+    transform 0.3s,
     visibility 0.3s;
 
   &.on {
