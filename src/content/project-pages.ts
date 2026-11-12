@@ -85,27 +85,29 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
     },
   },
   // Depends on the rework KPF-08, re-read in task 15 and X2 before DRAFT falls.
-  'developer-workspace-kit': {
+  // Sources: Buildorder README (quickstart, security model), PR #15 and the practical test of the
+  // first release (kit2). No version in the text.
+  buildorder: {
     architecture: {
       summary:
-        'Node.js-Plugin für Claude Code und sein eigener Marketplace. kit.mjs erledigt das Mechanische deterministisch, Claude übernimmt Einordnung, Rückfragen und Texte. Jeder Workspace hat genau eine Steuerdatei.',
-      parts: ['/kit:init', 'kit.mjs', 'templates', 'workspace.json'],
+        'Plugin für Claude Code mit eigenem Marketplace. Skills führen durch Einrichtung, Sessionstart und Sessionende; eine Node.js-CLI erledigt das Mechanische deterministisch. Hooks prüfen Commits und Steuerdateien, und zwar nur in einem Workspace mit workspace.json.',
+      parts: ['/buildorder:init', 'CLI (detect, nest)', 'workspace.json', 'Hooks'],
     },
     decisions: [
       {
-        title: 'Durchgesetzte Grenzen, jede Shell-Regel doppelt',
+        title: 'Der Secret-Guard verweigert im Zweifel',
         reason:
-          'Harte Grenzen werden per Hook und permissions durchgesetzt, nicht als Prosa-Verbot. Gemessen: Eine Bash(…)-deny-Regel blockt das PowerShell-Tool nicht.',
+          'Kann der Hook die git-Ausgabe nicht lesen oder das Ziel-Repo nicht erkennen, verweigert er den Commit und nennt eine prüfbare Form. Durchlassen ließe genau die unklaren Fälle ungeprüft.',
         price:
-          'Jede Regel steht doppelt, und auf macOS und Linux ist die PowerShell-Variante wirkungslos. Exotische Lesewege wie node -e readFileSync sind nicht geprüft.',
+          'Manche gültigen Befehle müssen anders geschrieben werden; ohne node sperrt er jeden git-Befehl. Commits außerhalb von Claude Code fängt gitleaks im Pre-commit und in der CI ab.',
       },
     ],
     failure: {
-      title: 'Ein lesender Audit-Skill durfte mehr als lesen',
+      title: 'Das Starter-Image fiel bei Trivy durch',
       found:
-        'Das Kit-eigene /secure fand vor v0.1.0 zu breite Freigaben: „node *scripts/status.mjs*“ passte auch auf „node -e“, „git -C * log“ erlaubte „--output=“.',
+        'Im Praxistest des ersten Release meldete Trivy im Django-Starter-Image HIGH-Lücken: zwei im Debian-Basis-Image, fünf in Paketen, die pip mitbringt. Neue Projekte wären mit roter CI gestartet.',
       changed:
-        'Die Freigaben sind exakt an das jeweilige Skript im Skill-Verzeichnis gebunden, /bestandsaufnahme hat keine „git -C“-Freigabe mehr. Tests halten das fest.',
+        'Die Laufzeit-Stage installiert die Debian-Sicherheitsupdates und enthält kein pip mehr. Buildorders eigene CI scannt das Starter-Image mit Trivy, damit ein alterndes Basis-Image rot wird, bevor es Nutzer trifft.',
     },
   },
 };

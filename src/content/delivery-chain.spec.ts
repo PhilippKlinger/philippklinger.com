@@ -432,10 +432,10 @@ describe('buildChainView', () => {
   });
 
   it('says "Code privat" without a table for a private step', () => {
-    const [kit] = buildChainView(deliveryPlans['developer-workspace-kit'], null).stations;
+    const [code] = buildChainView(deliveryPlans['neuro-check-in'], null).stations;
 
-    expect(kit.value).toBe('Code privat');
-    expect(kit.table).toBeNull();
+    expect(code.value).toBe('Code privat');
+    expect(code.table).toBeNull();
   });
 
   it('keeps the old file readable', () => {

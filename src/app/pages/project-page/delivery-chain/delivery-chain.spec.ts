@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { buildChainView } from '../../../../content/delivery-chain';
 import { deliveryPlans } from '../../../../content/delivery-plans';
-import { deliveryTexts } from '../../../../content/software-delivery';
+import { DeliveryPlan, deliveryTexts } from '../../../../content/software-delivery';
 import { ProjectStatus, StatusDocument } from '../../../../content/status';
 import { healthyStatus } from '../../../../content/status.fixture';
 import { DeliveryStatus } from '../../../delivery/delivery-status';
@@ -76,6 +76,17 @@ async function renderPrerendered(slug: string, document: StatusDocument | null =
   }
 }
 
+// No real project keeps its whole chain private or reads no status since Buildorder is public;
+// this plan keeps both cases covered.
+const PRIVATE_SLUG = 'test-private';
+const privatePlan: DeliveryPlan = {
+  fixedSignal: { state: 'private', status: 'Code privat', when: '' },
+  steps: [
+    { name: 'Code', arrowToNext: 'CI', state: 'private', sentence: 'privat' },
+    { name: 'CI', state: 'private', sentence: 'privat' },
+  ],
+};
+
 describe('DeliveryChain', () => {
   // jsdom has no IntersectionObserver. An inert one means: the chain never reports being in view.
   beforeEach(() =>
@@ -87,9 +98,11 @@ describe('DeliveryChain', () => {
       },
     ),
   );
+  beforeEach(() => (deliveryPlans[PRIVATE_SLUG] = privatePlan));
   afterEach(() => {
     vi.unstubAllGlobals();
     localStorage.removeItem(HINT_KEY);
+    delete deliveryPlans[PRIVATE_SLUG];
   });
 
   it('[D4] renders all stations before hydration', async () => {
@@ -319,7 +332,7 @@ describe('DeliveryChain', () => {
   });
 
   it('shows one line with a lock for a project without a public chain', async () => {
-    const element = await renderChain('developer-workspace-kit');
+    const element = await renderChain(PRIVATE_SLUG);
 
     expect(element.querySelector('.private')?.textContent?.trim()).toBe(
       'Code privat. Die Läufe zeige ich im Gespräch.',
@@ -363,7 +376,7 @@ describe('DeliveryChain', () => {
     );
     measured.destroy();
     const fixed = TestBed.createComponent(DeliveryChain);
-    fixed.componentRef.setInput('slug', 'developer-workspace-kit');
+    fixed.componentRef.setInput('slug', PRIVATE_SLUG);
     await fixed.whenStable();
     expect(statusLine(fixed.nativeElement)).toBe('');
   });

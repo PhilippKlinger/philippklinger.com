@@ -89,10 +89,10 @@ describe('deliveryPlans', () => {
       ],
     ],
     [
-      'developer-workspace-kit',
+      'buildorder',
       [
         ['Code', 'CI'],
-        ['CI', 'Release'],
+        ['Tests & Security-Checks', 'Release'],
         ['Release', undefined],
       ],
     ],
@@ -276,7 +276,7 @@ describe('deliveryPlans', () => {
     expect(deliveryPlans['vps-plattform'].statusKey).toBe('vps-plattform');
     expect(deliveryPlans['portfolio'].statusKey).toBe('portfolio');
     expect(deliveryPlans['neuro-check-in'].statusKey).toBe('neuro-check-in');
-    expect(deliveryPlans['developer-workspace-kit'].statusKey).toBeUndefined();
+    expect(deliveryPlans['buildorder'].statusKey).toBe('buildorder');
   });
 
   it('names the repositories of Videoflix after their role', () => {
@@ -331,23 +331,47 @@ describe('deliveryPlans', () => {
     expect(JSON.stringify(deliveryPlans)).not.toMatch(/Version \d/);
   });
 
-  it('keeps the code of Neuro Check-in and the Kit private', () => {
-    const steps = ['neuro-check-in', 'developer-workspace-kit'].flatMap(
-      (slug) => deliveryPlans[slug].steps as FixedStep[],
-    );
+  it('keeps the code of Neuro Check-in private', () => {
+    const steps = deliveryPlans['neuro-check-in'].steps as FixedStep[];
     const hidden = steps.filter((step) => step.state === 'private');
-    expect(hidden).toHaveLength(5);
+    expect(hidden).toHaveLength(2);
     for (const step of hidden) {
       expect(step.sentence).toBe('Der Code ist privat, Läufe zeige ich im Gespräch.');
     }
   });
 
-  it('fixes the signal of the Kit', () => {
-    const plan = deliveryPlans['developer-workspace-kit'];
-    expect(plan.fixedSignal).toEqual({
-      state: 'private',
-      status: 'Code privat',
-      when: '',
-    });
+  // Buildorder is public: CI and code are measured, no fixed "Code privat" any more.
+  it('measures the signal of Buildorder from its CI', () => {
+    const plan = deliveryPlans['buildorder'];
+    expect(plan.fixedSignal).toBeUndefined();
+    const status = healthyStatus();
+    // "Belegt" needs the public link to the run, as the collector writes it (spec 5).
+    const [run] = status.checks.signals.workflows;
+    status.checks.links = [
+      {
+        kind: 'workflow-run',
+        source: run.repo,
+        url: 'https://github.com/run/1',
+        workflow: run.workflow,
+      },
+    ];
+    const view = buildDeliveryView(plan, { generatedAt: '2026-11-06T00:58:11.069Z', status });
+    expect(view.signal.state).toBe('verified');
+    expect(view.signal.status).toBe('CI grün');
+  });
+
+  // No version in the text: the release page stays current by itself.
+  it('links the releases of Buildorder as a published pre-release', () => {
+    const release = deliveryPlans['buildorder'].steps.find(
+      (step) => step.name === 'Release',
+    ) as FixedStep;
+    expect(release.state).toBe('verified');
+    expect(release.sentence).toBe('Vorab-Versionen sind öffentlich auf GitHub veröffentlicht.');
+    expect(release.links).toEqual([
+      {
+        label: 'Releases ansehen',
+        url: 'https://github.com/PhilippKlinger/buildorder/releases',
+      },
+    ]);
   });
 });

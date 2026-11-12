@@ -39,14 +39,14 @@ const titles = [
   'Videoflix',
   'Neuro Check-in',
   'VPS-Plattform',
-  'Developer Workspace Kit',
+  'Buildorder',
   'Security, Linux und Container',
 ];
 const hrefs = [
   '/projekte/videoflix/',
   '/projekte/neuro-check-in/',
   '/projekte/vps-plattform/',
-  '/projekte/developer-workspace-kit/',
+  '/projekte/buildorder/',
   reportBase,
 ];
 
@@ -247,8 +247,8 @@ test.describe('Liste', () => {
     await expect(row(page, 'VPS-Plattform').locator('.signal-when')).toHaveText('zuletzt 10.11.');
     await expect(signal(page, 'Neuro Check-in')).toHaveText('Website erreichbar');
     await expect(row(page, 'Neuro Check-in').locator('.signal-when')).toHaveText('100 % (24 h)');
-    await expect(signal(page, 'Developer Workspace Kit')).toHaveText('Code privat');
-    await expect(row(page, 'Developer Workspace Kit').locator('.signal-when')).toHaveCount(0);
+    await expect(signal(page, 'Buildorder')).toHaveText('CI grün');
+    await expect(row(page, 'Buildorder').locator('.signal-when')).toHaveText('zuletzt 10.11.');
     await expect(signal(page, 'Security, Linux und Container')).toHaveText('4 Berichte');
   });
 
@@ -498,7 +498,7 @@ test.describe('Status im Browser', () => {
     await page.goto('/');
     await expect(signal(page, 'Videoflix')).toHaveText('CI grün');
     await expect(signal(page, 'Neuro Check-in')).toHaveText('Stand nicht abrufbar');
-    await expect(signal(page, 'Developer Workspace Kit')).toHaveText('Code privat');
+    await expect(signal(page, 'Buildorder')).toHaveText('Stand nicht abrufbar');
     await expect(signal(page, 'VPS-Plattform')).toHaveText('Stand nicht abrufbar');
     await expect(row(page, 'VPS-Plattform').locator('.signal-when')).toHaveCount(0);
     await expect(notice(page)).toHaveText(failedNotice);
