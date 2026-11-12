@@ -141,6 +141,11 @@ describe('deliveryPlans', () => {
     expect(operation.sources).toEqual(['stability']);
   });
 
+  // AK18: at the go-live no measured step waits for its source; only the Kit stays private.
+  it('[AK18] every measured step is set up', () => {
+    expect(measuredSteps.filter((step) => !step.setUp).map((step) => step.name)).toEqual([]);
+  });
+
   it('shows the operation of the VPS platform as unavailable while the data is silent', () => {
     const { steps } = buildDeliveryView(deliveryPlans['vps-plattform'], null);
     expect(steps.map((item) => item.state)).toEqual(['unavailable', 'unavailable', 'unavailable']);

@@ -275,4 +275,7 @@ jobs:
           check "http not redirected" "$(curl -sSI http://philipp-klinger.com/)" '^location: https://philipp-klinger\.com/'
           check "robots.txt missing" "$(curl -sSI "$SITE/robots.txt")" '^HTTP/[0-9.]+ 200'
           check "sitemap missing" "$(curl -sSI "$SITE/sitemap.xml")" '^HTTP/[0-9.]+ 200'
+          # F-24: the cards read this file; Status uploads it, the mirror never deletes it.
+          curl -fsS --max-time 20 "$SITE/status.json" | jq -e '.schemaVersion == 1' > /dev/null \
+            || { echo "::error::status.json missing or not readable"; exit 1; }
           echo "Production answers as expected."
