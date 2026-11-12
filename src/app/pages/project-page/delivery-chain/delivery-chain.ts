@@ -7,11 +7,12 @@ import {
   ElementRef,
   inject,
   input,
+  linkedSignal,
   signal,
   viewChild,
   viewChildren,
 } from '@angular/core';
-import { buildChainView, ChainView } from '../../../../content/delivery-chain';
+import { buildChainView, ChainStation, ChainView } from '../../../../content/delivery-chain';
 import { deliveryPlans } from '../../../../content/delivery-plans';
 import {
   DeliveryPlan,
@@ -84,7 +85,8 @@ export class DeliveryChain {
   private readonly hint = signal<ChainHint | null>(null);
 
   readonly slug = input.required<string>();
-  readonly selected = signal(0);
+  // Back to the first station when the router reuses the page for another project.
+  readonly selected = linkedSignal({ source: this.slug, computation: () => 0 });
 
   protected readonly texts = chainTexts;
   protected readonly deliveryTexts = deliveryTexts;
@@ -139,7 +141,10 @@ export class DeliveryChain {
 
   protected tabId = (index: number) => `chain-tab-${index}`;
   protected panelId = (index: number) => `chain-panel-${index}`;
-  protected spoken = (state: StepState) => MEASURED_STATES.includes(state);
+  /** A measured state as a word too, unless the value already is that word ("teilweise"). */
+  protected spoken = ({ state, value }: ChainStation) =>
+    MEASURED_STATES.includes(state) &&
+    value.toLowerCase() !== deliveryTexts.stateLabels[state].toLowerCase();
 
   private startHint(): void {
     const rail = this.rail()?.nativeElement;

@@ -205,6 +205,20 @@ describe('DeliveryChain', () => {
     );
   });
 
+  // The router keeps the component when only the slug changes; an old index would select nothing.
+  it('[D4] starts at the first station when the project changes', async () => {
+    const fixture = mount('videoflix', documentWith(linkedStatus()));
+    await fixture.whenStable();
+    fixture.componentInstance.select(5, true);
+
+    fixture.componentRef.setInput('slug', 'vps-plattform');
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(tabs(element).map((tab) => tab.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
+    expect(shownPanels(element).map((panel) => panel.id)).toEqual(['chain-panel-0']);
+  });
+
   it('[D2] shows name, value and transition per station from the chain view', async () => {
     const status = linkedStatus();
     const element = await renderChain('videoflix', documentWith(status));
@@ -232,6 +246,22 @@ describe('DeliveryChain', () => {
     expect(byName('Deployment').querySelector('.node .cross')).not.toBeNull();
     expect(byName('Deployment').querySelector('.value')?.textContent).toContain('≠');
     expect(byName('Code').querySelector('.visually-hidden')?.textContent).toContain('Belegt');
+  });
+
+  // Without a count the value is the state word itself; a screen reader would hear it twice.
+  it('[D2] says the state once when the value already names it', async () => {
+    const status = linkedStatus();
+    status.supplyChain.signals.repos.forEach((repo) => {
+      repo.attestation = { ...repo.attestation!, reachable: false, provenanceCount: null };
+    });
+    const element = await renderChain('videoflix', documentWith(status));
+    const build = tabs(element).find(
+      (tab) => tab.querySelector('.name')?.textContent?.trim() === 'Signed Build',
+    )!;
+
+    expect(build.getAttribute('data-state')).toBe('partial');
+    expect(build.querySelector('.value')?.textContent?.trim()).toBe('teilweise');
+    expect(build.querySelector('.visually-hidden')).toBeNull();
   });
 
   it('[D3] offers the verify command for the attested image', async () => {
