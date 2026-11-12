@@ -67,7 +67,7 @@
             <span class="cell">
               <span class="name">{{ station.name }}</span>
               <span class="value">{{ station.value }}</span>
-              @if (spoken(station.state)) {
+              @if (spoken(station)) {
                 <span class="visually-hidden"
                   >, {{ deliveryTexts.stateLabels[station.state] }}</span
                 >
