@@ -7,11 +7,12 @@ export interface Report {
   links: DeliveryLink[];
 }
 
-const reportBase = 'https://philippklinger.github.io/my-dso-blog/docs/projects';
+// Every address ends with a slash: the blog redirects any other form with a 301.
+const reportBase = 'https://philippklinger.github.io/my-dso-blog/docs/projects/';
 const repoBase = 'https://github.com/PhilippKlinger';
 
 function reportLinks(reportPath: string, repository?: string): DeliveryLink[] {
-  const report = { label: 'Bericht lesen', url: `${reportBase}/${reportPath}` };
+  const report = { label: 'Bericht lesen', url: `${reportBase}${reportPath}` };
   return repository ? [report, { label: 'Repo', url: `${repoBase}/${repository}` }] : [report];
 }
 
@@ -36,17 +37,17 @@ export const reportCard: {
     {
       title: 'V-Server Setup',
       what: 'Linux, SSH, NGINX',
-      links: reportLinks('v-server-setup', 'v-server-setup'),
+      links: reportLinks('v-server-setup/', 'v-server-setup'),
     },
     {
       title: 'Truck Signs API',
       what: 'Fehlerhaftes Compose-Setup repariert, PostgreSQL',
-      links: reportLinks('truck-signs-api', 'truck-signs-api'),
+      links: reportLinks('truck-signs-api/', 'truck-signs-api'),
     },
     {
       title: 'WordPress Multi-Container',
       what: 'Docker Compose, Healthchecks, persistente Daten',
-      links: reportLinks('wordpress-multicontainer-setup', 'wordpress-multicontainer-setup'),
+      links: reportLinks('wordpress-multicontainer-setup/', 'wordpress-multicontainer-setup'),
     },
   ],
 };

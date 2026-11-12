@@ -32,7 +32,7 @@ interface StatusFile {
 }
 type Change = (document: StatusFile) => void;
 
-const reportBase = 'https://philippklinger.github.io/my-dso-blog/docs/projects';
+const reportBase = 'https://philippklinger.github.io/my-dso-blog/docs/projects/';
 const failedNotice = 'Der aktuelle Stand ist gerade nicht abrufbar.';
 const staleNotice = 'Dieser Stand ist älter als einen Tag.';
 const titles = [
