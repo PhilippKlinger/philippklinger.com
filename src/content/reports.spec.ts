@@ -1,6 +1,7 @@
 import { reportCard } from './reports';
 
-const blog = 'https://philippklinger.github.io/my-dso-blog/docs/projects';
+// With the closing slash: the blog answers every other form with a 301.
+const blog = 'https://philippklinger.github.io/my-dso-blog/docs/projects/';
 const repos = 'https://github.com/PhilippKlinger';
 
 describe('reportCard', () => {
@@ -21,13 +22,13 @@ describe('reportCard', () => {
       [
         'OWASP Juice Shop',
         'Web Application Security: Injection, unsigned JWT',
-        [{ label: 'Bericht lesen', url: `${blog}/Juice%20Shop%20Master/` }],
+        [{ label: 'Bericht lesen', url: `${blog}Juice%20Shop%20Master/` }],
       ],
       [
         'V-Server Setup',
         'Linux, SSH, NGINX',
         [
-          { label: 'Bericht lesen', url: `${blog}/v-server-setup` },
+          { label: 'Bericht lesen', url: `${blog}v-server-setup/` },
           { label: 'Repo', url: `${repos}/v-server-setup` },
         ],
       ],
@@ -35,7 +36,7 @@ describe('reportCard', () => {
         'Truck Signs API',
         'Fehlerhaftes Compose-Setup repariert, PostgreSQL',
         [
-          { label: 'Bericht lesen', url: `${blog}/truck-signs-api` },
+          { label: 'Bericht lesen', url: `${blog}truck-signs-api/` },
           { label: 'Repo', url: `${repos}/truck-signs-api` },
         ],
       ],
@@ -43,7 +44,7 @@ describe('reportCard', () => {
         'WordPress Multi-Container',
         'Docker Compose, Healthchecks, persistente Daten',
         [
-          { label: 'Bericht lesen', url: `${blog}/wordpress-multicontainer-setup` },
+          { label: 'Bericht lesen', url: `${blog}wordpress-multicontainer-setup/` },
           { label: 'Repo', url: `${repos}/wordpress-multicontainer-setup` },
         ],
       ],
