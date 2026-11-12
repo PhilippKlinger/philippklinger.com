@@ -351,16 +351,13 @@ test.describe('eigener Zeiger', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     desktopOnly(testInfo);
     await page.goto('/');
-    // Since Playwright 1.62 (Chromium RenderDocument) every new document starts with the
-    // pointer at (0,0); in CI the header there gets a trusted pointerover shortly after load
-    // (PK-49). Like a real mouse in the window, that brings the dot. These tests start with
-    // no pointer in the window, so it moves out after the navigation, not before.
-    await page.mouse.move(-10, -10);
   });
 
+  // No check for the normal pointer before the first move: on the Linux runner every new
+  // document gets a trusted pointerover at (0,0) without any input (PK-49), and moving the
+  // pointer out does not reliably undo it. The test "außerhalb des Fensters" covers the
+  // normal pointer once the pointer is outside.
   test('[PK-36] der Punkt folgt dem Zeiger ohne Verzögerung', async ({ page }) => {
-    await expectNormalPointer(page);
-
     const first = await hoverCenter(page, heading(page));
     await expectDotOn(page);
     await expectDotSize(page, '10px');
