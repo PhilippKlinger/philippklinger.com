@@ -796,7 +796,13 @@ describe('parseStatusDocument', () => {
   it('accepts the healthy e2e fixture with every project', () => {
     const parsed = parseStatusDocument(JSON.stringify(e2eStatus));
     expect(parsed).not.toBeNull();
-    for (const key of ['videoflix', 'portfolio', 'vps-plattform', 'neuro-check-in'] as const) {
+    for (const key of [
+      'videoflix',
+      'portfolio',
+      'vps-plattform',
+      'neuro-check-in',
+      'buildorder',
+    ] as const) {
       expect(pickProjectSnapshot(parsed, key)).not.toBeNull();
     }
   });
@@ -806,6 +812,7 @@ describe('parseStatusDocument', () => {
     expect(parsed).not.toBeNull();
     expect(pickProjectSnapshot(parsed, 'vps-plattform')).toBeNull();
     expect(pickProjectSnapshot(parsed, 'neuro-check-in')).toBeNull();
+    expect(pickProjectSnapshot(parsed, 'buildorder')).toBeNull();
   });
 
   // Rollout: the server keeps the file of the old collector until status.yml runs again.

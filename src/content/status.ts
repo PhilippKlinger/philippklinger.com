@@ -6,7 +6,7 @@ export const STATUS_SCHEMA_VERSION = 1;
 
 export type StationKey = 'code' | 'checks' | 'supplyChain' | 'live' | 'stability' | 'restore';
 export type RequiredProjectKey = 'videoflix' | 'portfolio';
-export type ProjectKey = RequiredProjectKey | 'vps-plattform' | 'neuro-check-in';
+export type ProjectKey = RequiredProjectKey | 'vps-plattform' | 'neuro-check-in' | 'buildorder';
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
 export type LinkKind =
@@ -135,12 +135,13 @@ export interface StatusDocument {
   schemaVersion: number;
   generatedAt: string;
   /**
-   * vps-plattform and neuro-check-in are optional: a file written before they existed must stay
-   * readable. Such a file may still carry conduit, which no page reads any more.
+   * vps-plattform, neuro-check-in and buildorder are optional: a file written before they existed
+   * must stay readable. Such a file may still carry conduit, which no page reads any more.
    */
   projects: Record<RequiredProjectKey, ProjectStatus> & {
     'vps-plattform'?: ProjectStatus;
     'neuro-check-in'?: ProjectStatus;
+    buildorder?: ProjectStatus;
   };
 }
 
@@ -923,7 +924,7 @@ export async function collectStatus(options: CollectOptions): Promise<StatusDocu
 // The closed vocabulary of the document: every other field name fails the validation.
 // Checked only before writing, so a new project key belongs here before its first run.
 const SCHEMA_KEYS = new Set(
-  `schemaVersion generatedAt projects videoflix portfolio vps-plattform neuro-check-in
+  `schemaVersion generatedAt projects videoflix portfolio vps-plattform neuro-check-in buildorder
    code checks supplyChain live stability restore reachable signals links kind source url
    repos repo isPublic defaultBranch mergedPullRequests rulesets
    enforcement target appliesToDefaultBranch ruleTypes
