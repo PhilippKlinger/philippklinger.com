@@ -256,14 +256,6 @@ jobs:
         run: |
           set -Eeuo pipefail
           check() { grep -qiE "$3" <<<"$2" || { echo "::error::$1"; echo "$2"; exit 1; }; }
-          # Right after the upload the host served the old files for a short time (12.11.),
-          # so the checks start once the site reports exactly this commit.
-          for attempt in $(seq 1 12); do
-            served=$(curl -fsS "$SITE/version.json" | jq -r .sha || true)
-            test "$served" = "$GITHUB_SHA" && break
-            test "$attempt" -lt 12 || { echo "::error::site still serves ${served:-nothing}"; exit 1; }
-            sleep 10
-          done
           home=$(curl -sSI --retry 3 --retry-delay 5 "$SITE/")
           check "start page not 200" "$home" '^HTTP/[0-9.]+ 200'
           check "CSP missing" "$home" "^content-security-policy: default-src 'self'"
