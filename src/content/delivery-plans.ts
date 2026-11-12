@@ -103,7 +103,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         setUp: true,
         sentences: monitoringSentences,
       },
-      { name: 'Restore-Test', sources: ['restore'], setUp: false, sentences: restoreSentences },
+      { name: 'Restore-Test', sources: ['restore'], setUp: true, sentences: restoreSentences },
     ],
   },
   'neuro-check-in': {

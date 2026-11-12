@@ -146,20 +146,15 @@ describe('deliveryPlans', () => {
     expect(steps.map((item) => item.state)).toEqual(['unavailable', 'unavailable', 'unavailable']);
   });
 
-  // PK-42: Uptime Kuma delivers for both slugs, so a silent source is a fault, not a gap.
+  // PK-42: Uptime Kuma delivers for both slugs and the first restore test passed on 12.11.,
+  // so a silent source is a fault, not a gap.
   it.each([
     ['videoflix', 'Monitoring'],
+    ['videoflix', 'Restore-Test'],
     ['portfolio', 'Monitoring'],
   ])('"%s" measures "%s" as set up', (slug, name) => {
     const step = deliveryPlans[slug].steps.find((item) => item.name === name) as MeasuredStep;
     expect(step.setUp).toBe(true);
-  });
-
-  it('Videoflix still starts its restore test as not set up', () => {
-    const step = deliveryPlans['videoflix'].steps.find(
-      (item) => item.name === 'Restore-Test',
-    ) as MeasuredStep;
-    expect(step.setUp).toBe(false);
   });
 
   it('every fixed verified step has a public link', () => {

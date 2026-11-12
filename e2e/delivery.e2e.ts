@@ -164,13 +164,13 @@ test.describe('Software Delivery', () => {
       '6 von 6 passing',
       'teilweise',
       'nicht abrufbar',
-      // PK-42: monitoring is set up, a silent Kuma is a fault, not a gap.
+      // PK-42: monitoring and restore test are set up, a silent source is a fault, not a gap.
       'nicht abrufbar',
-      'noch nicht eingerichtet',
+      'nicht abrufbar',
     ]);
     await expect
       .poll(() => statesOf(page))
-      .toEqual(['verified', 'verified', 'partial', 'unavailable', 'unavailable', 'notSetUp']);
+      .toEqual(['verified', 'verified', 'partial', 'unavailable', 'unavailable', 'unavailable']);
     await expect(stations(page).locator('.tick')).toHaveCount(2);
     await expect(delivery(page).locator('.via')).toHaveText([
       '→ CI',

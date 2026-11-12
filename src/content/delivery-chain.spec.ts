@@ -448,8 +448,8 @@ describe('buildChainView', () => {
       expect(measured.every((entry) => entry.state !== 'verified')).toBe(true);
       expect(measured.every((entry) => entry.table === null && entry.verify === null)).toBe(true);
     }
+    // Every Videoflix station is set up since PK-42, so without data each one is unavailable.
     const values = buildChainView(plan, null).stations.map((entry) => entry.value);
-    expect(values).toContain('nicht abrufbar');
-    expect(values).toContain('noch nicht eingerichtet');
+    expect(values).toEqual(Array(plan.steps.length).fill('nicht abrufbar'));
   });
 });
