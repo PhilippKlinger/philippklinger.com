@@ -135,6 +135,15 @@ jobs:
           path: blob-report/
           retention-days: 1
 
+      - name: Upload screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screens-${{ matrix.shard }}
+          path: e2e-report/screens/
+          if-no-files-found: ignore
+          retention-days: 1
+
   # Keeps the required check "End-to-end tests" and merges the shard reports.
   e2e-report:
     name: End-to-end tests
@@ -162,6 +171,14 @@ jobs:
         with:
           pattern: blob-report-*
           path: all-blob-reports
+          merge-multiple: true
+
+      # File names carry viewport and page, so the shards never collide.
+      - name: Download screenshots
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: screens-*
+          path: e2e-report/screens
           merge-multiple: true
 
       - name: Merge reports
