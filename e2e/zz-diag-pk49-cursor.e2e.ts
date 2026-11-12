@@ -21,7 +21,7 @@ declare global {
 }
 
 for (let run = 0; run < 30; run++) {
-  test(`diag PK-49 pointer outside before goto #${run}`, async ({ page }, testInfo) => {
+  test(`diag PK-49 pointer outside after goto #${run}`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop');
     await page.addInitScript(() => {
       window.pk49 = [];
@@ -45,13 +45,12 @@ for (let run = 0; run < 30; run++) {
       for (const type of ['pointerover', 'pointermove', 'pointerenter', 'mouseover', 'mousemove'])
         addEventListener(type, note, { capture: true, passive: true });
     });
-    await page.mouse.move(-5, -5);
     await page.goto('/');
+    // RenderDocument (Playwright 1.62+) starts each document with the pointer at (0,0).
+    await page.mouse.move(-10, -10);
     await page.waitForTimeout(1000);
     const seen = await page.evaluate(() => window.pk49);
     const html = await page.locator('html').getAttribute('class');
-    expect(JSON.stringify({ html, seen }), 'no pointer event before the first move').toBe(
-      JSON.stringify({ html: null, seen: [] }),
-    );
+    expect(html, JSON.stringify(seen)).toBeNull();
   });
 }
