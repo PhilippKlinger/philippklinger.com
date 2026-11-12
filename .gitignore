@@ -52,13 +52,6 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Private workspace material never belongs in this public repo
-# (audits, findings, notes and legacy server scripts live in a separate private repo)
-findings/
-private/
-*.private.*
-*.php
-
 # End-to-end and Lighthouse output (CI artifacts)
 /test-results/
 /playwright-report/
