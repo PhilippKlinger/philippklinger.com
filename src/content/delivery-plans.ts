@@ -100,10 +100,10 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         name: 'Monitoring',
         arrowToNext: 'Backup',
         sources: ['stability'],
-        setUp: false,
+        setUp: true,
         sentences: monitoringSentences,
       },
-      { name: 'Restore-Test', sources: ['restore'], setUp: false, sentences: restoreSentences },
+      { name: 'Restore-Test', sources: ['restore'], setUp: true, sentences: restoreSentences },
     ],
   },
   'neuro-check-in': {
@@ -154,8 +154,8 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         setUp: true,
         sentences: platformCheckSentences,
       },
-      // No status page slug of its own yet (E5); rises by itself once the data proves it.
-      { name: 'Betrieb', sources: ['stability'], setUp: false, sentences: monitoringSentences },
+      // Own status page since 12.11. (E5), with the monitor "Statusseite" only (q11).
+      { name: 'Betrieb', sources: ['stability'], setUp: true, sentences: monitoringSentences },
     ],
   },
   'developer-workspace-kit': {
@@ -195,7 +195,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
         setUp: true,
         sentences: deploymentSentences,
       },
-      { name: 'Monitoring', sources: ['stability'], setUp: false, sentences: monitoringSentences },
+      { name: 'Monitoring', sources: ['stability'], setUp: true, sentences: monitoringSentences },
     ],
   },
 };
