@@ -20,8 +20,8 @@ declare global {
   }
 }
 
-for (let run = 0; run < 40; run++) {
-  test(`diag PK-49 pointer before first move #${run}`, async ({ page }, testInfo) => {
+for (let run = 0; run < 30; run++) {
+  test(`diag PK-49 pointer outside before goto #${run}`, async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop');
     await page.addInitScript(() => {
       window.pk49 = [];
@@ -45,6 +45,7 @@ for (let run = 0; run < 40; run++) {
       for (const type of ['pointerover', 'pointermove', 'pointerenter', 'mouseover', 'mousemove'])
         addEventListener(type, note, { capture: true, passive: true });
     });
+    await page.mouse.move(-5, -5);
     await page.goto('/');
     await page.waitForTimeout(1000);
     const seen = await page.evaluate(() => window.pk49);
