@@ -35,6 +35,9 @@
   align-items: center;
   min-width: var(--size-touch);
   min-height: var(--size-touch);
+  // Fira Code at 28 px, so the initials hold their own next to the navigation (S1, PK-41).
+  font-family: var(--font-code);
+  font-size: var(--text-logo);
   font-weight: var(--weight-bold);
   color: var(--color-text);
   text-decoration: none;

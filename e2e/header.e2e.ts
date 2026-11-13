@@ -92,3 +92,12 @@ test.describe('Header erreichbar (FB-13)', () => {
     await expect.poll(background).toBe('rgb(28, 28, 28)');
   });
 });
+
+// S1 (13.11.): the initials stood out too little; Fira Code at 28 px, no new logo (PK-41).
+test.describe('Logo (S1)', () => {
+  test('[S1] Initialen „PK“ im Kopf in Fira Code mit 28 px', async ({ page }) => {
+    const logo = header(page).getByRole('link', { name: /^PK/ });
+    await expect(logo).toHaveCSS('font-size', '28px');
+    expect(await logo.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"?Fira Code/);
+  });
+});

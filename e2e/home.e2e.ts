@@ -94,9 +94,9 @@ test.describe('Hero', () => {
     await expect(page.locator('.hero .band, .hero .scroll-down, .hero .social')).toHaveCount(0);
   });
 
-  test('[Design] Jobtitel und Navigation in Fira Code, Logo in Karla', async ({ page }) => {
+  test('[Design] Jobtitel, Navigation und Logo in Fira Code', async ({ page }) => {
     await expect(page.locator('.hero .role')).toHaveCSS('font-family', FIRA_CODE);
-    await expect(page.locator('header .logo')).toHaveCSS('font-family', KARLA);
+    await expect(page.locator('header .logo')).toHaveCSS('font-family', FIRA_CODE);
     await expect(page.locator('header .logo')).toHaveText('PK');
     test.skip(isMobile(page), 'Navigation liegt im Menü');
     const link = page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link');
