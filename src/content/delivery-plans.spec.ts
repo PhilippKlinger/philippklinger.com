@@ -361,12 +361,12 @@ describe('deliveryPlans', () => {
   });
 
   // No version in the text: the release page stays current by itself.
-  it('links the releases of Buildorder as a published pre-release', () => {
+  it('links the public releases of Buildorder', () => {
     const release = deliveryPlans['buildorder'].steps.find(
       (step) => step.name === 'Release',
     ) as FixedStep;
     expect(release.state).toBe('verified');
-    expect(release.sentence).toBe('Vorab-Versionen sind öffentlich auf GitHub veröffentlicht.');
+    expect(release.sentence).toBe('Releases sind öffentlich auf GitHub veröffentlicht.');
     expect(release.links).toEqual([
       {
         label: 'Releases ansehen',

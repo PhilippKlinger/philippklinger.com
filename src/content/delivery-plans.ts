@@ -180,7 +180,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
       {
         name: 'Release',
         state: 'verified',
-        sentence: 'Vorab-Versionen sind öffentlich auf GitHub veröffentlicht.',
+        sentence: 'Releases sind öffentlich auf GitHub veröffentlicht.',
         links: [
           {
             label: 'Releases ansehen',

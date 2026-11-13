@@ -93,10 +93,10 @@ export const projects: Project[] = [
     title: 'Buildorder',
     // DRAFT: no version in the text, the release page and the measured CI stay current (kit2).
     summary:
-      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentliches Pre-Release.',
+      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentlich auf GitHub veröffentlicht.',
     // DRAFT: meta description, shortened from the summary.
     description:
-      'Buildorder: Plugin für Claude Code, das Workspace, Doc-Map, Hooks und eine CI-Pipeline mit Security-Checks einrichtet. Öffentliches Pre-Release.',
+      'Buildorder: Plugin für Claude Code, das Workspace, Doc-Map, Hooks und eine CI-Pipeline mit Security-Checks einrichtet. Öffentlich auf GitHub.',
     stack: ['Node.js', 'Claude Code', 'GitHub Actions'],
     chips: ['Node.js', 'Claude Code', 'GitHub Actions'],
     // DRAFT: link labels.

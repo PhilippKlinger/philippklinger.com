@@ -128,10 +128,18 @@ describe('projects', () => {
     ],
     [
       'buildorder',
-      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentliches Pre-Release.',
+      'Plugin für Claude Code, das um den Agenten herum die Engineering-Standards aufbaut: geführte Einrichtung eines Workspace mit Doc-Map in einem privaten Docs-Repo, Hooks als Leitplanken für Commits und Steuerdateien und eine CI-Pipeline mit Security-Checks für neue Projekte. Öffentlich auf GitHub veröffentlicht.',
     ],
   ])('"%s" has the text of the spec', (slug, summary) => {
     expect(projects.find((project) => project.slug === slug)?.summary).toBe(summary);
+  });
+
+  // Buildorder 1.0.0 is a full release, so no text may still call it a pre-release.
+  it('describes Buildorder as published, not as a pre-release', () => {
+    const buildorder = projects.find((project) => project.slug === 'buildorder');
+    expect(buildorder?.description).toBe(
+      'Buildorder: Plugin für Claude Code, das Workspace, Doc-Map, Hooks und eine CI-Pipeline mit Security-Checks einrichtet. Öffentlich auf GitHub.',
+    );
   });
 
   it('keeps chips off the site itself, it has no card', () => {
