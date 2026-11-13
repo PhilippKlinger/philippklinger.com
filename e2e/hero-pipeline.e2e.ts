@@ -232,6 +232,23 @@ test.describe('Schleife', () => {
     await expect.poll(() => progress(page)).not.toBe(held);
   });
 
+  // Decision (b) 13.11.: the pause shows the end state, play goes on from the paused moment.
+  test('[b] Pause zeigt den Endstand, Play setzt an der angehaltenen Stelle fort', async ({
+    page,
+  }) => {
+    await openWith(page);
+    const midway = async () => Number((await progress(page)) || -1);
+    await expect.poll(midway, { timeout: ONE_RUN_MS, intervals: [50] }).toBeGreaterThan(0.3);
+    const before = await midway();
+    await pause(page).click();
+    await expect.poll(() => states(page)).toEqual(ALL_DONE);
+    await expect.poll(() => progress(page)).toBe('');
+    await page.waitForTimeout(1_000);
+    await pause(page).click();
+    await expect.poll(() => progress(page)).not.toBe('');
+    expect(await midway(), 'setzt fort statt neu zu starten').toBeGreaterThanOrEqual(before - 0.05);
+  });
+
   test('[H3] Hover hält an und zeigt alle Werte', async ({ page }) => {
     test.skip(page.viewportSize()!.width < 768, 'kein Hover auf Touch');
     await openWith(page);
