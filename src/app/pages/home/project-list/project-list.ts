@@ -26,6 +26,7 @@ function reportRow(): RowContent {
     tech: reportCard.chips,
     href: reportCard.cta.url,
     external: true,
+    preview: reportCard.preview,
     // Counted from the list when shown, so the number cannot drift from the reports.
     signal: { state: 'verified', status: `${reportCard.reports.length} Berichte`, when: '' },
     ring: 'Zum Blog ↗',
