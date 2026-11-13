@@ -156,3 +156,15 @@ test.describe('Nach oben (FB-02)', () => {
     await expect(button(page)).toHaveCount(0);
   });
 });
+
+// S10 (13.11.): the legal pages lead back to the footer of the start page, where they are linked.
+test.describe('Rechtliches (S10)', () => {
+  for (const path of ['/impressum/', '/datenschutz/']) {
+    test(`[S10] ${path}: Zurück führt zum Footer der Startseite`, async ({ page }) => {
+      await page.goto(path);
+      await page.getByRole('link', { name: 'Zurück zur Startseite' }).click();
+      await expect(page).toHaveURL(/\/#fusszeile$/);
+      await expect(page.locator('footer#fusszeile')).toBeInViewport();
+    });
+  }
+});

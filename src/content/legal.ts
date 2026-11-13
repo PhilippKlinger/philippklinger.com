@@ -3,6 +3,9 @@
 // Current postal address (Philipp, 2026-11-04).
 export const address = ['Philipp Klinger', 'Ostlandstraße 11', '49504 Lotte'];
 
+// DRAFT: label of the way back from both legal pages (S10).
+export const legalBack = 'Zurück zur Startseite';
+
 export const imprint = {
   providerHeading: 'Angaben gemäß § 5 DDG',
   contactHeading: 'Kontakt',

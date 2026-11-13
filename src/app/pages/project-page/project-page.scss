@@ -7,17 +7,14 @@
 }
 
 // Touch targets of at least 44 px (web-quality rule).
-.back,
+.back {
+  @include patterns.back-link;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
   min-height: var(--size-touch);
-}
-
-.back {
-  gap: var(--space-xs);
-  justify-self: start;
-  font-family: var(--font-code);
 }
 
 .overview {
