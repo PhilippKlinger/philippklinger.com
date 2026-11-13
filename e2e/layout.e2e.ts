@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { contrast } from './support/colour';
+import { revealSections } from './support/motion';
 import { pages } from './support/site';
 
 // Header and footer on every page, checked against the design
@@ -180,6 +181,7 @@ test.describe('Mobilmenü', () => {
 
   test('[Spec 4 · WCAG 2.2 AA] axe ohne Verstöße bei offenem Menü', async ({ page }) => {
     await page.goto('/');
+    await revealSections(page);
     await page.getByRole('button', { name: 'Menü' }).click();
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { projects } from '../src/content/projects';
+import { revealSections } from './support/motion';
 
 declare global {
   interface Window {
@@ -308,6 +309,9 @@ test.describe('Vorschaubild', () => {
   async function openHydrated(page: Page): Promise<void> {
     await openList(page);
     await expect(page.locator('[ngh]')).toHaveCount(0);
+    // Image and row are measured one after the other, so the rows have to rest: a section that
+    // fades in still lifts its content (S5).
+    await revealSections(page);
   }
 
   async function expectInRow(image: Box, link: Locator): Promise<void> {

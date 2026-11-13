@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { decodeRgba } from './support/colour';
+import { revealSections } from './support/motion';
 
 // The ring at the pointer (spec 8.2, 16.1). It only ever adds to the row, which is the link.
 declare global {
@@ -115,6 +116,9 @@ test.describe('mit Maus', () => {
     desktopOnly(testInfo);
     await countFrames(page);
     await page.goto('/');
+    // The rows rest under the pointer: content that still rises (S5) moves under a resting
+    // pointer, and the browser reports that as pointer movement.
+    await revealSections(page);
   });
 
   test('[AK10] über der Zeile erscheint der Ring und folgt dem Zeiger', async ({ page }) => {

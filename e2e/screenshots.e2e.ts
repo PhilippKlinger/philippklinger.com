@@ -1,4 +1,5 @@
 import { test } from '@playwright/test';
+import { revealSections } from './support/motion';
 import { pages } from './support/site';
 
 // Full-page screenshots of every page in every viewport, uploaded as CI artifact.
@@ -9,6 +10,7 @@ for (const path of pages) {
   test(`Screenshot ${path}`, async ({ page }, testInfo) => {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
+    await revealSections(page);
     const name = path === '/' ? 'start' : path.replaceAll('/', '');
     await page.screenshot({
       path: `e2e-report/screens/${testInfo.project.name}-${name}.png`,
