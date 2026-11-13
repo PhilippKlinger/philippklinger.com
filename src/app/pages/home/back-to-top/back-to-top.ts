@@ -2,10 +2,11 @@ import {
   Component,
   DestroyRef,
   DOCUMENT,
+  ElementRef,
   afterNextRender,
-  computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 
 /** Rest after the last scroll event before the button comes back (S11). */
@@ -23,10 +24,9 @@ const REST_MS = 600;
 export class BackToTop {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly heroGone = signal(false);
-  private readonly scrolling = signal(false);
+  private readonly button = viewChild.required<ElementRef<HTMLButtonElement>>('button');
+  protected readonly shown = signal(false);
   private restTimer = 0;
-  protected readonly shown = computed(() => this.heroGone() && !this.scrolling());
 
   constructor() {
     afterNextRender(() => {
@@ -45,9 +45,7 @@ export class BackToTop {
   private showOnceHeroIsGone(): void {
     const hero = this.document.querySelector('.hero');
     if (!hero) return;
-    const observer = new IntersectionObserver(([entry]) =>
-      this.heroGone.set(!entry.isIntersecting),
-    );
+    const observer = new IntersectionObserver(([entry]) => this.shown.set(!entry.isIntersecting));
     observer.observe(hero);
     this.destroyRef.onDestroy(() => observer.disconnect());
   }
@@ -61,9 +59,11 @@ export class BackToTop {
     });
   }
 
+  // A class, not a signal: scrolling must not wake change detection and ask for frames.
   private onScroll(): void {
-    this.scrolling.set(true);
+    const classes = this.button().nativeElement.classList;
+    classes.add('scrolling');
     clearTimeout(this.restTimer);
-    this.restTimer = window.setTimeout(() => this.scrolling.set(false), REST_MS);
+    this.restTimer = window.setTimeout(() => classes.remove('scrolling'), REST_MS);
   }
 }
