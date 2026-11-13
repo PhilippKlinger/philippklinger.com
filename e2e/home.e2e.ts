@@ -269,16 +269,24 @@ test.describe('Zustände und Bewegung', () => {
   });
 });
 
-test.describe('Mikro-Interaktionen (PK-28)', () => {
-  test('[PK-28] Button-Text läuft bei Hover und Fokus durch', async ({ page }) => {
+test.describe('Mikro-Interaktionen (PK-28, S2)', () => {
+  // S2 (13.11.): the label stays where it is, only the colours change on hover and focus.
+  test('[S2] Button-Text bleibt bei Fokus stehen, nur die Farbe wechselt', async ({ page }) => {
     const button = page.locator('.hero .button').first();
-    const label = button.locator('.button-label');
-    const offset = () => label.evaluate((el) => getComputedStyle(el).translate);
-    const rest = await offset();
+    const look = () =>
+      button.evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const text = range.getBoundingClientRect();
+        return { top: Math.round(text.top), background: getComputedStyle(el).backgroundColor };
+      });
+    const rest = await look();
     await button.focus();
     await page.keyboard.press('Shift+Tab');
     await page.keyboard.press('Tab');
-    await expect.poll(offset).not.toBe(rest);
+    await expect.poll(async () => (await look()).background).not.toBe(rest.background);
+    expect((await look()).top).toBe(rest.top);
+    await expect(button.locator('*')).toHaveCount(0);
     await expect(button).toHaveAccessibleName('Projekte ansehen');
   });
 });

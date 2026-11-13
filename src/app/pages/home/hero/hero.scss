@@ -60,14 +60,11 @@
   margin-top: var(--space-lg);
 }
 
-// The label rolls up once on hover and focus; its text shadow is the copy that
-// rolls in from below (PK-28). Shadow text is not read, the name stays the label.
+// Hover and focus change only the colours, the label stays still (S2, 13.11.).
 .button {
-  --roll: 2em;
   display: inline-flex;
   align-items: center;
   min-height: var(--size-touch);
-  overflow: hidden;
   padding: var(--space-xs) var(--space-md);
   border: var(--border-width) solid var(--color-text);
   border-radius: var(--radius-pill);
@@ -79,10 +76,6 @@
     border-color: var(--color-accent);
     background: var(--color-accent);
     color: var(--color-bg);
-
-    .button-label {
-      translate: 0 calc(-1 * var(--roll));
-    }
   }
 }
 
@@ -97,12 +90,6 @@
     border-color: var(--color-text);
     background: var(--color-text);
   }
-}
-
-.button-label {
-  display: block;
-  text-shadow: 0 var(--roll) currentColor;
-  transition: translate 0.35s ease;
 }
 
 @include bp.from(tablet) {
