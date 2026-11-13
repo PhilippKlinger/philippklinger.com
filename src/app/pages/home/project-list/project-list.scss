@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 // Stays in the DOM even when empty, so screen readers announce a later notice.
 .notice:not(:empty) {
   margin-top: var(--space-sm);
@@ -9,10 +11,10 @@
   position: relative;
 }
 
-// Equal rows: a title on two lines makes every row taller, not only its own.
+// Equal rows: a title on two lines makes every row taller, not only its own. Not on phones, where
+// an opened row would stretch every other row (c).
 .rows {
   display: grid;
-  grid-auto-rows: 1fr;
   margin: var(--space-lg) 0 0;
   padding: 0;
   border-bottom: var(--border-width) solid var(--color-line-faint);
@@ -20,5 +22,9 @@
 
   > li {
     display: grid;
+  }
+
+  @include bp.from(tablet) {
+    grid-auto-rows: 1fr;
   }
 }

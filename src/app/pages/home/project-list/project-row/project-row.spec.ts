@@ -76,6 +76,31 @@ describe('ProjectRow', () => {
     expect(thumb!.querySelector('img')).toBeNull();
   });
 
+  // Phones fold image, text and tech away (c, 13.11.); a disclosure inside the link would navigate.
+  it('repeats image, text and tech in a closed disclosure beside the link', () => {
+    const preview = { src: 'images/projects/videoflix.webp', width: 640, height: 336 };
+    const host = render({ ...projectRow, preview });
+    const fold = host.querySelector('details')!;
+    expect(fold.closest('a')).toBeNull();
+    expect(fold.querySelector('a')).toBeNull();
+    expect(fold.open).toBe(false);
+    expect(fold.querySelector('summary')?.textContent?.trim()).toBe('Details');
+    expect(fold.querySelector('.fold-text')?.textContent).toBe(projectRow.summary);
+    expect(fold.querySelector('.fold-tech')?.textContent).toBe(
+      'Docker Compose · Caddy · Uptime Kuma · GitHub Actions',
+    );
+    const image = fold.querySelector('img')!;
+    expect(image.getAttribute('src')).toBe(preview.src);
+    expect(image.getAttribute('width')).toBe('640');
+    expect(image.getAttribute('height')).toBe('336');
+    expect(image.getAttribute('alt')).toBe('');
+    expect(image.getAttribute('loading')).toBe('lazy');
+  });
+
+  it('folds no empty image place for a row without one', () => {
+    expect(render(projectRow).querySelector('details img')).toBeNull();
+  });
+
   it('keeps the cta text for screen readers', () => {
     const link = render(projectRow).querySelector('a')!;
     const text = link.querySelector('.cta-text')!;

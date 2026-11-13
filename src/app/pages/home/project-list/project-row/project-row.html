@@ -27,3 +27,22 @@
     <span class="arrow" aria-hidden="true">{{ cta().arrow }}</span>
   </span>
 </a>
+<!-- Phones only (c): image, text and tech behind "Details". Beside the link, a disclosure inside
+     it would navigate. From the tablet up it is hidden and the link shows everything. -->
+<details class="fold">
+  <summary>{{ foldLabel }}</summary>
+  <div class="fold-body">
+    @if (row().preview; as preview) {
+      <img
+        class="fold-image"
+        [src]="preview.src"
+        [width]="preview.width"
+        [height]="preview.height"
+        alt=""
+        loading="lazy"
+      />
+    }
+    <p class="fold-text">{{ row().summary }}</p>
+    <p class="fold-tech">{{ tech() }}</p>
+  </div>
+</details>
