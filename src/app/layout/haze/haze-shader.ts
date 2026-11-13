@@ -2,9 +2,9 @@ import { renderSize } from './haze-motion';
 
 export const vertexSource = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
 
-// The values were chosen by eye in a slider mockup (PK-36). The upper limit of the colour stays
-// below the first draft (.12,.33,.29): with the grain on top, the accent colour still reaches
-// 4.5:1 on the brightest pixel.
+// The values were chosen by eye in a slider mockup (PK-36; light radius 7, strength 1.2 on
+// 13.11.). The upper limit of the colour stays below the first draft (.12,.33,.29): with the
+// grain on top, the accent colour still reaches 4.5:1 on the brightest pixel.
 export const fragmentSource = `precision highp float;
 uniform vec2 uRes;uniform vec2 uPointer;uniform float uTime;uniform float uEnergy;
 const vec3 bg=vec3(.110,.110,.110);const vec3 glow=vec3(.043,.251,.212);const vec3 strong=vec3(.149,.322,.294);const vec3 accent=vec3(.239,.812,.714);
@@ -12,10 +12,10 @@ float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract
 float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),u.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),u.x),u.y);}
 float fbm(vec2 p){float v=0.,a=.5;mat2 r=mat2(.8,.6,-.6,.8);for(int i=0;i<4;i++){v+=a*noise(p);p=r*p*2.02+7.;a*=.5;}return v;}
 void main(){vec2 uv=gl_FragCoord.xy/uRes;float s=min(uRes.x,uRes.y);vec2 p=(gl_FragCoord.xy-.5*uRes)/s;vec2 m=(uPointer-.5)*uRes/s;
-float d=length(p-m);float pull=exp(-d*d*6.);float t=uTime*.002;
+float d=length(p-m);float pull=exp(-d*d*7.);float t=uTime*.002;
 vec2 q=vec2(fbm(p*1.05+t*.05),fbm(p*1.05+vec2(5.2,1.3)-t*.04));p+=(p-m)*pull*-(.45+uEnergy*.6);
 float n=fbm(p*1.25+q*1.7+t*.03);float haze=smoothstep(.36,.78,n);
-vec3 col=mix(bg,glow,haze*mix(.5,1.,uv.x));col=mix(col,strong,smoothstep(.56,.84,n)*.65);col=mix(col,glow,pull*.44);col=mix(col,strong,pull*pull*.36);col+=accent*pull*pull*.024;
+vec3 col=mix(bg,glow,haze*mix(.5,1.,uv.x));col=mix(col,strong,smoothstep(.56,.84,n)*.65);col=mix(col,glow,pull*.66);col=mix(col,strong,pull*pull*.54);col+=accent*pull*pull*.036;
 col=min(col,vec3(.115,.315,.275));col+=(hash(gl_FragCoord.xy+floor(t*12.))-.5)*.012;gl_FragColor=vec4(col,1.);}`;
 
 export interface Point {
