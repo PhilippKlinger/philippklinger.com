@@ -1,5 +1,9 @@
 @use 'breakpoints' as bp;
 
+// Room for three lines of description and a little air, so the tool lists of cards side by side
+// start at the same height (S6, variant B).
+$description-height: 4.8em;
+
 :host {
   display: block;
   // Static light area of the skills section. A translucent background
@@ -30,10 +34,9 @@ h3 {
   color: var(--color-text-muted);
 }
 
+// One tool per row, divided by a faint line: calmer than pills of different widths (S6, variant B).
 .tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
+  display: grid;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -42,12 +45,14 @@ h3 {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: 0.25rem var(--space-sm);
-    border: var(--border-width) solid var(--color-text-subtle);
-    border-radius: var(--radius-pill);
+    padding: var(--space-compact) 0;
     font-family: var(--font-code);
     font-size: var(--text-sm);
     white-space: nowrap;
+  }
+
+  li + li {
+    border-top: var(--border-width) solid var(--color-line-faint);
   }
 
   // Sized to the text, one token colour for all logos (no brand colours).
@@ -62,5 +67,9 @@ h3 {
 @include bp.from(desktop) {
   .areas {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .description {
+    min-height: $description-height;
   }
 }

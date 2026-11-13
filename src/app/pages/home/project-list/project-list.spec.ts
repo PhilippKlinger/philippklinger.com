@@ -78,6 +78,12 @@ describe('ProjectList', () => {
       expect(preview.querySelector('img')?.getAttribute('src')).toBe(neuro.preview!.src);
     });
 
+    it('shows the blog page for the row of the reports', () => {
+      const { preview, point } = renderList();
+      point(reportCard.title, 'mouse');
+      expect(preview.querySelector('img')?.getAttribute('src')).toBe('images/projects/blog.webp');
+    });
+
     it('stays off for a touch, the row shows its small image', () => {
       const { preview, point } = renderList();
       point(projects[0].title, 'touch');

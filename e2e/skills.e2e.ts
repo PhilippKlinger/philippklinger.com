@@ -84,3 +84,50 @@ test('[B13] kein horizontaler Überlauf bei 390 px', async ({ page }) => {
   );
   expect(outside, 'Werkzeug ragt aus der Karte').toEqual([]);
 });
+
+// Calm list (S6, variant B, 13.11.): one tool per row, rows divided by a faint line, no pills.
+test('[S6] Werkzeuge stehen als ruhige Liste: gleich hoch, bündig, ohne Pille', async ({
+  page,
+}) => {
+  const cards = await page.locator('#skills .card').evaluateAll((all) =>
+    all.map((card) => {
+      const list = card.querySelector('.tools')!.getBoundingClientRect();
+      return [...card.querySelectorAll('.tools li')].map((li) => {
+        const box = li.getBoundingClientRect();
+        const style = getComputedStyle(li);
+        return {
+          text: li.textContent?.trim(),
+          height: box.height,
+          indent: box.left - list.left,
+          width: list.width - box.width,
+          radius: parseFloat(style.borderTopLeftRadius),
+          sides: [style.borderRightStyle, style.borderBottomStyle, style.borderLeftStyle],
+          top: style.borderTopStyle === 'none' ? 0 : parseFloat(style.borderTopWidth),
+        };
+      });
+    }),
+  );
+  for (const tools of cards) {
+    const heights = tools.map((tool) => tool.height);
+    expect(Math.max(...heights) - Math.min(...heights), heights.join(', ')).toBeLessThanOrEqual(1);
+    expect(tools[0].top, `erste Zeile „${tools[0].text}“ mit Linie`).toBe(0);
+    for (const [index, tool] of tools.entries()) {
+      expect(tool.indent, `„${tool.text}“ nicht bündig`).toBeLessThanOrEqual(1);
+      expect(tool.width, `„${tool.text}“ nicht über die ganze Breite`).toBeLessThanOrEqual(1);
+      expect(tool.radius, `„${tool.text}“ ist eine Pille`).toBe(0);
+      expect(tool.sides, `„${tool.text}“ hat einen Rahmen`).toEqual(['none', 'none', 'none']);
+      if (index > 0) expect(tool.top, `„${tool.text}“ ohne Trennlinie`).toBe(1);
+    }
+  }
+});
+
+test('[S6] nebeneinanderstehende Karten beginnen ihre Werkzeuge auf gleicher Höhe', async ({
+  page,
+}) => {
+  test.skip(width(page) < 1440, 'Karten stehen erst ab Desktop nebeneinander');
+  const tops = await page
+    .locator('#skills .tools')
+    .evaluateAll((lists) => lists.map((list) => list.getBoundingClientRect().top));
+  expect(tops).toHaveLength(focusAreas.length);
+  expect(Math.max(...tops) - Math.min(...tops), tops.join(', ')).toBeLessThanOrEqual(1);
+});

@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { contrast } from './support/colour';
+import { revealSections } from './support/motion';
 import { pages } from './support/site';
 
 // Header and footer on every page, checked against the design
@@ -9,19 +11,6 @@ const navLabels = ['Über mich', 'Skills', 'Projekte', 'Kontakt'];
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 const buildLine = 'Diese Seite: getestet und deployt per GitHub Actions';
 const brightestHaze = 'rgb(31, 83, 74)'; // #1f534a
-
-function luminance(color: string): number {
-  const [red = 0, green = 0, blue = 0] = (color.match(/\d+/g) ?? []).map((part) => {
-    const channel = Number(part) / 255;
-    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-}
-
-function contrast(first: string, second: string): number {
-  const [dark = 0, light = 0] = [luminance(first), luminance(second)].sort((a, b) => a - b);
-  return (light + 0.05) / (dark + 0.05);
-}
 
 for (const path of pages) {
   test.describe(`Layout ${path}`, () => {
@@ -192,6 +181,7 @@ test.describe('Mobilmenü', () => {
 
   test('[Spec 4 · WCAG 2.2 AA] axe ohne Verstöße bei offenem Menü', async ({ page }) => {
     await page.goto('/');
+    await revealSections(page);
     await page.getByRole('button', { name: 'Menü' }).click();
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])

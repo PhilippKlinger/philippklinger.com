@@ -46,7 +46,7 @@ export const projects: Project[] = [
       { label: 'Live ansehen', url: 'https://videoflix.philipp-klinger.com' },
       { label: 'Code auf GitHub', url: 'https://github.com/PhilippKlinger/videoflix-backend' },
     ],
-    preview: { src: 'images/projects/videoflix.webp', width: 640, height: 336 },
+    preview: { src: 'images/projects/videoflix.webp', width: 704, height: 378 },
   },
   {
     slug: 'neuro-check-in',
@@ -67,7 +67,7 @@ export const projects: Project[] = [
       },
       { label: 'Website', url: 'https://neurocheckin.de' },
     ],
-    preview: { src: 'images/projects/neuro-check-in.webp', width: 640, height: 336 },
+    preview: { src: 'images/projects/neuro-check-in.webp', width: 704, height: 385 },
   },
   {
     slug: 'vps-plattform',

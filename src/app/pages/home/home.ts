@@ -1,4 +1,11 @@
-import { Component, DestroyRef, DOCUMENT, inject } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  ElementRef,
+  inject,
+} from '@angular/core';
 import { About } from './about/about';
 import { BackToTop } from './back-to-top/back-to-top';
 import { Contact } from './contact/contact';
@@ -6,6 +13,7 @@ import { FocusAreas } from './focus-areas/focus-areas';
 import { Hero } from './hero/hero';
 import { profilePageSchema } from './profile-page-schema';
 import { ProjectList } from './project-list/project-list';
+import { revealSectionsOnScroll } from './reveal-sections';
 
 @Component({
   selector: 'app-home',
@@ -16,10 +24,14 @@ import { ProjectList } from './project-list/project-list';
 })
 export class Home {
   private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
     const script = this.addStructuredData();
-    inject(DestroyRef).onDestroy(() => script.remove());
+    this.destroyRef.onDestroy(() => script.remove());
+    // Only in the browser after hydration, so the prerendered page shows every section.
+    afterNextRender(() => revealSectionsOnScroll(this.host.nativeElement, this.destroyRef));
   }
 
   // Prerendering writes the block into the static HTML; hydration finds it

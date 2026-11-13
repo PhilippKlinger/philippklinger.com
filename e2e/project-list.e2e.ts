@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { projects } from '../src/content/projects';
+import { revealSections } from './support/motion';
 
 declare global {
   interface Window {
@@ -103,6 +105,7 @@ const row = (page: Page, title: string) =>
   links(page).filter({ has: page.locator('h3', { hasText: new RegExp(`^${title}$`) }) });
 const signal = (page: Page, title: string) => row(page, title).locator('.signal .state');
 const notice = (page: Page) => page.locator('#projekte .notice');
+const folds = (page: Page) => items(page).locator('details');
 
 const onlyIn = (testInfo: TestInfo, project: string) =>
   test.skip(testInfo.project.name !== project, `nur ${project}`);
@@ -139,9 +142,9 @@ async function expectLineLimits(page: Page): Promise<void> {
 }
 
 test.describe('Liste', () => {
-  test('[L1] fünf gleich gebaute Zeilen in fester Reihenfolge, alle gleich hoch', async ({
+  test('[L1] fünf gleich gebaute Zeilen in fester Reihenfolge, ab Tablet alle gleich hoch', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await openList(page);
     await expect(items(page).locator('h3')).toHaveText(titles);
     for (const link of await links(page).all()) {
@@ -153,6 +156,8 @@ test.describe('Liste', () => {
       rows.map((link) => link.getBoundingClientRect().height),
     );
     expect(heights).toHaveLength(5);
+    // On the phone each row is as tall as its own content, an opened row stretches no other (c).
+    if (testInfo.project.name === 'mobile') return;
     expect(Math.max(...heights) - Math.min(...heights), heights.join(', ')).toBeLessThanOrEqual(1);
   });
 
@@ -170,22 +175,26 @@ test.describe('Liste', () => {
 
   test('[L2] Tab erreicht jede Zeile in Lesereihenfolge, mit sichtbarem Fokus', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await page.goto('/');
     await tabIntoList(page);
-    const reached: { href: string | null; outline: boolean }[] = [];
-    for (let press = 0; press < hrefs.length; press++) {
+    // On the phone the "Mehr" of a row follows its link (c).
+    const expected =
+      testInfo.project.name === 'mobile' ? hrefs.flatMap((href) => [href, 'summary']) : hrefs;
+    const reached: { target: string | null; outline: boolean }[] = [];
+    for (let press = 0; press < expected.length; press++) {
       if (press > 0) await page.keyboard.press('Tab');
       reached.push(
         await page.evaluate(() => {
           const active = document.activeElement!;
           const { outlineStyle, outlineWidth } = getComputedStyle(active);
           const outline = outlineStyle !== 'none' && parseFloat(outlineWidth) >= 2;
-          return { href: active.getAttribute('href'), outline };
+          const target = active.getAttribute('href') ?? active.tagName.toLowerCase();
+          return { target, outline };
         }),
       );
     }
-    expect(reached).toEqual(hrefs.map((href) => ({ href, outline: true })));
+    expect(reached).toEqual(expected.map((target) => ({ target, outline: true })));
   });
 
   test('[L4] Maus: nur der Pfeil, der Text bleibt für Screenreader und kommt bei Fokus', async ({
@@ -257,6 +266,8 @@ test.describe('Liste', () => {
   }) => {
     await openList(page);
     const target = row(page, 'Videoflix');
+    // The row must be at rest: a section that still fades in (S5) moves under the click.
+    await revealSections(page);
     await target.scrollIntoViewIfNeeded();
     const before = await page.evaluate(() => window.scrollY);
     expect(before, 'the row must sit below the top').toBeGreaterThan(0);
@@ -300,6 +311,9 @@ test.describe('Vorschaubild', () => {
   async function openHydrated(page: Page): Promise<void> {
     await openList(page);
     await expect(page.locator('[ngh]')).toHaveCount(0);
+    // Image and row are measured one after the other, so the rows have to rest: a section that
+    // fades in still lifts its content (S5).
+    await revealSections(page);
   }
 
   async function expectInRow(image: Box, link: Locator): Promise<void> {
@@ -388,10 +402,11 @@ test.describe('Vorschaubild', () => {
     expect(await page.evaluate(() => window.layoutShift)).toBeLessThan(0.01);
   });
 
-  test('[L5] Touch und gestapelte Zeilen: kleines Bild links in jeder Zeile', async ({
+  // On the phone the image sits behind "Mehr" (c), see the describe block below.
+  test('[L5] gestapelte Zeilen ab Tablet: kleines Bild links in jeder Zeile', async ({
     page,
   }, testInfo) => {
-    test.skip(!['mobile', 'tablet'].includes(testInfo.project.name), 'nur gestapelte Zeilen');
+    onlyIn(testInfo, 'tablet');
     await openList(page);
     for (const link of await links(page).all()) {
       const thumb = link.locator('.thumb');
@@ -415,6 +430,10 @@ test.describe('Vorschaubild', () => {
       }).observe({ type: 'layout-shift', buffered: true });
     });
     await openHydrated(page);
+    // The phone shows its images behind "Mehr" (c).
+    if (testInfo.project.name === 'mobile') {
+      for (const summary of await folds(page).locator('summary').all()) await summary.click();
+    }
     for (const link of await links(page).all()) await link.hover();
     // Ends on a row with an image, so the large one is loaded on the desktop as well.
     await links(page).first().hover();
@@ -431,6 +450,143 @@ test.describe('Vorschaubild', () => {
       .toBe(true);
     await twoFrames(page);
     expect(await page.evaluate(() => window.layoutShift)).toBeLessThan(0.01);
+  });
+});
+
+// Phones fold image, text and tech of a row behind "Mehr" (c, decided 13.11.): less to scroll.
+// From the tablet up every row stays open as before and shows no disclosure.
+test.describe('Handy: Details einklappbar', () => {
+  // Before (c) the list measured 1553 px at 390 px (13.11.), every row 272 px.
+  const listBefore = 1553;
+  const videoflix = projects.find((project) => project.slug === 'videoflix')!;
+  const firstFold = (page: Page) => folds(page).first();
+  const openFolds = (page: Page) => page.locator('#projekte details[open]');
+
+  test('[c] eingeklappt: Status, Titel und Link sichtbar, Bild, Text und Technik nicht', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    await expect(folds(page)).toHaveCount(5);
+    for (const item of await items(page).all()) {
+      const link = item.locator('a.row');
+      for (const part of ['.signal .state', 'h3', '.cta']) {
+        await expect(link.locator(part), part).toBeVisible();
+      }
+      for (const part of ['.thumb', '.text', '.tech']) {
+        await expect(link.locator(part), part).toBeHidden();
+      }
+      const fold = item.locator('details');
+      await expect(fold).not.toHaveAttribute('open');
+      await expect(fold.locator('summary')).toHaveText('Mehr');
+      for (const part of ['img', '.fold-text', '.fold-tech']) {
+        await expect(fold.locator(part), part).toBeHidden();
+      }
+    }
+  });
+
+  test('[c] „Mehr“ ist ein Touch-Ziel ab 44 px auf der Linkzeile, ohne den Link zu verdecken', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    const middle = (box: { y: number; height: number }) => box.y + box.height / 2;
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const item of await items(page).all()) {
+        await item.scrollIntoViewIfNeeded();
+        const summary = (await item.locator('summary').boundingBox())!;
+        const cta = (await item.locator('.cta').boundingBox())!;
+        const label = `bei ${width} px`;
+        expect(summary.height, label).toBeGreaterThanOrEqual(44);
+        expect(summary.width, label).toBeGreaterThanOrEqual(44);
+        expect(summary.x + summary.width, label).toBeLessThanOrEqual(cta.x);
+        expect(Math.abs(middle(summary) - middle(cta)), label).toBeLessThanOrEqual(1);
+        // A tap on the link text reaches the link, not the disclosure above it.
+        const hit = await page.evaluate(
+          ([x, y]) => !!document.elementFromPoint(x, y)?.closest('a.row'),
+          [cta.x + cta.width / 2, middle(cta)],
+        );
+        expect(hit, `Link verdeckt ${label}`).toBe(true);
+      }
+    }
+  });
+
+  test('[c] Tippen auf den Link öffnet das Projekt, nicht „Mehr“', async ({ page }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    await links(page).first().locator('.cta-text').tap();
+    await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
+  });
+
+  test('[c] Tippen auf „Mehr“ öffnet Bild, Text und Technik und navigiert nicht', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    const fold = firstFold(page);
+    await fold.locator('summary').tap();
+    await expect(fold).toHaveAttribute('open', '');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(fold.locator('img')).toBeVisible();
+    await expect(fold.locator('img')).toHaveAttribute('src', videoflix.preview!.src);
+    await expect(fold.locator('.fold-text')).toHaveText(videoflix.summary);
+    await expect(fold.locator('.fold-tech')).toHaveText(videoflix.chips.slice(0, 4).join(' · '));
+    await expect(openFolds(page)).toHaveCount(1);
+    await expect(page.locator('#projekte app-row-preview')).toBeHidden();
+
+    await fold.locator('summary').tap();
+    await expect(fold).not.toHaveAttribute('open');
+    await expect(fold.locator('.fold-text')).toBeHidden();
+  });
+
+  test('[c] Tastatur: Enter auf „Mehr“ öffnet, Tab geht danach zur nächsten Zeile', async ({
+    page,
+  }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    await tabIntoList(page);
+    await page.keyboard.press('Tab');
+    await expect(firstFold(page).locator('summary')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(firstFold(page)).toHaveAttribute('open', '');
+    await expect(firstFold(page).locator('.fold-text')).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(links(page).nth(1)).toBeFocused();
+  });
+
+  test('[c] offen bei 320 px ohne Überlauf', async ({ page }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    await page.setViewportSize({ width: 320, height: 844 });
+    for (const summary of await folds(page).locator('summary').all()) await summary.click();
+    await expect(openFolds(page)).toHaveCount(5);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('[c] die Liste ist auf dem Handy deutlich kürzer', async ({ page }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await openList(page);
+    const { height } = (await page.locator('#projekte').boundingBox())!;
+    expect(height, `vorher ${listBefore} px`).toBeLessThanOrEqual(listBefore - 400);
+  });
+
+  test('[c] ab Tablet alles offen wie bisher, ohne „Mehr“', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile', 'ab Tablet');
+    await openList(page);
+    await expect(folds(page)).toHaveCount(5);
+    for (const item of await items(page).all()) {
+      await expect(item.locator('details')).toBeHidden();
+      for (const part of ['.signal .state', 'h3', '.text', '.tech', '.cta']) {
+        await expect(item.locator(`a.row ${part}`), part).toBeVisible();
+      }
+      // The row is the link alone, as before: the hidden disclosure takes no room.
+      const row = (await item.boundingBox())!.height;
+      expect(Math.abs(row - (await item.locator('a.row').boundingBox())!.height)).toBeLessThan(1);
+    }
   });
 });
 
@@ -613,5 +769,14 @@ test.describe('Ohne JavaScript', () => {
     expect(targets).toEqual(hrefs);
     await row(page, 'VPS-Plattform').click();
     await expect(page).toHaveURL(/\/projekte\/vps-plattform\/$/);
+  });
+
+  test('[L7 · c] „Mehr“ öffnet auf dem Handy auch ohne JavaScript', async ({ page }, testInfo) => {
+    onlyIn(testInfo, 'mobile');
+    await page.goto('/');
+    const fold = folds(page).first();
+    await fold.locator('summary').click();
+    await expect(fold.locator('.fold-text')).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
   });
 });

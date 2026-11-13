@@ -1,4 +1,6 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { decodeRgba } from './support/colour';
+import { revealSections } from './support/motion';
 
 // The ring at the pointer (spec 8.2, 16.1). It only ever adds to the row, which is the link.
 declare global {
@@ -114,6 +116,9 @@ test.describe('mit Maus', () => {
     desktopOnly(testInfo);
     await countFrames(page);
     await page.goto('/');
+    // The rows rest under the pointer: content that still rises (S5) moves under a resting
+    // pointer, and the browser reports that as pointer movement.
+    await revealSections(page);
   });
 
   test('[AK10] über der Zeile erscheint der Ring und folgt dem Zeiger', async ({ page }) => {
@@ -310,17 +315,6 @@ const accentColor = (page: Page) =>
     probe.remove();
     return color;
   });
-
-// Decoded by the browser itself, so the test needs no image library.
-const decodeRgba = (page: Page, png: Buffer) =>
-  page.evaluate(async (base64) => {
-    const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
-    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
-    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-    const context = canvas.getContext('2d')!;
-    context.drawImage(bitmap, 0, 0);
-    return [...context.getImageData(0, 0, bitmap.width, bitmap.height).data];
-  }, png.toString('base64'));
 
 const pixelsOffColor = (rgba: number[], color: string) => {
   const rgb = color.match(/\d+/g)!.map(Number);

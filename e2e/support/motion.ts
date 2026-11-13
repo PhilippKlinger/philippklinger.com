@@ -17,6 +17,30 @@ export async function holdHero(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Scrolls each section of the start page into view once, so every one has faded in (S5), and
+ * returns to the top. Checks of the whole page then judge the shown sections: axe skips content
+ * that is still hidden, and a screenshot would show it empty. Pages without sections pass.
+ */
+export async function revealSections(page: Page): Promise<void> {
+  for (const section of await page.locator('main .section').all()) {
+    // The heading, not the section: a tall section counts as visible by its empty top alone.
+    await section.locator('h2').scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => section.evaluate((el) => el.matches('.reveal:not(.in)')), 'eingeblendet')
+      .toBe(false);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  // A section in the middle of its fade has a contrast of its own that says nothing.
+  await page.evaluate(() =>
+    Promise.all(
+      [...document.querySelectorAll('main .section')]
+        .flatMap((section) => section.getAnimations())
+        .map((animation) => animation.finished),
+    ),
+  );
+}
+
 declare global {
   interface Window {
     frameRequests: number;

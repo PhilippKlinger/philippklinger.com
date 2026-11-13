@@ -28,6 +28,18 @@ describe('Header', () => {
     expect(menuButton?.getAttribute('aria-expanded')).toBe('false');
   });
 
+  // Over the content the bar is solid while the menu is open (S3).
+  it('marks the host while the mobile menu is open', async () => {
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList).not.toContain('menu-open');
+
+    await click(menuButton);
+    expect(host.classList).toContain('menu-open');
+
+    await click(menuButton);
+    expect(host.classList).not.toContain('menu-open');
+  });
+
   it('closes the mobile menu when a link is chosen', async () => {
     await click(menuButton);
 

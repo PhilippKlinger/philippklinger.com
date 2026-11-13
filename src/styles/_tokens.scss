@@ -64,6 +64,8 @@
   --page-gutter: 1rem;
   // Header overlays the page; content below starts after this height.
   --header-height: 6rem;
+  // Slimmer while it lies over the content (S3); jump targets leave room for this one.
+  --header-height-compact: 4.75rem;
   --content-width: 78rem;
   // Long texts (legal pages) as on the legal notice.
   --reading-width: 60rem;

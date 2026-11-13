@@ -25,6 +25,8 @@ const ctas = {
   details: { text: 'Details ansehen', arrow: '→' },
   external: { text: 'Alle Berichte ansehen', arrow: '↗' },
 };
+// DRAFT: label of the disclosure on phones (c).
+const foldLabel = 'Mehr';
 
 /** The whole row is one link, with no other link inside. */
 @Component({
@@ -37,4 +39,5 @@ export class ProjectRow {
   readonly row = input.required<RowContent>();
   protected readonly cta = computed(() => (this.row().external ? ctas.external : ctas.details));
   protected readonly tech = computed(() => this.row().tech.join(' · '));
+  protected readonly foldLabel = foldLabel;
 }

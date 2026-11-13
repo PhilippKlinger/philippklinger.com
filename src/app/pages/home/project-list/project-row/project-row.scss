@@ -15,14 +15,13 @@ $hover-fade: 0.15s ease;
   display: grid;
 }
 
-// Below the breakpoint the rows stack with the small image beside the head; the CTA sits at the
-// bottom, so all rows end alike.
+// Phones show head and CTA only, the rest waits behind "Details" (c). From the tablet up the rows
+// stack with the small image beside the head; the CTA sits at the bottom, so all rows end alike.
 .row {
   position: relative;
   display: grid;
-  grid-template-columns: $thumb-width minmax(0, 1fr);
-  grid-template-areas: 'thumb head' 'text text' 'tech tech' 'cta cta';
-  grid-template-rows: auto auto auto 1fr;
+  grid-template-areas: 'head' 'cta';
+  grid-template-rows: auto 1fr;
   gap: var(--space-xs) var(--space-sm);
   padding: var(--space-md) 0;
   border-top: var(--border-width) solid var(--color-line-faint);
@@ -37,6 +36,12 @@ $hover-fade: 0.15s ease;
     outline-offset: calc(-2 * var(--border-width));
   }
 
+  @include bp.from(tablet) {
+    grid-template-columns: $thumb-width minmax(0, 1fr);
+    grid-template-areas: 'thumb head' 'text text' 'tech tech' 'cta cta';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
   // Touch keeps the small image in its own column, it has no pointer to show the large one.
   @include bp.from(card) {
     grid-template-columns: $thumb-width minmax($head-column, 1fr) 2fr $cta-column;
@@ -46,6 +51,13 @@ $hover-fade: 0.15s ease;
     min-height: $row-height;
     padding: var(--space-md) var(--space-sm);
   }
+}
+
+// On phones these three live in the disclosure (c).
+.thumb,
+.text,
+.tech {
+  display: none;
 }
 
 // Fixed size before the image loads, so nothing moves when it arrives.
@@ -92,7 +104,6 @@ h3 {
 
 // Two lines at most, so no row grows past the others.
 .text {
-  display: -webkit-box;
   grid-area: text;
   overflow: hidden;
   color: var(--color-text-muted);
@@ -128,6 +139,17 @@ h3 {
 
 .arrow {
   transition: translate $hover-fade;
+}
+
+@include bp.from(tablet) {
+  .thumb,
+  .tech {
+    display: block;
+  }
+
+  .text {
+    display: -webkit-box;
+  }
 }
 
 @include bp.from(card) {
@@ -188,4 +210,77 @@ h3 {
       translate: var(--space-2xs) 0;
     }
   }
+}
+
+// Sits on the CTA line, left of the link text, and opens below the link. Pulled up by the CTA
+// line and the padding below it; drawn above the link, so a tap on "Details" opens it instead of
+// navigating. Closed it is only as wide as "Details", so it covers no part of the link; open it
+// spans the CTA line, so there only the summary and the body take taps.
+.fold {
+  position: relative;
+  margin-top: calc(-1 * (var(--size-touch) + var(--space-md)));
+  pointer-events: none;
+
+  &:not([open]) {
+    width: fit-content;
+  }
+
+  @include bp.from(tablet) {
+    display: none;
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    width: fit-content;
+    min-height: var(--size-touch);
+    font-family: var(--font-code);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-accent);
+    list-style: none;
+    cursor: pointer;
+    pointer-events: auto;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    // Empty alternative text: screen readers say the state, not the arrow.
+    &::after {
+      content: '▾' / '';
+    }
+  }
+
+  &[open] summary::after {
+    rotate: 180deg;
+  }
+}
+
+.fold-body {
+  display: grid;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-md);
+  pointer-events: auto;
+}
+
+// Fixed size before the image loads, as in the row.
+.fold-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border: var(--border-width) solid var(--color-line-faint);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.fold-text {
+  color: var(--color-text-muted);
+}
+
+.fold-tech {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
 }

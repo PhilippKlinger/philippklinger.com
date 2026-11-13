@@ -157,11 +157,13 @@ export class HeroPipelineView {
   /** Shows the next frame; false when the run stands and needs no frame until it is woken. */
   private advance(step: number): boolean {
     const pipeline = this.pipeline();
-    if (!this.takeNew(pipeline) && this.isHeld()) return false;
-    if (!runs(pipeline)) {
+    const fresh = this.takeNew(pipeline);
+    // Decision (b): the pause shows the end state; the elapsed time stays, so play goes on from it.
+    if (this.motion.paused() || !runs(pipeline)) {
       this.showEndState();
       return false;
     }
+    if (!fresh && this.isHeld()) return false;
     this.elapsed = (this.elapsed + step) % heroCycleMs(pipeline);
     this.show(heroFrame(pipeline, this.elapsed));
     return true;
@@ -178,7 +180,7 @@ export class HeroPipelineView {
   // Only the stations hold the run. The pause control must not: after a click it keeps the focus
   // and the pointer, and the run would not continue when it says so.
   private isHeld(): boolean {
-    return this.motion.paused() || !!this.host.querySelector('.box')?.matches(this.holdOn);
+    return !!this.host.querySelector('.box')?.matches(this.holdOn);
   }
 
   private show(next: HeroFrame): void {
