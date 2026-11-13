@@ -266,6 +266,8 @@ test.describe('Liste', () => {
   }) => {
     await openList(page);
     const target = row(page, 'Videoflix');
+    // The row must be at rest: a section that still fades in (S5) moves under the click.
+    await revealSections(page);
     await target.scrollIntoViewIfNeeded();
     const before = await page.evaluate(() => window.scrollY);
     expect(before, 'the row must sit below the top').toBeGreaterThan(0);
