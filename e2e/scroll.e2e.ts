@@ -103,6 +103,63 @@ test.describe('Sprungziele (FB-03)', () => {
   });
 });
 
+// S4 (13.11.): after a jump to "Über mich" the next section already showed at the bottom. From
+// tablet up each section is about one screen high; on the phone it stays compact.
+test.describe('Abschnittshöhe (S4)', () => {
+  /**
+   * Height at the end of each section in which nothing is drawn: no text, image, line or
+   * surface. Element boxes alone would not tell, the items of a grid stretch with the section.
+   */
+  const emptyBelowContent = (page: Page) =>
+    page.locator('main section.section').evaluateAll((all) =>
+      all.map((section) => {
+        const draws = (style: CSSStyleDeclaration) =>
+          style.borderBottomStyle !== 'none' ||
+          style.backgroundColor !== 'rgba(0, 0, 0, 0)' ||
+          style.backgroundImage !== 'none';
+        const drawn = [...section.querySelectorAll('*')]
+          .filter((el) => el.matches('img, svg') || draws(getComputedStyle(el)))
+          .map((el) => el.getBoundingClientRect().bottom);
+        const range = document.createRange();
+        const texts = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+        while (texts.nextNode()) {
+          if (!texts.currentNode.textContent?.trim()) continue;
+          range.selectNodeContents(texts.currentNode);
+          drawn.push(range.getBoundingClientRect().bottom);
+        }
+        const { bottom } = section.getBoundingClientRect();
+        const end = bottom - parseFloat(getComputedStyle(section).paddingBottom);
+        return { id: section.id, empty: Math.round(end - Math.max(...drawn)) };
+      }),
+    );
+
+  test('[S4] ab Tablet: nach einem Sprung ist der nächste Abschnitt nicht im Bild', async ({
+    page,
+  }) => {
+    test.skip(isMobile(page), 'mobil bleibt kompakt');
+    const labels = ['Über mich', 'Skills', 'Projekte'];
+    for (const [index, label] of labels.entries()) {
+      await page
+        .getByRole('navigation', { name: 'Hauptnavigation' })
+        .getByRole('link', { name: label, exact: true })
+        .click();
+      await expectLandedOn(page, sections[index]);
+      const next = page.locator(`#${sections[index + 1]} h2`);
+      await expect(
+        next,
+        `nach „${label}“ ist ${sections[index + 1]} zu sehen`,
+      ).not.toBeInViewport();
+    }
+  });
+
+  test('[S4] mobil: kein Abschnitt hat eine Leerfläche unter seinem Inhalt', async ({ page }) => {
+    test.skip(!isMobile(page), 'nur mobil');
+    for (const { id, empty } of await emptyBelowContent(page)) {
+      expect(empty, `#${id}: Leerfläche unter dem Inhalt`).toBeLessThanOrEqual(GAP);
+    }
+  });
+});
+
 test.describe('Nach oben (FB-02)', () => {
   const button = (page: Page) => page.getByRole('button', { name: 'Nach oben' });
 

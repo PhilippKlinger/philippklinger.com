@@ -61,13 +61,17 @@ img {
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin-inline: auto;
   padding: var(--space-section) var(--page-gutter) 0;
-  // A jump lands on the content with a small gap, not on the padding above it (FB-03).
-  // On mobile the header slides out on a jump, from tablet on it stays and needs its room:
-  // after a jump it lies over the content, so at its slim height (S3).
-  scroll-margin-top: calc(var(--space-lg) - var(--space-section));
+  // Where a jump puts the top edge of the section: the content lands with a small gap, not the
+  // padding above it (FB-03). On mobile the header slides out on a jump, from tablet on it
+  // stays and needs its room: after a jump it lies over the content, so at its slim height (S3).
+  --section-landing: calc(var(--space-lg) - var(--space-section));
+  scroll-margin-top: var(--section-landing);
 
   @include bp.from(tablet) {
-    scroll-margin-top: calc(var(--header-height-compact) + var(--space-lg) - var(--space-section));
+    --section-landing: calc(var(--header-height-compact) + var(--space-lg) - var(--space-section));
+    // From there the section reaches down to the bottom edge, so a jump shows it alone and the
+    // next heading stays below (S4). Not on the phone: short sections would only gain empty space.
+    min-height: calc(100svh - var(--section-landing));
   }
 
   // tabindex="-1" lets a jump move the focus here, so Tab continues in the section.
