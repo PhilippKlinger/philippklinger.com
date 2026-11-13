@@ -1,6 +1,20 @@
-import { Component, DestroyRef, DOCUMENT, afterNextRender, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 
-/** Floating button back to the top of the start page, shown once the hero is out of view. */
+/** Rest after the last scroll event before the button comes back (S11). */
+const REST_MS = 600;
+
+/**
+ * Floating button back to the top of the start page. Shown once the hero is out of view and
+ * only while the reader rests, so it never covers content during scrolling (S11).
+ */
 @Component({
   selector: 'app-back-to-top',
   templateUrl: './back-to-top.html',
@@ -9,10 +23,16 @@ import { Component, DestroyRef, DOCUMENT, afterNextRender, inject, signal } from
 export class BackToTop {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly shown = signal(false);
+  private readonly heroGone = signal(false);
+  private readonly scrolling = signal(false);
+  private restTimer = 0;
+  protected readonly shown = computed(() => this.heroGone() && !this.scrolling());
 
   constructor() {
-    afterNextRender(() => this.showOnceHeroIsGone());
+    afterNextRender(() => {
+      this.showOnceHeroIsGone();
+      this.hideWhileScrolling();
+    });
   }
 
   protected backToTop(): void {
@@ -25,8 +45,25 @@ export class BackToTop {
   private showOnceHeroIsGone(): void {
     const hero = this.document.querySelector('.hero');
     if (!hero) return;
-    const observer = new IntersectionObserver(([entry]) => this.shown.set(!entry.isIntersecting));
+    const observer = new IntersectionObserver(([entry]) =>
+      this.heroGone.set(!entry.isIntersecting),
+    );
     observer.observe(hero);
     this.destroyRef.onDestroy(() => observer.disconnect());
+  }
+
+  private hideWhileScrolling(): void {
+    const stop = new AbortController();
+    addEventListener('scroll', () => this.onScroll(), { passive: true, signal: stop.signal });
+    this.destroyRef.onDestroy(() => {
+      stop.abort();
+      clearTimeout(this.restTimer);
+    });
+  }
+
+  private onScroll(): void {
+    this.scrolling.set(true);
+    clearTimeout(this.restTimer);
+    this.restTimer = window.setTimeout(() => this.scrolling.set(false), REST_MS);
   }
 }

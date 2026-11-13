@@ -150,6 +150,27 @@ test.describe('Nach oben (FB-02)', () => {
     expect(box!.y + box!.height, 'Button reicht in den Footer').toBeLessThanOrEqual(footer!.y);
   });
 
+  // S11 (13.11.): the button sits in the corner and only shows while the reader rests.
+  test('[S11] sitzt in der Ecke: höchstens 16 px Abstand rechts und unten', async ({ page }) => {
+    await page.locator('#skills').scrollIntoViewIfNeeded();
+    await expect(button(page)).toBeVisible();
+    const box = (await button(page).boundingBox())!;
+    const view = page.viewportSize()!;
+    expect(view.width - (box.x + box.width), 'Abstand rechts').toBeLessThanOrEqual(16);
+    expect(view.height - (box.y + box.height), 'Abstand unten').toBeLessThanOrEqual(16);
+  });
+
+  test('[S11] verschwindet beim Scrollen und kommt nach der Pause zurück', async ({ page }) => {
+    await page.locator('#skills').scrollIntoViewIfNeeded();
+    await expect(button(page)).toBeVisible();
+    for (let step = 0; step < 6; step++) {
+      await page.evaluate(() => window.scrollBy(0, 40));
+      await page.waitForTimeout(50);
+    }
+    await expect(button(page)).toBeHidden();
+    await expect(button(page)).toBeVisible();
+  });
+
   test('[FB-02] nur auf der Startseite', async ({ page }) => {
     await page.goto('/impressum/');
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));

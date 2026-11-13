@@ -1,12 +1,13 @@
 // Sticky at the end of the start page: it rides along at the bottom of the viewport and
 // stops above the footer instead of covering its links. The row itself lets clicks through.
+// A small fixed gap keeps it in the corner on every width, not at the page gutter (S11).
 :host {
   position: sticky;
-  inset-block-end: var(--page-gutter);
+  inset-block-end: var(--space-sm);
   z-index: 5;
   display: flex;
   justify-content: flex-end;
-  padding-inline: var(--page-gutter);
+  padding-inline: var(--space-sm);
   pointer-events: none;
 }
 
