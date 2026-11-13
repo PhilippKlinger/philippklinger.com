@@ -4,6 +4,7 @@ import { BuildInfo, buildLineTexts, buildRunUrl } from '../../../content/build-i
 import { profile } from '../../../content/profile';
 import { docsUrl, repositoryUrl } from '../../../content/site';
 import { BUILD_INFO } from './build-info-token';
+import { ExternalLink } from '../../external-link';
 
 const BUILD_INFO_KEY = makeStateKey<BuildInfo | null>('build-info');
 
@@ -23,7 +24,7 @@ function linkToRun(info: BuildInfo | null): { url: string; label: string } | nul
 
 @Component({
   selector: 'app-footer',
-  imports: [RouterLink],
+  imports: [ExternalLink, RouterLink],
   templateUrl: './footer.html',
   styleUrl: './footer.scss',
 })

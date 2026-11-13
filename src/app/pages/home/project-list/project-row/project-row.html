@@ -1,10 +1,4 @@
-<a
-  class="row"
-  [href]="row().href"
-  [attr.data-cursor]="row().ring"
-  [attr.target]="row().external ? '_blank' : null"
-  [attr.rel]="row().external ? 'noopener' : null"
->
+<a class="row" [href]="row().href" [attr.data-cursor]="row().ring">
   <!-- Touch and stacked rows: a small fixed image. Below the fold, so lazy; empty alt: the row says it all. -->
   <span class="thumb" aria-hidden="true">
     @if (row().preview; as preview) {

@@ -18,6 +18,7 @@ import {
   heroFinalFrame,
   heroFrame,
 } from '../../../../../content/hero-pipeline-motion';
+import { ExternalLink } from '../../../../external-link';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 const CAN_HOVER = '(hover: hover)';
@@ -27,6 +28,7 @@ const MAX_STEP_MS = 100;
 const runs = (pipeline: HeroPipeline) => !pipeline.still && pipeline.reached >= 0;
 
 @Component({
+  imports: [ExternalLink],
   selector: 'app-hero-pipeline',
   templateUrl: './hero-pipeline-view.html',
   styleUrl: './hero-pipeline-view.scss',

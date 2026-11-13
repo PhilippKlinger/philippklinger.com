@@ -156,6 +156,24 @@ for (const path of pages) {
         );
       expect(unsafe).toEqual([]);
     });
+
+    // S9 (13.11.): links to other sites open in a new tab and say so; own links stay.
+    test('[S9] externe Links öffnen in neuem Tab mit Hinweis, eigene nicht', async ({ page }) => {
+      await page.goto(path);
+      const links = await page.locator('a[href]').evaluateAll((all) =>
+        all.map((link) => ({
+          href: link.getAttribute('href') ?? '',
+          target: link.getAttribute('target'),
+          hint: link.getAttribute('aria-describedby'),
+        })),
+      );
+      const external = (href: string) =>
+        /^https?:\/\//.test(href) && !href.startsWith('https://philipp-klinger.com');
+      expect(links.filter((l) => external(l.href) && l.target !== '_blank')).toEqual([]);
+      expect(links.filter((l) => external(l.href) && l.hint !== 'new-tab-hint')).toEqual([]);
+      expect(links.filter((l) => !external(l.href) && l.target)).toEqual([]);
+      await expect(page.locator('#new-tab-hint')).toHaveText('öffnet in neuem Tab');
+    });
   });
 }
 

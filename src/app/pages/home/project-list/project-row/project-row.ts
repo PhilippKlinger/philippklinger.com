@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import type { ProjectPreview } from '../../../../../content/projects';
 import type { DeliveryView } from '../../../../../content/software-delivery';
 import { StateBadge } from '../../../../delivery/state-badge/state-badge';
+import { ExternalLink } from '../../../../external-link';
 
 /** What one row of the project list shows (spec 16.1). */
 export interface RowContent {
@@ -28,7 +29,7 @@ const ctas = {
 /** The whole row is one link, with no other link inside. */
 @Component({
   selector: 'app-project-row',
-  imports: [StateBadge],
+  imports: [ExternalLink, StateBadge],
   templateUrl: './project-row.html',
   styleUrl: './project-row.scss',
 })

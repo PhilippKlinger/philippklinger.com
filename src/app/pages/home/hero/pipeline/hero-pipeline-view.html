@@ -49,9 +49,7 @@
             <span class="value">
               @for (part of station.value; track $index) {
                 @if (part.href; as href) {
-                  <a [href]="href" target="_blank" rel="noopener" [class.fail]="part.failed">{{
-                    part.text
-                  }}</a>
+                  <a [href]="href" [class.fail]="part.failed">{{ part.text }}</a>
                 } @else {
                   <span [class.fail]="part.failed">{{ part.text }}</span>
                 }
