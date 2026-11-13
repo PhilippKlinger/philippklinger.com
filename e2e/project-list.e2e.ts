@@ -177,7 +177,7 @@ test.describe('Liste', () => {
   }, testInfo) => {
     await page.goto('/');
     await tabIntoList(page);
-    // On the phone the "Details" of a row follows its link (c).
+    // On the phone the "Mehr" of a row follows its link (c).
     const expected =
       testInfo.project.name === 'mobile' ? hrefs.flatMap((href) => [href, 'summary']) : hrefs;
     const reached: { target: string | null; outline: boolean }[] = [];
@@ -396,7 +396,7 @@ test.describe('Vorschaubild', () => {
     expect(await page.evaluate(() => window.layoutShift)).toBeLessThan(0.01);
   });
 
-  // On the phone the image sits behind "Details" (c), see the describe block below.
+  // On the phone the image sits behind "Mehr" (c), see the describe block below.
   test('[L5] gestapelte Zeilen ab Tablet: kleines Bild links in jeder Zeile', async ({
     page,
   }, testInfo) => {
@@ -424,7 +424,7 @@ test.describe('Vorschaubild', () => {
       }).observe({ type: 'layout-shift', buffered: true });
     });
     await openHydrated(page);
-    // The phone shows its images behind "Details" (c).
+    // The phone shows its images behind "Mehr" (c).
     if (testInfo.project.name === 'mobile') {
       for (const summary of await folds(page).locator('summary').all()) await summary.click();
     }
@@ -447,7 +447,7 @@ test.describe('Vorschaubild', () => {
   });
 });
 
-// Phones fold image, text and tech of a row behind "Details" (c, decided 13.11.): less to scroll.
+// Phones fold image, text and tech of a row behind "Mehr" (c, decided 13.11.): less to scroll.
 // From the tablet up every row stays open as before and shows no disclosure.
 test.describe('Handy: Details einklappbar', () => {
   // Before (c) the list measured 1553 px at 390 px (13.11.), every row 272 px.
@@ -472,14 +472,14 @@ test.describe('Handy: Details einklappbar', () => {
       }
       const fold = item.locator('details');
       await expect(fold).not.toHaveAttribute('open');
-      await expect(fold.locator('summary')).toHaveText('Details');
+      await expect(fold.locator('summary')).toHaveText('Mehr');
       for (const part of ['img', '.fold-text', '.fold-tech']) {
         await expect(fold.locator(part), part).toBeHidden();
       }
     }
   });
 
-  test('[c] „Details“ ist ein Touch-Ziel ab 44 px auf der Linkzeile, ohne den Link zu verdecken', async ({
+  test('[c] „Mehr“ ist ein Touch-Ziel ab 44 px auf der Linkzeile, ohne den Link zu verdecken', async ({
     page,
   }, testInfo) => {
     onlyIn(testInfo, 'mobile');
@@ -506,16 +506,14 @@ test.describe('Handy: Details einklappbar', () => {
     }
   });
 
-  test('[c] Tippen auf den Link öffnet das Projekt, nicht „Details“', async ({
-    page,
-  }, testInfo) => {
+  test('[c] Tippen auf den Link öffnet das Projekt, nicht „Mehr“', async ({ page }, testInfo) => {
     onlyIn(testInfo, 'mobile');
     await openList(page);
     await links(page).first().locator('.cta-text').tap();
     await expect(page).toHaveURL(/\/projekte\/videoflix\/?$/);
   });
 
-  test('[c] Tippen auf „Details“ öffnet Bild, Text und Technik und navigiert nicht', async ({
+  test('[c] Tippen auf „Mehr“ öffnet Bild, Text und Technik und navigiert nicht', async ({
     page,
   }, testInfo) => {
     onlyIn(testInfo, 'mobile');
@@ -536,7 +534,7 @@ test.describe('Handy: Details einklappbar', () => {
     await expect(fold.locator('.fold-text')).toBeHidden();
   });
 
-  test('[c] Tastatur: Enter auf „Details“ öffnet, Tab geht danach zur nächsten Zeile', async ({
+  test('[c] Tastatur: Enter auf „Mehr“ öffnet, Tab geht danach zur nächsten Zeile', async ({
     page,
   }, testInfo) => {
     onlyIn(testInfo, 'mobile');
@@ -570,7 +568,7 @@ test.describe('Handy: Details einklappbar', () => {
     expect(height, `vorher ${listBefore} px`).toBeLessThanOrEqual(listBefore - 400);
   });
 
-  test('[c] ab Tablet alles offen wie bisher, ohne „Details“', async ({ page }, testInfo) => {
+  test('[c] ab Tablet alles offen wie bisher, ohne „Mehr“', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile', 'ab Tablet');
     await openList(page);
     await expect(folds(page)).toHaveCount(5);
@@ -767,9 +765,7 @@ test.describe('Ohne JavaScript', () => {
     await expect(page).toHaveURL(/\/projekte\/vps-plattform\/$/);
   });
 
-  test('[L7 · c] „Details“ öffnet auf dem Handy auch ohne JavaScript', async ({
-    page,
-  }, testInfo) => {
+  test('[L7 · c] „Mehr“ öffnet auf dem Handy auch ohne JavaScript', async ({ page }, testInfo) => {
     onlyIn(testInfo, 'mobile');
     await page.goto('/');
     const fold = folds(page).first();

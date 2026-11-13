@@ -26,7 +26,7 @@ const ctas = {
   external: { text: 'Alle Berichte ansehen', arrow: '↗' },
 };
 // DRAFT: label of the disclosure on phones (c).
-const foldLabel = 'Details';
+const foldLabel = 'Mehr';
 
 /** The whole row is one link, with no other link inside. */
 @Component({

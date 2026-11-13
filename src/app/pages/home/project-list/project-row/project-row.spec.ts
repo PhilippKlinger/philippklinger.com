@@ -84,7 +84,7 @@ describe('ProjectRow', () => {
     expect(fold.closest('a')).toBeNull();
     expect(fold.querySelector('a')).toBeNull();
     expect(fold.open).toBe(false);
-    expect(fold.querySelector('summary')?.textContent?.trim()).toBe('Details');
+    expect(fold.querySelector('summary')?.textContent?.trim()).toBe('Mehr');
     expect(fold.querySelector('.fold-text')?.textContent).toBe(projectRow.summary);
     expect(fold.querySelector('.fold-tech')?.textContent).toBe(
       'Docker Compose · Caddy · Uptime Kuma · GitHub Actions',
