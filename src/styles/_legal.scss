@@ -1,5 +1,11 @@
 // Layout of the legal pages, shared by /impressum and /datenschutz.
+@use 'patterns';
+
 @mixin page {
+  .back {
+    @include patterns.back-link;
+  }
+
   .legal {
     display: grid;
     gap: var(--space-lg);

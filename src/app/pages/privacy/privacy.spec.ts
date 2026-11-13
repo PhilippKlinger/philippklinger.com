@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { profile } from '../../../content/profile';
 import { Privacy } from './privacy';
 
@@ -6,6 +7,7 @@ describe('Privacy', () => {
   let page: HTMLElement;
 
   beforeEach(async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(Privacy);
     await fixture.whenStable();
     page = fixture.nativeElement as HTMLElement;
@@ -44,5 +46,11 @@ describe('Privacy', () => {
 
   it('shows the date of the current version', () => {
     expect(page.textContent).toMatch(/Stand: \w+ \d{4}/);
+  });
+  // S10 (13.11.): the legal pages lead back to the footer of the start page, where they are linked.
+  it('links back to the footer of the start page', () => {
+    const back = page.querySelector<HTMLAnchorElement>('a.back');
+    expect(back?.getAttribute('href')).toBe('/#fusszeile');
+    expect(back?.textContent).toContain('Zurück zur Startseite');
   });
 });

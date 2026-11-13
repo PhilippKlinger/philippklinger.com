@@ -1,3 +1,13 @@
+// Way back to the start page, used by project and legal pages. Touch target of at least 44 px.
+@mixin back-link {
+  display: inline-flex;
+  gap: var(--space-xs);
+  align-items: center;
+  justify-self: start;
+  min-height: var(--size-touch);
+  font-family: var(--font-code);
+}
+
 // Diagonal accent stripes behind images (PK-29), tokens only.
 @mixin stripes($angle, $gap) {
   background: repeating-linear-gradient(
