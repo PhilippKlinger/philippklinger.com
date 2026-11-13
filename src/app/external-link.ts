@@ -14,6 +14,8 @@ export function isExternal(href: string): boolean {
  * screen readers so. Own pages, relative links and mailto stay in the same tab.
  */
 @Directive({
+  // An attribute selector without prefix on purpose: it applies to every link where imported.
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'a[href]',
   host: {
     '[attr.href]': 'href()',
