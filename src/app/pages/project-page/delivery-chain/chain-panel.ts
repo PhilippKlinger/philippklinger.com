@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { ChainStation, ChainTable } from '../../../../content/delivery-chain';
+import { ExternalLink } from '../../../external-link';
 
 // DRAFT: texts of the field, wording to be approved.
 const panelTexts = {
@@ -10,6 +11,7 @@ const panelTexts = {
 
 /** The field of one station: what it proves, its table and, for an attested image, the command. */
 @Component({
+  imports: [ExternalLink],
   selector: 'app-chain-panel',
   templateUrl: './chain-panel.html',
   styleUrl: './chain-panel.scss',

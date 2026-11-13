@@ -7,6 +7,7 @@ import { buildDeliveryView, deliveryTexts } from '../../../content/software-deli
 import { DeliveryStatus } from '../../delivery/delivery-status';
 import { StateBadge } from '../../delivery/state-badge/state-badge';
 import { DeliveryChain } from './delivery-chain/delivery-chain';
+import { ExternalLink } from '../../external-link';
 
 /** A token, not an input: the router would bind a query parameter of that name to an input. */
 export const PROJECT_PAGE_CONTENT = new InjectionToken('content of the project pages', {
@@ -23,7 +24,7 @@ const blockTexts = {
 
 @Component({
   selector: 'app-project-page',
-  imports: [DeliveryChain, RouterLink, StateBadge],
+  imports: [ExternalLink, DeliveryChain, RouterLink, StateBadge],
   templateUrl: './project-page.html',
   styleUrl: './project-page.scss',
 })
