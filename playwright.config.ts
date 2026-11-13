@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 // End-to-end tests run against the real static build (npm run build), served by
 // e2e/server.mjs with the same redirect and 404 behaviour as Apache on the host.
 // One project per breakpoint of the template (spec 3.4) plus a widescreen check.
-const port = 4300;
+// E2E_PORT lets two local checkouts run the suite at once; CI keeps the default.
+const port = Number(process.env['E2E_PORT'] ?? 4300);
 const baseURL = `http://localhost:${port}`;
 
 export default defineConfig({
