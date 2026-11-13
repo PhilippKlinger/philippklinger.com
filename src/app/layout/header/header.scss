@@ -1,6 +1,7 @@
 @use 'breakpoints' as bp;
 
-// Transparent over the hero; over the content it needs the page colour to stay readable.
+// Transparent over the hero. Over the content it turns slimmer and fades from the page colour
+// to transparent, without a line: readable, but no hard bar (S3, variant C of 13.11.).
 // On mobile it slides out while the reader scrolls down (FB-13).
 :host {
   transition:
@@ -8,7 +9,20 @@
     background-color 0.2s ease;
 
   &.over-content {
-    border-bottom: var(--border-width) solid var(--color-line-faint);
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-bg) 92%, transparent),
+      color-mix(in srgb, var(--color-bg) 70%, transparent) 60%,
+      transparent
+    );
+
+    .header {
+      height: var(--header-height-compact);
+    }
+  }
+
+  // The open menu below is solid; a fading bar above it would let the content show in between.
+  &.over-content.menu-open {
     background: var(--color-bg);
   }
 
@@ -27,6 +41,7 @@
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin-inline: auto;
   padding: 0 var(--page-gutter);
+  transition: height 0.2s ease;
 }
 
 // Two letters are far narrower than a touch target; the text edge stays on the left.

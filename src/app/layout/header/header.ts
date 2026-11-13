@@ -21,6 +21,7 @@ const MOBILE = '(max-width: 767.98px)';
   host: {
     '[class.away]': 'away()',
     '[class.over-content]': 'overContent()',
+    '[class.menu-open]': 'menuOpen()',
     '(focusin)': 'away.set(false)',
     '(document:keydown.escape)': 'closeMenuWithKeyboard()',
   },
