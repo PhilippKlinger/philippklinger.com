@@ -168,7 +168,7 @@ for (const path of pages) {
         })),
       );
       const external = (href: string) =>
-        /^https?:\/\//.test(href) && !href.startsWith('https://philipp-klinger.com');
+        /^https?:\/\//.test(href) && new URL(href).origin !== 'https://philipp-klinger.com';
       expect(links.filter((l) => external(l.href) && l.target !== '_blank')).toEqual([]);
       expect(links.filter((l) => external(l.href) && l.hint !== 'new-tab-hint')).toEqual([]);
       expect(links.filter((l) => !external(l.href) && l.target)).toEqual([]);

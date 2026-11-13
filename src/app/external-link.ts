@@ -6,7 +6,8 @@ export const NEW_TAB_HINT_ID = 'new-tab-hint';
 
 /** Links to other sites open in a new tab, so the portfolio stays open (S9). */
 export function isExternal(href: string): boolean {
-  return /^https?:\/\//.test(href) && !href.startsWith(siteUrl);
+  // The origin decides, not the prefix: philipp-klinger.com.example.org is another site.
+  return /^https?:\/\//.test(href) && new URL(href).origin !== new URL(siteUrl).origin;
 }
 
 /**

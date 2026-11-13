@@ -9,6 +9,7 @@ import { ExternalLink, NEW_TAB_HINT_ID } from './external-link';
     <a id="own" href="https://philipp-klinger.com/impressum/">Impressum</a>
     <a id="relative" href="/projekte/portfolio/">Portfolio</a>
     <a id="mail" href="mailto:mail@example.org">E-Mail</a>
+    <a id="lookalike" href="https://philipp-klinger.com.example.org/">Fremd</a>
   `,
 })
 class Host {}
@@ -28,6 +29,11 @@ describe('ExternalLink', () => {
     expect(link('github').getAttribute('target')).toBe('_blank');
     expect(link('github').getAttribute('rel')).toBe('noopener');
     expect(link('github').getAttribute('aria-describedby')).toBe(NEW_TAB_HINT_ID);
+  });
+
+  // Only the origin counts: a host that merely starts with the own domain is another site.
+  it('treats a host that only starts with the own domain as another site', () => {
+    expect(link('lookalike').getAttribute('target')).toBe('_blank');
   });
 
   it.each(['own', 'relative', 'mail'])('keeps "%s" in the same tab', (id) => {
