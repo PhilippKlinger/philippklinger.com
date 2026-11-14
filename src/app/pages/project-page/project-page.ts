@@ -39,7 +39,6 @@ export class ProjectPage {
   protected readonly deliveryTexts = deliveryTexts;
   protected readonly blockTexts = blockTexts;
   protected readonly built = computed(() => this.content[this.project().slug]);
-  protected readonly tech = computed(() => this.project().stack.join(' · '));
   /** The same status line as the row of the project list (spec 16.3). */
   protected readonly statusLine = computed(() => {
     const plan = deliveryPlans[this.project().slug];

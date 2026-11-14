@@ -46,14 +46,6 @@ h1 {
   color: var(--color-text-muted);
 }
 
-// Muted, not subtle: subtle falls below 4.5:1 on the brightest haze (contrast.e2e.ts).
-.tech {
-  margin-top: var(--space-sm);
-  font-family: var(--font-code);
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-}
-
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -90,12 +82,9 @@ h1 {
   }
 }
 
-// 16:10 like the list; until the final images arrive the image keeps its own ratio inside.
+// The frame follows the image, so there is no area above or below it.
 .media {
-  // The single row stretches to the frame: the placeholder fills it, the image is centered.
-  display: grid;
   align-self: start;
-  aspect-ratio: 16 / 10;
   overflow: hidden;
   border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-small);
@@ -103,10 +92,15 @@ h1 {
 
   img {
     display: block;
-    align-self: center;
     width: 100%;
     height: auto;
   }
+}
+
+// Without an image the striped placeholder keeps the 16:10 frame.
+.media-placeholder {
+  display: grid;
+  aspect-ratio: 16 / 10;
 }
 
 .placeholder {

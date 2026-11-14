@@ -38,7 +38,7 @@ for (const project of projects) {
       ]);
       await expect(main.locator('.signal .state')).toBeVisible();
       await expect(main.locator('.summary')).toHaveText(project.summary);
-      await expect(main.locator('.tech')).toHaveText(project.stack.join(' · '));
+      await expect(main.locator('.tech')).toHaveCount(0);
       await expect(main.locator('.media')).toBeVisible();
       const links = main.locator('.links a');
       await expect(links).toHaveCount(project.links.length);
@@ -99,16 +99,21 @@ test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('Seite nicht gefunden');
 });
 
-test('[Spec 16.3] Bild 16:10 ab 960 px neben dem Text, darunter unter dem Text', async ({
-  page,
-}) => {
+test('[Spec 16.3] Bild ab 960 px neben dem Text, darunter unter dem Text', async ({ page }) => {
   await page.goto('/projekte/videoflix/');
   const text = (await page.locator('main .intro').boundingBox())!;
   const media = (await page.locator('main .media').boundingBox())!;
-  expect(media.height).toBeCloseTo((media.width * 10) / 16, 0);
   if (isBeside(page)) {
     expect(media.x).toBeGreaterThanOrEqual(text.x + text.width);
   } else {
     expect(media.y).toBeGreaterThanOrEqual(text.y + text.height);
   }
+});
+
+test('[a2] Bildrahmen folgt dem Bild: keine Fläche über oder unter dem Bild', async ({ page }) => {
+  await page.goto('/projekte/videoflix/');
+  // clientHeight leaves out the border of the frame.
+  const frame = await page.locator('main .media').evaluate((el) => el.clientHeight);
+  const image = (await page.locator('main .media img').boundingBox())!;
+  expect(Math.abs(frame - image.height)).toBeLessThanOrEqual(1);
 });

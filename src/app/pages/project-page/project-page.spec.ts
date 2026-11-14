@@ -57,9 +57,8 @@ describe('ProjectPage', () => {
     },
   );
 
-  it.each(projects)('shows the stack of "$title" in one line', async (project) => {
-    const tech = (await renderPage(project)).querySelector('.tech');
-    expect(tech?.textContent?.trim()).toBe(project.stack.join(' · '));
+  it.each(projects)('renders no tech line on "$title"', async (project) => {
+    expect((await renderPage(project)).querySelector('.tech')).toBeNull();
   });
 
   it.each(projects)(

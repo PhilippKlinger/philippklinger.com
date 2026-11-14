@@ -14,7 +14,6 @@
       </p>
       <h1>{{ project().title }}</h1>
       <p class="summary">{{ project().summary }}</p>
-      <p class="tech">{{ tech() }}</p>
       @if (project().links.length > 0) {
         <ul class="links">
           @for (link of project().links; track link.url; let first = $first) {
@@ -29,8 +28,8 @@
       }
     </div>
 
-    <!-- 16:10 frame; the image keeps its own ratio inside, so its height is reserved. -->
-    <div class="media">
+    <!-- The frame follows the image; width and height on the img reserve its height. Without one: 16:10 placeholder. -->
+    <div class="media" [class.media-placeholder]="!project().preview">
       @if (project().preview; as preview) {
         <!-- Above the fold, so no lazy loading. Empty alt: the text says it all. -->
         <img
