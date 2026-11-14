@@ -347,7 +347,6 @@ describe('DeliveryChain', () => {
 
     expect(tabs(element).map((tab) => tab.getAttribute('data-state'))).toEqual([
       'private',
-      'private',
       'verified',
       'unavailable',
     ]);

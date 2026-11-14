@@ -768,9 +768,9 @@ test.describe('Fester Inhalt', () => {
     await page.goto('/projekte/neuro-check-in/');
     // The status line comes from the uptime of the website, the release has no fixed version.
     await expect(page.locator('main .intro .signal')).toContainText('100 % (24 h)');
-    await expect.poll(() => statesOf(page)).toEqual(['private', 'private', 'verified', 'verified']);
-    await expect(valueOf(page, 'Code')).toHaveText('Code privat');
-    await expect(station(page, 'Code').locator('.lock')).toBeVisible();
+    await expect.poll(() => statesOf(page)).toEqual(['private', 'verified', 'verified']);
+    await expect(valueOf(page, 'Code & Tests')).toHaveText('Code privat');
+    await expect(station(page, 'Code & Tests').locator('.lock')).toBeVisible();
     await expect(valueOf(page, 'Release im Play Store')).toHaveText('öffentlich');
     await expect(valueOf(page, 'Website')).toHaveText('1 von 1 up');
     await choose(page, 'Release im Play Store');

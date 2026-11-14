@@ -69,11 +69,11 @@ export const projectPageContent: Partial<Record<string, ProjectPageContent>> = {
     },
     decisions: [
       {
-        title: 'Kritische Funde in Kuma befristet angenommen',
+        title: 'Bekannte Funde ohne Fix befristet angenommen',
         reason:
-          'Uptime Kuma 2.5.9 ist das neueste Release, sein Image bringt fünf kritische CVEs in gebündelten Komponenten mit, für die es noch kein Image mit Fix gibt. Jeder Eintrag in .trivyignore.yaml begründet, warum die Lücke hier nicht erreichbar ist.',
+          'Für einige kritische CVEs in gebündelten Komponenten von Uptime Kuma gibt es noch kein Image mit Fix. Jeder Eintrag in .trivyignore.yaml begründet, warum die Lücke hier nicht erreichbar ist.',
         price:
-          'Bis zum 10.12.2026 bleiben bekannte Funde offen. Danach wird die CI wieder rot und erzwingt eine neue Prüfung.',
+          'Bekannte Funde bleiben für eine feste Frist offen. Danach wird die CI wieder rot und erzwingt eine neue Prüfung.',
       },
     ],
     failure: {

@@ -74,8 +74,7 @@ describe('deliveryPlans', () => {
     [
       'neuro-check-in',
       [
-        ['Code', 'CI'],
-        ['Unit- & E2E-Tests', 'Release'],
+        ['Code & Tests', 'Release'],
         ['Release im Play Store', undefined],
         ['Website', undefined],
       ],
@@ -334,7 +333,7 @@ describe('deliveryPlans', () => {
   it('keeps the code of Neuro Check-in private', () => {
     const steps = deliveryPlans['neuro-check-in'].steps as FixedStep[];
     const hidden = steps.filter((step) => step.state === 'private');
-    expect(hidden).toHaveLength(2);
+    expect(hidden).toHaveLength(1);
     for (const step of hidden) {
       expect(step.sentence).toBe('Der Code ist privat, Läufe zeige ich im Gespräch.');
     }
