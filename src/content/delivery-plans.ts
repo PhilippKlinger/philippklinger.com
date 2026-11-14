@@ -111,8 +111,7 @@ export const deliveryPlans: Record<string, DeliveryPlan> = {
     // DRAFT
     runningLabel: 'Website erreichbar',
     steps: [
-      privateStep('Code', 'CI'),
-      privateStep('Unit- & E2E-Tests', 'Release'),
+      privateStep('Code & Tests', 'Release'),
       {
         name: 'Release im Play Store',
         state: 'verified',

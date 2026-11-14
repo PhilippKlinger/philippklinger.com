@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { deliveryPlans } from '../../../content/delivery-plans';
 import { projectPageContent, ProjectPageContent } from '../../../content/project-pages';
+import { profile } from '../../../content/profile';
 import { portfolioProject, Project, projects } from '../../../content/projects';
 import { buildDeliveryView, deliveryTexts } from '../../../content/software-delivery';
 import { PROJECT_PAGE_CONTENT, ProjectPage } from './project-page';
@@ -57,9 +58,8 @@ describe('ProjectPage', () => {
     },
   );
 
-  it.each(projects)('shows the stack of "$title" in one line', async (project) => {
-    const tech = (await renderPage(project)).querySelector('.tech');
-    expect(tech?.textContent?.trim()).toBe(project.stack.join(' · '));
+  it.each(projects)('renders no tech line on "$title"', async (project) => {
+    expect((await renderPage(project)).querySelector('.tech')).toBeNull();
   });
 
   it.each(projects)(
@@ -110,6 +110,16 @@ describe('ProjectPage', () => {
       deliveryTexts.title,
       deliveryTexts.howBuilt,
     ]);
+  });
+
+  it('puts the project name above "Wie es gebaut ist" as a kicker hidden from screen readers', async () => {
+    const project = bySlug('vps-plattform');
+    const page = await renderPage(project, sampleContent);
+    const kicker = page.querySelector<HTMLElement>('.how-built .kicker');
+    expect(kicker?.textContent?.trim()).toBe(project.title);
+    expect(kicker?.getAttribute('aria-hidden')).toBe('true');
+    const h2 = page.querySelector('.how-built h2')!;
+    expect(kicker!.compareDocumentPosition(h2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('takes the content of the real file by default', () => {
@@ -175,5 +185,52 @@ describe('ProjectPage', () => {
     const back = (await renderPage(bySlug('vps-plattform'))).querySelector('a.back');
     expect(back?.getAttribute('href')).toBe('/#projekte');
     expect(back?.textContent?.trim()).toBeTruthy();
+  });
+
+  it('asks for questions with a mailto link and the project as subject', async () => {
+    const project = bySlug('neuro-check-in');
+    const page = await renderPage(project);
+    expect(page.querySelector('.ask p')?.textContent?.trim()).toBe(`Fragen zu ${project.title}?`);
+    const mail = page.querySelector('.ask a');
+    expect(mail?.getAttribute('href')).toBe(
+      `mailto:${profile.email}?subject=${encodeURIComponent(project.title)}`,
+    );
+    expect(mail?.classList.contains('button-primary')).toBe(true);
+    expect(mail?.getAttribute('target')).toBeNull();
+  });
+
+  it('encodes special characters of the title in the subject', async () => {
+    const page = await renderPage({ ...bySlug('videoflix'), title: 'A & B?' });
+    expect(page.querySelector('.ask a')?.getAttribute('href')).toContain('?subject=A%20%26%20B%3F');
+  });
+
+  it.each([
+    ['videoflix', 'neuro-check-in'],
+    ['neuro-check-in', 'vps-plattform'],
+    ['vps-plattform', 'buildorder'],
+    ['buildorder', 'videoflix'],
+    [portfolioProject.slug, 'videoflix'],
+  ])('leads from "%s" to "%s" in the nav at the end', async (slug, next) => {
+    const project = [...projects, portfolioProject].find((entry) => entry.slug === slug)!;
+    const nav = (await renderPage(project)).querySelector('nav[aria-label="Projekte"]');
+    expect(nav?.querySelector('a.list-link')?.getAttribute('href')).toBe('/#projekte');
+    const link = nav?.querySelector('a.next');
+    expect(link?.getAttribute('href')).toBe(`/projekte/${next}/`);
+    expect(link?.textContent).toContain('Nächstes Projekt');
+    expect(link?.textContent).toContain(bySlug(next).title);
+  });
+
+  it('updates the next project when the same component gets another project', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: PROJECT_PAGE_CONTENT, useValue: {} }],
+    });
+    const fixture = TestBed.createComponent(ProjectPage);
+    fixture.componentRef.setInput('project', bySlug('videoflix'));
+    await fixture.whenStable();
+    fixture.componentRef.setInput('project', bySlug('neuro-check-in'));
+    await fixture.whenStable();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('a.next')?.getAttribute('href')).toBe('/projekte/vps-plattform/');
+    expect(page.querySelector('.ask p')?.textContent).toContain('Neuro Check-in');
   });
 });

@@ -110,9 +110,22 @@ const labelOf = (plan: DeliveryPlan, repo: string) => plan.repoLabels?.[repo] ??
 const textCell = (text: string | null): ChainCell => (text === null ? EMPTY : { text });
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
-/** No table without rows, so a station never shows an empty frame. */
-const tableOf = (head: string[], rows: ChainCell[][]): ChainTable | null =>
-  rows.length > 0 ? { head, rows } : null;
+const hasContent = (cell: ChainCell) =>
+  !!cell.url || !!cell.sha || cell.ok !== undefined || (cell.text !== '' && cell !== EMPTY);
+
+/**
+ * No table without rows, so a station never shows an empty frame; a column in which no row has
+ * anything to show (no text, commit, mark or link) is left out with its head.
+ */
+const tableOf = (head: string[], rows: ChainCell[][]): ChainTable | null => {
+  if (rows.length === 0) return null;
+  const kept = head.map((_, column) => rows.some((row) => hasContent(row[column])));
+  if (!kept.includes(true)) return null;
+  return {
+    head: head.filter((_, column) => kept[column]),
+    rows: rows.map((row) => row.filter((_, column) => kept[column])),
+  };
+};
 
 function linkOf(links: StatusLink[], kind: LinkKind, source?: string): StatusLink | undefined {
   return links.find(
@@ -311,7 +324,7 @@ function tableOfStability(status: ProjectStatus): ChainTable | null {
   const row = [
     textCell(valueOfStability(status)),
     textCell(percent(signals.uptime24h)),
-    { text: percent(signals.uptime30d) ?? 'noch zu kurz gemessen' },
+    textCell(percent(signals.uptime30d)),
     textCell(formatTime(dayTimeFormat, signals.lastHeartbeatAt)),
     linkCell(linkOf(links, 'status-page'), 'Statusseite'),
   ];
@@ -319,9 +332,8 @@ function tableOfStability(status: ProjectStatus): ChainTable | null {
 }
 
 function valueOfRestore({ restore }: ProjectStatus): string | null {
-  const { result, testedAt } = restore.signals;
-  const day = formatTime(dayFormat, testedAt);
-  return result === null || day === null ? null : `${RESTORE_RESULT[result]} · ${day}`;
+  const { result } = restore.signals;
+  return result === null ? null : RESTORE_RESULT[result];
 }
 
 function tableOfRestore(status: ProjectStatus): ChainTable | null {

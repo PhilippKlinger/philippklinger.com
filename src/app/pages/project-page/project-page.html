@@ -14,7 +14,6 @@
       </p>
       <h1>{{ project().title }}</h1>
       <p class="summary">{{ project().summary }}</p>
-      <p class="tech">{{ tech() }}</p>
       @if (project().links.length > 0) {
         <ul class="links">
           @for (link of project().links; track link.url; let first = $first) {
@@ -29,8 +28,8 @@
       }
     </div>
 
-    <!-- 16:10 frame; the image keeps its own ratio inside, so its height is reserved. -->
-    <div class="media">
+    <!-- The frame follows the image; width and height on the img reserve its height. Without one: 16:10 placeholder. -->
+    <div class="media" [class.media-placeholder]="!project().preview">
       @if (project().preview; as preview) {
         <!-- Above the fold, so no lazy loading. Empty alt: the text says it all. -->
         <img
@@ -47,10 +46,11 @@
     </div>
   </div>
 
-  <app-delivery-chain [slug]="project().slug" />
+  <app-delivery-chain [slug]="project().slug" [projectTitle]="project().title" />
 
   @if (built(); as built) {
     <section class="how-built" aria-labelledby="how-built-title">
+      <p class="kicker" aria-hidden="true">{{ project().title }}</p>
       <h2 id="how-built-title">{{ deliveryTexts.howBuilt }}</h2>
       <div class="cards">
         <section class="card card-architecture">
@@ -91,4 +91,24 @@
       </div>
     </section>
   }
+
+  <!-- DRAFT: wording of the end of the page, to be approved. -->
+  <div class="finish">
+    <div class="ask">
+      <p>{{ texts.askTitle }} {{ project().title }}?</p>
+      <a class="button button-primary" [href]="mailto()">{{ texts.askButton }}</a>
+    </div>
+
+    <nav class="end" [attr.aria-label]="texts.navLabel">
+      <a class="list-link" routerLink="/" fragment="projekte">
+        <span aria-hidden="true">←</span>
+        <span>{{ texts.listLink }}</span>
+      </a>
+      <!-- Plain href with trailing slash: canonical URL on Apache, no 301 (routerLink strips the slash). -->
+      <a class="next" [href]="'/projekte/' + nextProject().slug + '/'">
+        <small>{{ texts.nextLabel }}</small>
+        <span>{{ nextProject().title }} <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+  </div>
 </article>

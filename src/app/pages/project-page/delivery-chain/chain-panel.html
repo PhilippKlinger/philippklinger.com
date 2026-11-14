@@ -1,6 +1,7 @@
-<p class="kicker">
-  {{ index() + 1 }} / {{ count() }} · <b>{{ station().name }}</b>
-</p>
+@if (!enhanced()) {
+  <!-- DRAFT: without tabs the heading says which station the field belongs to. -->
+  <h3 class="name">{{ station().name }}</h3>
+}
 <p class="what">{{ station().sentence }}</p>
 
 @if (station().table; as table) {

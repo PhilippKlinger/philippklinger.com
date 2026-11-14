@@ -17,8 +17,8 @@
 }
 
 h2 {
-  font-size: var(--text-heading);
-  line-height: var(--leading-tight);
+  font-size: var(--text-xl);
+  color: var(--color-text);
 }
 
 // Muted, not subtle: subtle falls below 4.5:1 on the brightest haze (contrast.e2e.ts).
@@ -26,6 +26,10 @@ h2 {
   font-family: var(--font-code);
   font-size: var(--text-sm);
   color: var(--color-text-muted);
+}
+
+.kicker {
+  text-transform: uppercase;
 }
 
 .notice {
@@ -97,7 +101,8 @@ h2 {
   gap: 0 var(--space-sm);
 }
 
-.value {
+.value,
+.kicker {
   font-family: var(--font-code);
   font-size: var(--text-sm);
   color: var(--color-accent);

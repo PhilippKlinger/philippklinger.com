@@ -41,6 +41,12 @@ describe('projectPageContent', () => {
       expect(JSON.stringify(content.failure)).toContain('CVE-2026-111497');
     });
 
+    it('names no Kuma version, CVE count or date in its decision', () => {
+      expect(JSON.stringify(content.decisions)).not.toMatch(
+        /\d+\.\d+\.\d+|fünf|\d+ (kritische|CVE)/i,
+      );
+    });
+
     it('leaves out what is not proven yet', () => {
       expect(JSON.stringify(content)).not.toMatch(/incident|assistent|llm|ollama|telegram/i);
     });

@@ -28,6 +28,12 @@ export interface Project {
 // DRAFT: labels of the project page, wording to be approved.
 export const projectPageTexts = {
   back: 'Zurück zur Projektliste',
+  // DRAFT: end of the page, wording to be approved.
+  askTitle: 'Fragen zu',
+  askButton: 'Schreib mir',
+  listLink: 'Zur Projektliste',
+  nextLabel: 'Nächstes Projekt',
+  navLabel: 'Projekte',
 };
 
 export const projects: Project[] = [

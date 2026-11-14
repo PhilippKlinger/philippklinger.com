@@ -43,6 +43,7 @@ function mount(slug: string, document: StatusDocument | null = null) {
   });
   const fixture = TestBed.createComponent(DeliveryChain);
   fixture.componentRef.setInput('slug', slug);
+  fixture.componentRef.setInput('projectTitle', 'Projektname');
   return fixture;
 }
 
@@ -213,9 +214,8 @@ describe('DeliveryChain', () => {
     expect(panel.getAttribute('tabindex')).toBe('0');
     expect(panel.getAttribute('aria-labelledby')).toBe(tabs(element)[1].id);
     expect(tabs(element)[1].getAttribute('aria-controls')).toBe(panel.id);
-    expect(panel.querySelector('.kicker')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      '2 / 6 · Tests & Security-Checks',
-    );
+    expect(panel.querySelector('.kicker')).toBeNull();
+    expect(panel.querySelector('h3')).toBeNull();
   });
 
   // The router keeps the component when only the slug changes; an old index would select nothing.
@@ -301,7 +301,7 @@ describe('DeliveryChain', () => {
     expect(shas.every((sha) => sha.hasAttribute('data-match'))).toBe(true);
     expect(shas.some((sha) => sha.hasAttribute('tabindex') || sha.closest('a'))).toBe(false);
 
-    element.querySelector('.kicker')!.dispatchEvent(new Event('pointerover', { bubbles: true }));
+    element.querySelector('h2')!.dispatchEvent(new Event('pointerover', { bubbles: true }));
     TestBed.tick();
     expect(shas.some((sha) => sha.hasAttribute('data-match'))).toBe(false);
   });
@@ -347,7 +347,6 @@ describe('DeliveryChain', () => {
 
     expect(tabs(element).map((tab) => tab.getAttribute('data-state'))).toEqual([
       'private',
-      'private',
       'verified',
       'unavailable',
     ]);
@@ -360,6 +359,15 @@ describe('DeliveryChain', () => {
     expect(element.querySelectorAll('[role="status"]')).toHaveLength(1);
   });
 
+  it('puts the project name above the h2 as a kicker that is hidden from screen readers', async () => {
+    const element = await renderChain('videoflix');
+    const kicker = element.querySelector<HTMLElement>('.kicker');
+    expect(kicker?.textContent?.trim()).toBe('Projektname');
+    expect(kicker?.getAttribute('aria-hidden')).toBe('true');
+    const h2 = element.querySelector('h2')!;
+    expect(kicker!.compareDocumentPosition(h2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   // Without a server behind it the real request fails, no mock involved.
   it('[D8] tells about a failed request on a measured page', async () => {
     const element = await renderChain('videoflix');
@@ -370,6 +378,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const measured = TestBed.createComponent(DeliveryChain);
     measured.componentRef.setInput('slug', 'videoflix');
+    measured.componentRef.setInput('projectTitle', 'Projektname');
     await measured.whenStable();
     await vi.waitFor(() =>
       expect(statusLine(measured.nativeElement)).toBe(deliveryTexts.refreshFailed),
@@ -377,6 +386,7 @@ describe('DeliveryChain', () => {
     measured.destroy();
     const fixed = TestBed.createComponent(DeliveryChain);
     fixed.componentRef.setInput('slug', PRIVATE_SLUG);
+    fixed.componentRef.setInput('projectTitle', 'Projektname');
     await fixed.whenStable();
     expect(statusLine(fixed.nativeElement)).toBe('');
   });
@@ -385,6 +395,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const fixture = TestBed.createComponent(DeliveryChain);
     fixture.componentRef.setInput('slug', 'vps-plattform');
+    fixture.componentRef.setInput('projectTitle', 'Projektname');
     await fixture.whenStable();
     const status = TestBed.inject(DeliveryStatus);
     await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));
