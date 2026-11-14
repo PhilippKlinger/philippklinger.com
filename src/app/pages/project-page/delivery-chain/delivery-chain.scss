@@ -38,22 +38,25 @@ h2 {
   }
 }
 
+// The space sits on the chain, not on the rail: a top margin of the rail would collapse through
+// the chain, and the line, placed in the chain, would hang that far below the nodes.
 .chain {
   position: relative;
+  margin-top: var(--space-lg);
 }
 
 .rail {
   position: relative;
   display: grid;
-  margin: var(--space-lg) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-// The line from the first node to the last one; the rail starts --space-lg below the chain.
+// The line from the first node to the last one.
 .track {
   position: absolute;
-  top: calc(var(--space-lg) + var(--size-touch) / 2);
+  top: calc(var(--size-touch) / 2);
   bottom: calc(var(--size-touch) / 2);
   left: calc(var(--node) / 2 - var(--border-width) / 2);
   width: var(--border-width);
@@ -303,8 +306,8 @@ h2 {
   }
 
   .track {
-    inset: calc(var(--space-lg) + var(--space-sm) + var(--node) / 2 - var(--border-width) / 2)
-      calc(var(--node) / 2) auto;
+    inset: calc(var(--space-sm) + var(--node) / 2 - var(--border-width) / 2) calc(var(--node) / 2)
+      auto;
     width: auto;
     height: var(--border-width);
   }

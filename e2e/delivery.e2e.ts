@@ -152,7 +152,93 @@ async function expectLayout(page: Page): Promise<void> {
   }
 }
 
+type Box = { left: number; right: number; top: number; bottom: number };
+
+/** The line joins the nodes through their centers, stops at the outer ones and crosses no text. */
+async function expectTrackOnNodes(page: Page, label: string): Promise<void> {
+  const rect = (element: Element): Box => {
+    const { left, right, top, bottom } = element.getBoundingClientRect();
+    return { left, right, top, bottom };
+  };
+  const track: Box = await delivery(page).locator('.track').evaluate(rect);
+  const nodes: Box[] = await stations(page)
+    .locator('.node')
+    .evaluateAll((items) =>
+      items.map((item) => {
+        const { left, right, top, bottom } = item.getBoundingClientRect();
+        return { left, right, top, bottom };
+      }),
+    );
+  const texts: Box[] = await stations(page)
+    .locator('.name, .value, .via')
+    .evaluateAll((items) =>
+      items
+        .filter((item) => item.getClientRects().length > 0)
+        .map((item) => {
+          const { left, right, top, bottom } = item.getBoundingClientRect();
+          return { left, right, top, bottom };
+        }),
+    );
+  const middle = (low: number, high: number) => (low + high) / 2;
+  const [first, last] = [nodes[0], nodes.at(-1)!];
+  if (page.viewportSize()!.width >= PIPELINE_BREAKPOINT) {
+    const y = middle(track.top, track.bottom);
+    for (const node of nodes) {
+      expect(
+        Math.abs(y - middle(node.top, node.bottom)),
+        `${label}: line through the node`,
+      ).toBeLessThanOrEqual(1);
+    }
+    // Starts and ends inside the outer nodes, neither short of them nor beyond.
+    expect(track.left, `${label}: starts in the first node`).toBeGreaterThanOrEqual(first.left);
+    expect(track.left, `${label}: starts in the first node`).toBeLessThanOrEqual(
+      middle(first.left, first.right),
+    );
+    expect(track.right, `${label}: ends in the last node`).toBeLessThanOrEqual(last.right);
+    expect(track.right, `${label}: ends in the last node`).toBeGreaterThanOrEqual(
+      middle(last.left, last.right),
+    );
+  } else {
+    const x = middle(track.left, track.right);
+    for (const node of nodes) {
+      expect(
+        Math.abs(x - middle(node.left, node.right)),
+        `${label}: line through the node`,
+      ).toBeLessThanOrEqual(1);
+    }
+    expect(track.top, `${label}: starts in the first node`).toBeGreaterThanOrEqual(first.top);
+    expect(track.top, `${label}: starts in the first node`).toBeLessThanOrEqual(
+      middle(first.top, first.bottom),
+    );
+    expect(track.bottom, `${label}: ends in the last node`).toBeLessThanOrEqual(last.bottom);
+    expect(track.bottom, `${label}: ends in the last node`).toBeGreaterThanOrEqual(
+      middle(last.top, last.bottom),
+    );
+  }
+  for (const text of texts) {
+    const crosses =
+      track.left < text.right &&
+      text.left < track.right &&
+      track.top < text.bottom &&
+      text.top < track.bottom;
+    expect(crosses, `${label}: line crosses no text`).toBe(false);
+  }
+}
+
 test.describe('Software Delivery', () => {
+  test('[D1] die Linie verbindet die Knoten und kreuzt keinen Text, auf allen Detailseiten', async ({
+    page,
+  }) => {
+    await serveStatus(page);
+    for (const path of pages.filter((each) => each.startsWith('/projekte/'))) {
+      await page.goto(path);
+      if (!(await delivery(page).locator('.track').count())) continue;
+      await expect(stations(page).first()).toHaveAttribute('role', 'tab');
+      if (hasStatus(path)) await expect(delivery(page).locator('.stand')).toBeVisible();
+      await expectTrackOnNodes(page, path);
+    }
+  });
+
   test('[AK3] [D2] [D3] Videoflix: eine Station je Schritt, Zustand mit Zeichen und Wort', async ({
     page,
   }) => {
