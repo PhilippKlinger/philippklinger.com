@@ -32,21 +32,25 @@ async function expectThreeCards(page: Page) {
 }
 
 /** [g3] An arrow hangs at the end of the previous part and no part breaks inside. */
-async function expectArrowsAtLineEnd(page: Page, { noBreak = true } = {}) {
+// A part may only break below tablet (the longest one passes 320 px otherwise).
+async function expectArrowsAtLineEnd(page: Page, { noBreak = isTablet(page) } = {}) {
   const parts = await page.locator('main .parts li').evaluateAll((items) =>
     items.map((item, index) => ({
       before: getComputedStyle(item, '::before').content,
       after: getComputedStyle(item, '::after').content,
       last: index === items.length - 1,
-      oneLine:
-        item.getBoundingClientRect().height <
-        item.firstElementChild!.getBoundingClientRect().height * 1.5,
+      // One client rect per line box: a wrapped part gives more than one.
+      lines: (() => {
+        const range = document.createRange();
+        range.selectNodeContents(item.firstElementChild!);
+        return range.getClientRects().length;
+      })(),
     })),
   );
   for (const part of parts) {
     expect(['none', 'normal']).toContain(part.before);
     expect(part.after.startsWith('"→"')).toBe(!part.last);
-    if (noBreak) expect(part.oneLine).toBe(true);
+    if (noBreak) expect(part.lines).toBe(1);
   }
 }
 
@@ -161,7 +165,7 @@ test('[g3] Architektur bei 320 px ohne horizontales Scrollen, Pfeile am Zeilenen
   for (const project of projects) {
     await page.goto(`/projekte/${project.slug}/`);
     // At 320 px the longest part of vps-plattform may break; nothing may pass the edge.
-    await expectArrowsAtLineEnd(page, { noBreak: false });
+    await expectArrowsAtLineEnd(page);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
