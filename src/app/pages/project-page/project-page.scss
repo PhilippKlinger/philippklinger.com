@@ -108,8 +108,16 @@ h1 {
 }
 
 .how-built h2 {
-  font-size: var(--text-heading);
-  line-height: var(--leading-tight);
+  font-size: var(--text-xl);
+  color: var(--color-text);
+}
+
+// The project name above the heading, like the card labels.
+.kicker {
+  font-family: var(--font-code);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  text-transform: uppercase;
 }
 
 .cards {

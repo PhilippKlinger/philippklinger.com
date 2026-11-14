@@ -43,6 +43,7 @@ function mount(slug: string, document: StatusDocument | null = null) {
   });
   const fixture = TestBed.createComponent(DeliveryChain);
   fixture.componentRef.setInput('slug', slug);
+  fixture.componentRef.setInput('title', 'Projektname');
   return fixture;
 }
 
@@ -360,6 +361,15 @@ describe('DeliveryChain', () => {
     expect(element.querySelectorAll('[role="status"]')).toHaveLength(1);
   });
 
+  it('puts the project name above the h2 as a kicker that is hidden from screen readers', async () => {
+    const element = await renderChain('videoflix');
+    const kicker = element.querySelector<HTMLElement>('.kicker');
+    expect(kicker?.textContent?.trim()).toBe('Projektname');
+    expect(kicker?.getAttribute('aria-hidden')).toBe('true');
+    const h2 = element.querySelector('h2')!;
+    expect(kicker!.compareDocumentPosition(h2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   // Without a server behind it the real request fails, no mock involved.
   it('[D8] tells about a failed request on a measured page', async () => {
     const element = await renderChain('videoflix');
@@ -370,6 +380,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const measured = TestBed.createComponent(DeliveryChain);
     measured.componentRef.setInput('slug', 'videoflix');
+    measured.componentRef.setInput('title', 'Projektname');
     await measured.whenStable();
     await vi.waitFor(() =>
       expect(statusLine(measured.nativeElement)).toBe(deliveryTexts.refreshFailed),
@@ -377,6 +388,7 @@ describe('DeliveryChain', () => {
     measured.destroy();
     const fixed = TestBed.createComponent(DeliveryChain);
     fixed.componentRef.setInput('slug', PRIVATE_SLUG);
+    fixed.componentRef.setInput('title', 'Projektname');
     await fixed.whenStable();
     expect(statusLine(fixed.nativeElement)).toBe('');
   });
@@ -385,6 +397,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const fixture = TestBed.createComponent(DeliveryChain);
     fixture.componentRef.setInput('slug', 'vps-plattform');
+    fixture.componentRef.setInput('title', 'Projektname');
     await fixture.whenStable();
     const status = TestBed.inject(DeliveryStatus);
     await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));

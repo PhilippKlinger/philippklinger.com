@@ -111,6 +111,16 @@ describe('ProjectPage', () => {
     ]);
   });
 
+  it('puts the project name above "Wie es gebaut ist" as a kicker hidden from screen readers', async () => {
+    const project = bySlug('vps-plattform');
+    const page = await renderPage(project, sampleContent);
+    const kicker = page.querySelector<HTMLElement>('.how-built .kicker');
+    expect(kicker?.textContent?.trim()).toBe(project.title);
+    expect(kicker?.getAttribute('aria-hidden')).toBe('true');
+    const h2 = page.querySelector('.how-built h2')!;
+    expect(kicker!.compareDocumentPosition(h2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('takes the content of the real file by default', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     expect(TestBed.inject(PROJECT_PAGE_CONTENT)).toBe(projectPageContent);

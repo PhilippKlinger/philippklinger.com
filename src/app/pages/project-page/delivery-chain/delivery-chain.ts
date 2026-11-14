@@ -85,6 +85,8 @@ export class DeliveryChain {
   private readonly hint = signal<ChainHint | null>(null);
 
   readonly slug = input.required<string>();
+  // Shown as the kicker above the heading; the h1 of the page names the project already.
+  readonly title = input.required<string>();
   // Back to the first station when the router reuses the page for another project.
   readonly selected = linkedSignal({ source: this.slug, computation: () => 0 });
 

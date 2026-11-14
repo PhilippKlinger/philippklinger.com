@@ -46,10 +46,11 @@
     </div>
   </div>
 
-  <app-delivery-chain [slug]="project().slug" />
+  <app-delivery-chain [slug]="project().slug" [title]="project().title" />
 
   @if (built(); as built) {
     <section class="how-built" aria-labelledby="how-built-title">
+      <p class="kicker" aria-hidden="true">{{ project().title }}</p>
       <h2 id="how-built-title">{{ deliveryTexts.howBuilt }}</h2>
       <div class="cards">
         <section class="card card-architecture">
