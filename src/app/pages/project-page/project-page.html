@@ -46,7 +46,7 @@
     </div>
   </div>
 
-  <app-delivery-chain [slug]="project().slug" [title]="project().title" />
+  <app-delivery-chain [slug]="project().slug" [projectTitle]="project().title" />
 
   @if (built(); as built) {
     <section class="how-built" aria-labelledby="how-built-title">
@@ -93,19 +93,22 @@
   }
 
   <!-- DRAFT: wording of the end of the page, to be approved. -->
-  <section class="ask">
-    <p>{{ texts.askTitle }} {{ project().title }}?</p>
-    <a class="button button-primary" [href]="mailto()">{{ texts.askButton }}</a>
-  </section>
+  <div class="finish">
+    <div class="ask">
+      <p>{{ texts.askTitle }} {{ project().title }}?</p>
+      <a class="button button-primary" [href]="mailto()">{{ texts.askButton }}</a>
+    </div>
 
-  <nav class="end" [attr.aria-label]="texts.navLabel">
-    <a class="list-link" routerLink="/" fragment="projekte">
-      <span aria-hidden="true">←</span>
-      <span>{{ texts.listLink }}</span>
-    </a>
-    <a class="next" [routerLink]="['/projekte', nextProject().slug]">
-      <small>{{ texts.nextLabel }}</small>
-      <span>{{ nextProject().title }} <span aria-hidden="true">→</span></span>
-    </a>
-  </nav>
+    <nav class="end" [attr.aria-label]="texts.navLabel">
+      <a class="list-link" routerLink="/" fragment="projekte">
+        <span aria-hidden="true">←</span>
+        <span>{{ texts.listLink }}</span>
+      </a>
+      <!-- Plain href with trailing slash: canonical URL on Apache, no 301 (routerLink strips the slash). -->
+      <a class="next" [href]="'/projekte/' + nextProject().slug + '/'">
+        <small>{{ texts.nextLabel }}</small>
+        <span>{{ nextProject().title }} <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+  </div>
 </article>

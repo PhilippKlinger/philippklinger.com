@@ -116,7 +116,7 @@ for (const project of projects) {
       await page.locator('main a.next').click();
       await expect(page).toHaveURL(new RegExp(`/projekte/${next.slug}/?$`));
       await expect(page.locator('main h1')).toHaveText(next.title);
-      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     });
 
     test('[h3] Schreib mir ist ein mailto-Link mit Projektname als Betreff', async ({ page }) => {
@@ -148,6 +148,12 @@ test('[Hosting] unbekannter Slug liefert Status 404', async ({ page }) => {
   const response = await page.goto('/projekte/gibts-nicht/');
   expect(response?.status()).toBe(404);
   await expect(page.locator('h1')).toHaveText('Seite nicht gefunden');
+});
+
+test('[Spec 16.3] Platzhalter ohne Bild hat das Seitenverhältnis 16:10', async ({ page }) => {
+  await page.goto('/projekte/vps-plattform/');
+  const media = (await page.locator('main .media').boundingBox())!;
+  expect(Math.abs(media.height - (media.width * 10) / 16)).toBeLessThanOrEqual(1);
 });
 
 test('[Spec 16.3] Bild ab 960 px neben dem Text, darunter unter dem Text', async ({ page }) => {

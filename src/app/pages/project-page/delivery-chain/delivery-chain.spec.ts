@@ -43,7 +43,7 @@ function mount(slug: string, document: StatusDocument | null = null) {
   });
   const fixture = TestBed.createComponent(DeliveryChain);
   fixture.componentRef.setInput('slug', slug);
-  fixture.componentRef.setInput('title', 'Projektname');
+  fixture.componentRef.setInput('projectTitle', 'Projektname');
   return fixture;
 }
 
@@ -301,7 +301,7 @@ describe('DeliveryChain', () => {
     expect(shas.every((sha) => sha.hasAttribute('data-match'))).toBe(true);
     expect(shas.some((sha) => sha.hasAttribute('tabindex') || sha.closest('a'))).toBe(false);
 
-    element.querySelector('.kicker')!.dispatchEvent(new Event('pointerover', { bubbles: true }));
+    element.querySelector('h2')!.dispatchEvent(new Event('pointerover', { bubbles: true }));
     TestBed.tick();
     expect(shas.some((sha) => sha.hasAttribute('data-match'))).toBe(false);
   });
@@ -378,7 +378,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const measured = TestBed.createComponent(DeliveryChain);
     measured.componentRef.setInput('slug', 'videoflix');
-    measured.componentRef.setInput('title', 'Projektname');
+    measured.componentRef.setInput('projectTitle', 'Projektname');
     await measured.whenStable();
     await vi.waitFor(() =>
       expect(statusLine(measured.nativeElement)).toBe(deliveryTexts.refreshFailed),
@@ -386,7 +386,7 @@ describe('DeliveryChain', () => {
     measured.destroy();
     const fixed = TestBed.createComponent(DeliveryChain);
     fixed.componentRef.setInput('slug', PRIVATE_SLUG);
-    fixed.componentRef.setInput('title', 'Projektname');
+    fixed.componentRef.setInput('projectTitle', 'Projektname');
     await fixed.whenStable();
     expect(statusLine(fixed.nativeElement)).toBe('');
   });
@@ -395,7 +395,7 @@ describe('DeliveryChain', () => {
     TestBed.configureTestingModule({});
     const fixture = TestBed.createComponent(DeliveryChain);
     fixture.componentRef.setInput('slug', 'vps-plattform');
-    fixture.componentRef.setInput('title', 'Projektname');
+    fixture.componentRef.setInput('projectTitle', 'Projektname');
     await fixture.whenStable();
     const status = TestBed.inject(DeliveryStatus);
     await vi.waitFor(() => expect(status.notice()).toBe(deliveryTexts.refreshFailed));

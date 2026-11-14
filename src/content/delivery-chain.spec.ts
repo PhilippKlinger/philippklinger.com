@@ -376,6 +376,17 @@ describe('buildChainView', () => {
     expect(both.table?.head).toEqual(['zuletzt getestet', 'Ergebnis', '', '']);
   });
 
+  it('shows no table when no column has anything to show', () => {
+    const fixed: FixedStep = {
+      name: 'Öffentlich',
+      state: 'verified',
+      sentence: 'Satz',
+      links: [{ label: '', url: '' }],
+    };
+    const [station] = buildChainView({ steps: [fixed] }, null).stations;
+    expect(station.table).toBeNull();
+  });
+
   it('shows the restore test with its protocol and runbook', () => {
     const restore = station(videoflixStatus(), 'Restore-Test');
 

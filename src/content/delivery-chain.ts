@@ -120,6 +120,7 @@ const hasContent = (cell: ChainCell) =>
 const tableOf = (head: string[], rows: ChainCell[][]): ChainTable | null => {
   if (rows.length === 0) return null;
   const kept = head.map((_, column) => rows.some((row) => hasContent(row[column])));
+  if (!kept.includes(true)) return null;
   return {
     head: head.filter((_, column) => kept[column]),
     rows: rows.map((row) => row.filter((_, column) => kept[column])),

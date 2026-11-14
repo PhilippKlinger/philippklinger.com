@@ -210,7 +210,12 @@ dd {
   margin: 0;
 }
 
-// Question card and navigation at the end of the page.
+// Question card and navigation at the end of the page form one group.
+.finish {
+  display: grid;
+  gap: var(--space-sm);
+}
+
 .ask {
   display: flex;
   flex-wrap: wrap;

@@ -215,7 +215,7 @@ describe('ProjectPage', () => {
     const nav = (await renderPage(project)).querySelector('nav[aria-label="Projekte"]');
     expect(nav?.querySelector('a.list-link')?.getAttribute('href')).toBe('/#projekte');
     const link = nav?.querySelector('a.next');
-    expect(link?.getAttribute('href')).toBe(`/projekte/${next}`);
+    expect(link?.getAttribute('href')).toBe(`/projekte/${next}/`);
     expect(link?.textContent).toContain('Nächstes Projekt');
     expect(link?.textContent).toContain(bySlug(next).title);
   });
@@ -230,7 +230,7 @@ describe('ProjectPage', () => {
     fixture.componentRef.setInput('project', bySlug('neuro-check-in'));
     await fixture.whenStable();
     const page = fixture.nativeElement as HTMLElement;
-    expect(page.querySelector('a.next')?.getAttribute('href')).toBe('/projekte/vps-plattform');
+    expect(page.querySelector('a.next')?.getAttribute('href')).toBe('/projekte/vps-plattform/');
     expect(page.querySelector('.ask p')?.textContent).toContain('Neuro Check-in');
   });
 });
