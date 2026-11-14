@@ -110,6 +110,24 @@ for (const project of projects) {
       await expect(page.locator('#projekte h2')).toBeInViewport();
     });
 
+    test('[h3] Nächstes Projekt führt zur nächsten Seite, ganz oben', async ({ page }) => {
+      const index = projects.indexOf(project);
+      const next = projects[(index + 1) % projects.length];
+      await page.locator('main a.next').click();
+      await expect(page).toHaveURL(new RegExp(`/projekte/${next.slug}/?$`));
+      await expect(page.locator('main h1')).toHaveText(next.title);
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    });
+
+    test('[h3] Schreib mir ist ein mailto-Link mit Projektname als Betreff', async ({ page }) => {
+      const mail = page.locator('main .ask a');
+      await expect(mail).toHaveText('Schreib mir');
+      await expect(mail).toHaveAttribute('href', /^mailto:.+\?subject=/);
+      expect(decodeURIComponent((await mail.getAttribute('href'))!)).toContain(
+        `subject=${project.title}`,
+      );
+    });
+
     test('[Spec 3.4 Motion] Reduced Motion: nichts bewegt sich', async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(`/projekte/${project.slug}/`);

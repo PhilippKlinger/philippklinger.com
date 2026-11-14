@@ -91,4 +91,21 @@
       </div>
     </section>
   }
+
+  <!-- DRAFT: wording of the end of the page, to be approved. -->
+  <section class="ask">
+    <p>{{ texts.askTitle }} {{ project().title }}?</p>
+    <a class="button button-primary" [href]="mailto()">{{ texts.askButton }}</a>
+  </section>
+
+  <nav class="end" [attr.aria-label]="texts.navLabel">
+    <a class="list-link" routerLink="/" fragment="projekte">
+      <span aria-hidden="true">←</span>
+      <span>{{ texts.listLink }}</span>
+    </a>
+    <a class="next" [routerLink]="['/projekte', nextProject().slug]">
+      <small>{{ texts.nextLabel }}</small>
+      <span>{{ nextProject().title }} <span aria-hidden="true">→</span></span>
+    </a>
+  </nav>
 </article>

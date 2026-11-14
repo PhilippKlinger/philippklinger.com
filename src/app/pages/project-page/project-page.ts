@@ -2,7 +2,8 @@ import { Component, computed, DestroyRef, inject, InjectionToken, input } from '
 import { RouterLink } from '@angular/router';
 import { deliveryPlans } from '../../../content/delivery-plans';
 import { projectPageContent } from '../../../content/project-pages';
-import { Project, projectPageTexts } from '../../../content/projects';
+import { profile } from '../../../content/profile';
+import { Project, projectPageTexts, projects } from '../../../content/projects';
 import { buildDeliveryView, deliveryTexts } from '../../../content/software-delivery';
 import { DeliveryStatus } from '../../delivery/delivery-status';
 import { StateBadge } from '../../delivery/state-badge/state-badge';
@@ -39,6 +40,14 @@ export class ProjectPage {
   protected readonly deliveryTexts = deliveryTexts;
   protected readonly blockTexts = blockTexts;
   protected readonly built = computed(() => this.content[this.project().slug]);
+  protected readonly mailto = computed(
+    () => `mailto:${profile.email}?subject=${encodeURIComponent(this.project().title)}`,
+  );
+  /** Order of the project list, then around; the portfolio page is not in it and leads to the first. */
+  protected readonly nextProject = computed(() => {
+    const index = projects.findIndex((entry) => entry.slug === this.project().slug);
+    return projects[(index + 1) % projects.length];
+  });
   /** The same status line as the row of the project list (spec 16.3). */
   protected readonly statusLine = computed(() => {
     const plan = deliveryPlans[this.project().slug];
