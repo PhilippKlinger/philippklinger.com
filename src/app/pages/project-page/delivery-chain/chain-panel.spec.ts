@@ -27,25 +27,37 @@ function station(fields: Partial<ChainStation> = {}): ChainStation {
   };
 }
 
-function render(shown: ChainStation, hoveredSha: string | null = null): HTMLElement {
+function render(
+  shown: ChainStation,
+  hoveredSha: string | null = null,
+  enhanced = false,
+): HTMLElement {
   const fixture = TestBed.createComponent(ChainPanel);
   fixture.componentRef.setInput('station', shown);
-  fixture.componentRef.setInput('index', 1);
-  fixture.componentRef.setInput('count', 6);
+  fixture.componentRef.setInput('enhanced', enhanced);
   fixture.componentRef.setInput('hoveredSha', hoveredSha);
   fixture.detectChanges();
   return fixture.nativeElement as HTMLElement;
 }
 
 describe('ChainPanel', () => {
-  it('says where the station stands in the chain and what it proves', () => {
-    const panel = render(station());
-    expect(panel.querySelector('.kicker')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      '2 / 6 · Tests & Security-Checks',
-    );
-    expect(panel.querySelector('.what')?.textContent?.trim()).toBe(
+  it('starts with the sentence of the station and has no position line', () => {
+    const panel = render(station(), null, true);
+    expect(panel.querySelector('.kicker')).toBeNull();
+    expect(panel.firstElementChild?.textContent?.trim()).toBe(
       'Jeder Commit läuft durch die Pipeline.',
     );
+  });
+
+  it('names the station in a heading without tabs, so the field stays assignable', () => {
+    const panel = render(station(), null, false);
+    const heading = panel.querySelector('h3');
+    expect(heading?.textContent?.trim()).toBe('Tests & Security-Checks');
+    expect(panel.firstElementChild).toBe(heading);
+  });
+
+  it('shows no heading once the tabs carry the name', () => {
+    expect(render(station(), null, true).querySelector('h3')).toBeNull();
   });
 
   it('[D7] shows the table with its heads, a label per stacked value and the links in their row', () => {

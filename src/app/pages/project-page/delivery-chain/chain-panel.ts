@@ -18,8 +18,8 @@ const panelTexts = {
 })
 export class ChainPanel {
   readonly station = input.required<ChainStation>();
-  readonly index = input.required<number>();
-  readonly count = input.required<number>();
+  /** True once the tabs are active: they carry the station name, so the field drops its heading. */
+  readonly enhanced = input(false);
   /** Commit under the pointer anywhere in the chain, so the same commit lights up here too. */
   readonly hoveredSha = input<string | null>(null);
 

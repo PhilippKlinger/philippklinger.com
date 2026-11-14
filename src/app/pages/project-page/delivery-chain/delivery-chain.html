@@ -105,8 +105,7 @@
           [attr.tabindex]="enhanced() ? 0 : null"
           [hidden]="enhanced() && index !== selected()"
           [station]="station"
-          [index]="index"
-          [count]="view().stations.length"
+          [enhanced]="enhanced()"
           [hoveredSha]="hoveredSha()"
         />
       }

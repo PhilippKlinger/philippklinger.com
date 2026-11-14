@@ -795,6 +795,8 @@ test.describe('Ohne JavaScript', () => {
     await expect(fields).toHaveCount(6);
     for (const field of await fields.all()) await expect(field).toBeVisible();
     await expect(delivery(page).locator('[role="tab"], [role="tablist"]')).toHaveCount(0);
+    // Without tabs every field names its station in a heading.
+    await expect(fields.locator('h3')).toHaveText(stepNames.videoflix);
     await expect(page.locator('main .links a')).toHaveCount(2);
     await expect(page.locator('main a.back')).toHaveAttribute('href', '/#projekte');
   });

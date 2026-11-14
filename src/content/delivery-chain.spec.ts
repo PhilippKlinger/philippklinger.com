@@ -178,7 +178,7 @@ describe('buildChainView', () => {
       '2 Images attestiert',
       'live = geprüfter Stand',
       '2 von 2 up',
-      'bestanden · 04.11.',
+      'bestanden',
     ]);
   });
 
@@ -324,21 +324,56 @@ describe('buildChainView', () => {
     ]);
   });
 
-  it('says "noch zu kurz gemessen" without a 30-day uptime', () => {
+  it('leaves out the 30-day column without a 30-day uptime', () => {
     const monitoring = station(
       videoflixStatus((status) => (status.stability.signals.uptime30d = null)),
       'Monitoring',
     );
 
+    expect(monitoring.table?.head).toEqual(['Monitore', '24 h', 'letzter Heartbeat', '']);
     expect(monitoring.table?.rows).toEqual([
       [
         { text: '2 von 2 up' },
         { text: '100 %' },
-        { text: 'noch zu kurz gemessen' },
         { text: '06.11., 01:50' },
         { text: 'Statusseite', url: 'https://status.example/status/videoflix' },
       ],
     ]);
+  });
+
+  it('keeps the 30-day column when the uptime is known', () => {
+    const monitoring = station(videoflixStatus(), 'Monitoring');
+    expect(monitoring.table?.head).toContain('30 Tage');
+  });
+
+  it('leaves out the "gebaut aus" column when no image has a source commit', () => {
+    const build = station(
+      videoflixStatus((status) =>
+        status.supplyChain.signals.repos.forEach((repo) => {
+          if (repo.attestation) repo.attestation.sourceSha = null;
+        }),
+      ),
+      'Signed Build',
+    );
+
+    expect(build.table?.head).not.toContain('gebaut aus');
+    expect(build.table?.head).toContain('Digest');
+    for (const row of build.table!.rows) expect(row).toHaveLength(build.table!.head.length);
+  });
+
+  it('leaves out a link column without a link, but keeps the one with a link', () => {
+    const noRunbook = station(
+      videoflixStatus(
+        (status) =>
+          (status.restore.links = status.restore.links.filter((link) => link.kind !== 'runbook')),
+      ),
+      'Restore-Test',
+    );
+    expect(noRunbook.table?.head).toEqual(['zuletzt getestet', 'Ergebnis', '']);
+    expect(noRunbook.table?.rows[0]).toHaveLength(3);
+
+    const both = station(videoflixStatus(), 'Restore-Test');
+    expect(both.table?.head).toEqual(['zuletzt getestet', 'Ergebnis', '', '']);
   });
 
   it('shows the restore test with its protocol and runbook', () => {

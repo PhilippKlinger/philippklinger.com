@@ -214,9 +214,8 @@ describe('DeliveryChain', () => {
     expect(panel.getAttribute('tabindex')).toBe('0');
     expect(panel.getAttribute('aria-labelledby')).toBe(tabs(element)[1].id);
     expect(tabs(element)[1].getAttribute('aria-controls')).toBe(panel.id);
-    expect(panel.querySelector('.kicker')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      '2 / 6 · Tests & Security-Checks',
-    );
+    expect(panel.querySelector('.kicker')).toBeNull();
+    expect(panel.querySelector('h3')).toBeNull();
   });
 
   // The router keeps the component when only the slug changes; an old index would select nothing.
