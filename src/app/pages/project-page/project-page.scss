@@ -159,13 +159,13 @@ h4 {
   line-height: var(--leading-subtitle);
 }
 
-// Pushed to the bottom, so the parts line up in cards of the same height.
+// Each part carries its own arrow, so a line never starts with one.
 .parts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-xs);
-  margin: auto 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
   font-family: var(--font-code);
@@ -179,7 +179,7 @@ h4 {
   }
 
   // The order of the list already says it, so screen readers skip the arrow.
-  li + li::before {
+  li:not(:last-child)::after {
     content: '→';
     content: '→' / '';
     color: var(--color-text-subtle);
@@ -217,10 +217,34 @@ dd {
     align-items: center;
     column-gap: var(--space-xl);
   }
+}
 
-  // Equal rows: a longer card makes all three taller, not one (spec 16.3, D9).
+@include bp.from(tablet) {
+  // Architecture over the full width; decision and failure side by side below it, of the same height.
   .cards {
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card-architecture {
+    grid-column: 1 / -1;
+  }
+
+  // A part never breaks inside; on phones the longest one has to, or it passes 320 px.
+  .part {
+    white-space: nowrap;
+  }
+}
+
+@include bp.from(desktop) {
+  // The sentence on the left, the parts on the right.
+  .card-architecture {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-xl);
+
+    h3 {
+      grid-column: 1 / -1;
+    }
   }
 }

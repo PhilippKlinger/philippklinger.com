@@ -7,17 +7,46 @@ import { projects } from '../src/content/projects';
 // Breakpoint card of src/styles/_breakpoints.scss: head and cards side by side from here.
 const isBeside = (page: Page) => (page.viewportSize()?.width ?? 0) >= 960;
 
-/** [D9] Architecture, decision and failure; from 960 px in one row and of the same height. */
+// Breakpoints of src/styles/_breakpoints.scss: decision and failure side by side from tablet,
+// the architecture card in two columns from desktop.
+const isTablet = (page: Page) => (page.viewportSize()?.width ?? 0) >= 768;
+const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1440;
+
+/** [g3] Architecture over the full width; decision and failure below, of the same height. */
 async function expectThreeCards(page: Page) {
   const cards = page.locator('main .how-built .card');
   await expect(cards).toHaveCount(3);
-  if (!isBeside(page)) return;
-  const [first, ...rest] = await Promise.all(
+  const grid = (await page.locator('main .how-built .cards').boundingBox())!;
+  const [architecture, decision, failure] = await Promise.all(
     (await cards.all()).map(async (card) => (await card.boundingBox())!),
   );
-  for (const box of rest) {
-    expect(box.y).toBeCloseTo(first.y, 0);
-    expect(box.height).toBeCloseTo(first.height, 0);
+  expect(architecture.width).toBeCloseTo(grid.width, 0);
+  expect(decision.y).toBeGreaterThanOrEqual(architecture.y + architecture.height);
+  if (!isTablet(page)) {
+    expect(failure.y).toBeGreaterThanOrEqual(decision.y + decision.height);
+    return;
+  }
+  expect(failure.y).toBeCloseTo(decision.y, 0);
+  expect(failure.height).toBeCloseTo(decision.height, 0);
+  expect(failure.x).toBeGreaterThanOrEqual(decision.x + decision.width);
+}
+
+/** [g3] An arrow hangs at the end of the previous part and no part breaks inside. */
+async function expectArrowsAtLineEnd(page: Page, { noBreak = true } = {}) {
+  const parts = await page.locator('main .parts li').evaluateAll((items) =>
+    items.map((item, index) => ({
+      before: getComputedStyle(item, '::before').content,
+      after: getComputedStyle(item, '::after').content,
+      last: index === items.length - 1,
+      oneLine:
+        item.getBoundingClientRect().height <
+        item.firstElementChild!.getBoundingClientRect().height * 1.5,
+    })),
+  );
+  for (const part of parts) {
+    expect(['none', 'normal']).toContain(part.before);
+    expect(part.after.startsWith('"→"')).toBe(!part.last);
+    if (noBreak) expect(part.oneLine).toBe(true);
   }
 }
 
@@ -107,6 +136,36 @@ test('[Spec 16.3] Bild ab 960 px neben dem Text, darunter unter dem Text', async
     expect(media.x).toBeGreaterThanOrEqual(text.x + text.width);
   } else {
     expect(media.y).toBeGreaterThanOrEqual(text.y + text.height);
+  }
+});
+
+test('[g3] Architektur: Bausteine ohne Pfeil am Zeilenanfang, Videoflix ab 1440 px in einer Zeile', async ({
+  page,
+}) => {
+  await page.goto('/projekte/videoflix/');
+  await expectArrowsAtLineEnd(page);
+  if (!isDesktop(page)) return;
+  const tops = await page
+    .locator('main .parts li')
+    .evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
+  const text = (await page.locator('main .card-architecture p').boundingBox())!;
+  const parts = (await page.locator('main .parts').boundingBox())!;
+  expect(parts.x).toBeGreaterThanOrEqual(text.x + text.width);
+});
+
+test('[g3] Architektur bei 320 px ohne horizontales Scrollen, Pfeile am Zeilenende', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  for (const project of projects) {
+    await page.goto(`/projekte/${project.slug}/`);
+    // At 320 px the longest part of vps-plattform may break; nothing may pass the edge.
+    await expectArrowsAtLineEnd(page, { noBreak: false });
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, project.slug).toBeLessThanOrEqual(0);
   }
 });
 
