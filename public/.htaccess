@@ -41,7 +41,8 @@ RewriteRule ^index\.csr\.html$ - [R=404,L]
     Header set Cache-Control "no-cache"
   </FilesMatch>
   # Images and the preloaded fonts (fixed path for <link rel="preload">) keep their name when
-  # they change, so they are cached for 30 days only.
+  # they change, so they are cached for 30 days only. A changed image gets a new name
+  # (src/public-images.spec.ts).
   <FilesMatch "\.(webp|png|svg|ico|woff2)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
